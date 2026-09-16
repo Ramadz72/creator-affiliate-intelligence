@@ -20,3 +20,27 @@ Route::get('/dashboard', function () {
 Route::get('/creators', [CreatorController::class, 'index'])
     ->middleware(['auth'])
     ->name('creators.index');
+
+Route::get('/creators/create', [CreatorController::class, 'create'])
+    ->middleware(['auth'])
+    ->name('creators.create');
+
+Route::post('/creators', [CreatorController::class, 'store'])
+    ->middleware(['auth'])
+    ->name('creators.store');
+
+Route::get('/creators/{creator}', [CreatorController::class, 'show'])
+    ->middleware(['auth'])
+    ->name('creators.show');
+
+Route::get('/creators/{creator}/edit', [CreatorController::class, 'edit'])
+    ->middleware(['auth'])
+    ->name('creators.edit');
+
+Route::put('/creators/{creator}', [CreatorController::class, 'update'])
+    ->middleware(['auth'])
+    ->name('creators.update');
+
+Route::delete('/creators/{creator}', [CreatorController::class, 'destroy'])
+    ->middleware(['auth'])
+    ->name('creators.destroy');
