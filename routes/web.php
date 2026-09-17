@@ -44,3 +44,26 @@ Route::put('/creators/{creator}', [CreatorController::class, 'update'])
 Route::delete('/creators/{creator}', [CreatorController::class, 'destroy'])
     ->middleware(['auth'])
     ->name('creators.destroy');
+
+use App\Http\Controllers\CreatorContentController;
+
+Route::get(
+    '/creators/{creator}/contents/create',
+    [CreatorContentController::class, 'create']
+)
+    ->middleware(['auth'])
+    ->name('creators.contents.create');
+    
+Route::post(
+    '/creators/{creator}/contents',
+    [CreatorContentController::class, 'store']
+)
+    ->middleware(['auth'])
+    ->name('creators.contents.store');
+
+Route::delete(
+    '/creators/{creator}/contents/{content}',
+    [CreatorContentController::class, 'destroy']
+)
+    ->middleware(['auth'])
+    ->name('creators.contents.destroy');

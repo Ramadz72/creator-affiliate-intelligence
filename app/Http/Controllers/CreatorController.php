@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Creator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class CreatorController extends Controller
@@ -43,9 +44,16 @@ class CreatorController extends Controller
             'audience_age' => ['nullable', 'array'],
             'audience_location' => ['nullable', 'array'],
             'profile_link' => ['nullable', 'string', 'max:500'],
+            'profile_image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
             'status' => ['required', 'in:active,inactive'],
             'notes' => ['nullable', 'string'],
         ]);
+
+        if ($request->hasFile('profile_image')) {
+            $validated['profile_image'] = $request
+                ->file('profile_image')
+                ->store('creator-profiles', 'public');
+        }
 
         Creator::create($validated);
 
@@ -54,8 +62,15 @@ class CreatorController extends Controller
             ->with('success', 'Creator berhasil ditambahkan.');}
     public function show(Creator $creator)
     {
+        $contents = $creator->contents()
+            ->latest('content_date')
+            ->latest('id')
+            ->limit(7)
+            ->get();
+
         return Inertia::render('creators/Show', [
             'creator' => $creator,
+            'contents' => $contents,
         ]);
     }
 
@@ -78,6 +93,7 @@ class CreatorController extends Controller
         'audience_age' => ['nullable', 'string'],
         'audience_location' => ['nullable', 'string'],
         'profile_link' => ['nullable', 'string', 'max:500'],
+        'profile_image' => ['nullable', 'image', 'mimes:jpeg,jpg,png,webp', 'max:2048'],
         'status' => ['required', 'in:active,inactive'],
         'notes' => ['nullable', 'string'],
     ]);
@@ -93,7 +109,15 @@ class CreatorController extends Controller
     $validated['audience_location'] = $validated['audience_location']
         ? [$validated['audience_location']]
         : null;
+    if ($request->hasFile('profile_image')) {
+    if ($creator->profile_image) {
+        Storage::disk('public')->delete($creator->profile_image);
+    }
 
+    $validated['profile_image'] = $request
+        ->file('profile_image')
+        ->store('creator-profiles', 'public');
+}
     $creator->update($validated);
 
     return redirect()

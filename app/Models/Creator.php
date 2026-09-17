@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-
+use App\Models\CreatorContent;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -19,6 +19,7 @@ class Creator extends Model
         'audience_age',
         'audience_location',
         'profile_link',
+        'profile_image',
         'status',
         'notes',
     ];

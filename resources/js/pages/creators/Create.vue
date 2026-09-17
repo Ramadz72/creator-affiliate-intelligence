@@ -1,5 +1,8 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
+import { ref } from 'vue';
+import { ArrowLeft, Save, Upload } from '@lucide/vue';
+
 
 const form = useForm({
     name: '',
@@ -11,13 +14,32 @@ const form = useForm({
     audience_age: [] as string[],
     audience_location: [] as string[],
     profile_link: '',
+    profile_image: null as File | null,
     status: 'active',
     notes: '',
 });
 
-const submit = () => {
-    form.post('/creators');
+const previewImage = ref<string | null>(null);
+
+const handleImageChange = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+
+    form.profile_image = file;
+
+    if (file) {
+        previewImage.value = URL.createObjectURL(file);
+    } else {
+        previewImage.value = null;
+    }
 };
+
+const submit = () => {
+    form.post('/creators', {
+        forceFormData: true,
+    });
+}; 
+
 </script>
 
 <template>
@@ -47,7 +69,7 @@ const submit = () => {
         <!-- Form -->
         <form
             @submit.prevent="submit"
-            class="max-w-4xl space-y-6"
+            class="max-w-full space-y-6"
         >
 
             <!-- Basic Information -->
@@ -300,6 +322,54 @@ const submit = () => {
                         />
                     </div>
 
+                    <div class="space-y-3">
+                        <Label>Foto Profil</Label>
+
+                        <div class="flex items-center gap-4">
+                            <!-- Preview -->
+                            <div
+                                v-if="previewImage"
+                                class="shrink-0"
+                            >
+                                <img
+                                    :src="previewImage"
+                                    alt="Preview foto profil"
+                                    class="h-20 w-20 rounded-full border border-border object-cover"
+                                />
+                            </div>
+
+                            <!-- Upload Button -->
+                            <div>
+                                <input
+                                    id="profile_image"
+                                    type="file"
+                                    accept="image/jpeg,image/png,image/webp"
+                                    class="hidden"
+                                    @change="handleImageChange"
+                                />
+
+                                <label
+                                    for="profile_image"
+                                    class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+                                >
+                                    <Upload class="h-4 w-4" />
+                                    Pilih Foto
+                                </label>
+
+                                <p class="mt-2 text-sm text-muted-foreground">
+                                    JPG, PNG, atau WEBP. Maksimal 2 MB.
+                                </p>
+                            </div>
+                        </div>
+
+                        <p
+                            v-if="form.errors.profile_image"
+                            class="text-sm text-destructive"
+                        >
+                            {{ form.errors.profile_image }}
+                        </p>
+                    </div>
+
 
                     <!-- Notes -->
                     <div class="space-y-2">
@@ -320,7 +390,7 @@ const submit = () => {
 
 
             <!-- Actions -->
-            <div class="flex items-center justify-end gap-3">
+            <div class="flex justify-end gap-3">
 
                 <Link
                     href="/creators"

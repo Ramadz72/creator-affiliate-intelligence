@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, useForm } from '@inertiajs/vue3';
-import { ArrowLeft, Save } from '@lucide/vue';
+import { ArrowLeft, Save, Upload } from '@lucide/vue';
+import { ref } from 'vue';
 
 interface Creator {
     id: number;
@@ -13,6 +14,7 @@ interface Creator {
     audience_age: string[] | null;
     audience_location: string[] | null;
     profile_link: string | null;
+    profile_image: string | null;
     status: 'active' | 'inactive';
     notes: string | null;
 }
@@ -31,13 +33,35 @@ const form = useForm({
     audience_age: props.creator.audience_age?.[0] ?? '',
     audience_location: props.creator.audience_location?.[0] ?? '',
     profile_link: props.creator.profile_link ?? '',
+    profile_image: null as File | null,
     status: props.creator.status,
     notes: props.creator.notes ?? '',
 });
+const previewImage = ref<string | null>(
+    props.creator.profile_image
+        ? `/storage/${props.creator.profile_image}`
+        : null,
+);
 
-const submit = () => {
-    form.put(`/creators/${props.creator.id}`);
+const handleImageChange = (event: Event) => {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
+
+    form.profile_image = file;
+
+    if (file) {
+        previewImage.value = URL.createObjectURL(file);
+    }
 };
+const submit = () => {
+    form.transform((data) => ({
+    ...data,
+    _method: 'put',
+})).post(`/creators/${props.creator.id}`, {
+    forceFormData: true,
+});
+};
+
 </script>
 
 <template>
@@ -262,6 +286,52 @@ const submit = () => {
                         placeholder="https://..."
                         class="mt-2 w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-primary"
                     />
+                </div>
+                <!-- Profile Image -->
+                 <div class="space-y-3">
+                    <Label>Foto Profil</Label>
+
+                    <div class="flex items-center gap-4">
+                        <div
+                            v-if="previewImage"
+                            class="shrink-0"
+                        >
+                            <img
+                                :src="previewImage"
+                                alt="Preview foto profil"
+                                class="h-20 w-20 rounded-full border border-border object-cover"
+                            />
+                        </div>
+
+                        <div>
+                            <input
+                                id="profile_image"
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp"
+                                class="hidden"
+                                @change="handleImageChange"
+                            />
+
+                            <label
+                                for="profile_image"
+                                class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground shadow-sm transition hover:bg-muted"
+                            >
+                                <Upload class="h-4 w-4" />
+                                Ganti Foto
+                            </label>
+
+                            <p class="mt-2 text-sm text-muted-foreground">
+                                JPG, PNG, atau WEBP. Maksimal 2 MB.
+                            </p>
+                        </div>
+                    </div>
+
+                    <p
+                        v-if="form.errors.profile_image"
+                        class="text-sm text-destructive"
+                    >
+                        {{ form.errors.profile_image }}
+                    </p>
                 </div>
 
                 <!-- Notes -->
