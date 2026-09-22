@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Campaign extends Model
 {
-    protected $table = 'campaigns';
+    public $timestamps = false;
 
     protected $fillable = [
         'creator_id',
@@ -27,6 +27,7 @@ class Campaign extends Model
         'agreed_price' => 'decimal:2',
         'start_date' => 'date',
         'end_date' => 'date',
+        'created_at' => 'datetime',
     ];
 
     public function creator(): BelongsTo

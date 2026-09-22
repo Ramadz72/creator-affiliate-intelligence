@@ -26,13 +26,11 @@ class AffiliateScore extends Model
     protected $casts = [
         'affiliate_id' => 'integer',
         'import_batch_id' => 'integer',
-
-        'performance_score' => 'decimal:2',
-        'growth_score' => 'decimal:2',
-        'consistency_score' => 'decimal:2',
-        'opportunity_score' => 'decimal:2',
-        'overall_score' => 'decimal:2',
-
+        'performance_score' => 'float',
+        'growth_score' => 'float',
+        'consistency_score' => 'float',
+        'opportunity_score' => 'float',
+        'overall_score' => 'float',
         'generated_at' => 'datetime',
     ];
 

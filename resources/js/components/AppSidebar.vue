@@ -106,12 +106,18 @@ const footerNavItems: NavItem[] = [];
 <template>
     <Sidebar collapsible="icon" variant="inset">
 
-        <!-- Logo -->
-        <SidebarHeader>
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton size="lg" as-child>
-                        <Link :href="dashboard()">
+       <!-- Logo -->
+        <SidebarHeader class="overflow-visible">
+            <SidebarMenu class="overflow-visible">
+                <SidebarMenuItem class="overflow-visible">
+                    <SidebarMenuButton
+                        as-child
+                        class="h-28 w-full justify-center bg-transparent p-0 hover:bg-transparent focus:bg-transparent"
+                    >
+                        <Link
+                            :href="dashboard()"
+                            class="flex h-28 w-full items-center justify-center overflow-visible"
+                        >
                             <AppLogo />
                         </Link>
                     </SidebarMenuButton>

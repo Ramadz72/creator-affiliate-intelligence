@@ -2,6 +2,9 @@
 
 namespace App\Models;
 use App\Models\CreatorContent;
+use App\Models\CreatorRateCard;
+use App\Models\Campaign;
+use App\Models\CreatorScore;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 

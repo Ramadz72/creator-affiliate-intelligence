@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+
 
 class Affiliate extends Model
 {
@@ -29,5 +31,15 @@ class Affiliate extends Model
     public function scores(): HasMany
     {
         return $this->hasMany(AffiliateScore::class);
+    }
+
+    public function latestScore(): HasOne
+    {
+        return $this->hasOne(AffiliateScore::class)->latestOfMany('id');
+    }
+
+    public function latestPerformance(): HasOne
+    {
+        return $this->hasOne(AffiliatePerformance::class)->latestOfMany('id');
     }
 }

@@ -68,9 +68,14 @@ class CreatorController extends Controller
             ->limit(7)
             ->get();
 
+        $rateCards = $creator->rateCards()
+            ->latest('id')
+            ->get();
+
         return Inertia::render('creators/Show', [
             'creator' => $creator,
             'contents' => $contents,
+            'rateCards' => $rateCards,
         ]);
     }
 

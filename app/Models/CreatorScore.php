@@ -1,9 +1,10 @@
 <?php
 
 namespace App\Models;
-
+use App\Models\CreatorAnalysisSnapshot;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class CreatorScore extends Model
 {
@@ -39,5 +40,10 @@ class CreatorScore extends Model
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Creator::class);
+    }
+
+    public function snapshot(): HasOne
+    {
+        return $this->hasOne(CreatorAnalysisSnapshot::class);
     }
 }

@@ -6,6 +6,7 @@ import {
     Pencil,
     Plus,
     Trash2,
+    Brain,
 } from '@lucide/vue';
 
 interface CreatorContent {
@@ -17,6 +18,18 @@ interface CreatorContent {
     likes: number;
     comments: number;
     shares: number;
+}
+
+interface CreatorRateCard {
+    id: number;
+    platform: string;
+    deliverable: string;
+    price: string | number;
+    duration: string | null;
+    revision: number;
+    usage_rights: string | null;
+    valid_until: string | null;
+    notes: string | null;
 }
 
 interface Creator {
@@ -40,6 +53,7 @@ interface Creator {
 const props = defineProps<{
     creator: Creator;
     contents: CreatorContent[];
+    rateCards: CreatorRateCard[];
 }>();
 
 const average = (values: number[]) => {
@@ -69,6 +83,14 @@ const deleteContent = (id: number) => {
     if (confirm('Yakin ingin menghapus konten ini?')) {
         router.delete(
             `/creators/${props.creator.id}/contents/${id}`,
+        );
+    }
+};
+
+const deleteRateCard = (id: number) => {
+    if (confirm('Yakin ingin menghapus rate card ini?')) {
+        router.delete(
+            `/creators/${props.creator.id}/rate-cards/${id}`,
         );
     }
 };
@@ -117,6 +139,14 @@ const formatDate = (date: string) => {
             >
                 <Pencil class="size-4" />
                 Edit Creator
+            </Link>
+            
+            <Link
+                :href="`/creators/${creator.id}/analysis`"
+                class="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
+            >
+                <Brain class="h-4 w-4" />
+                Analyze Creator
             </Link>
         </div>
 
@@ -295,6 +325,190 @@ const formatDate = (date: string) => {
                         </p>
                     </div>
                 </div>
+            </div>
+        </div>
+
+         <!-- Rate Card Section -->
+        <div
+            class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+        >
+            <div
+                class="flex items-center justify-between border-b border-border p-6"
+            >
+                <div>
+                    <h2 class="text-lg font-semibold text-foreground">
+                        Rate Card
+                    </h2>
+
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Daftar harga kerja sama creator.
+                    </p>
+                </div>
+
+                <Link
+                    :href="`/creators/${creator.id}/rate-cards/create`"
+                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                >
+                    <Plus class="size-4" />
+                    Add Rate Card
+                </Link>
+            </div>
+
+            <!-- Empty -->
+            <div
+                v-if="rateCards.length === 0"
+                class="flex flex-col items-center justify-center px-6 py-14 text-center"
+            >
+                <div
+                    class="mb-4 flex size-12 items-center justify-center rounded-xl bg-muted"
+                >
+                    <Plus class="size-6 text-muted-foreground" />
+                </div>
+
+                <h3 class="font-semibold text-foreground">
+                    Belum ada rate card
+                </h3>
+
+                <p class="mt-1 text-sm text-muted-foreground">
+                    Tambahkan rate card untuk mengetahui harga kerja sama
+                    creator.
+                </p>
+
+                <Link
+                    :href="`/creators/${creator.id}/rate-cards/create`"
+                    class="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                >
+                    <Plus class="size-4" />
+                    Add First Rate Card
+                </Link>
+            </div>
+
+            <!-- Rate Card List -->
+            <div
+                v-else
+                class="overflow-x-auto"
+            >
+                <table class="w-full text-sm">
+                    <thead
+                        class="border-b border-border bg-muted/30 text-left"
+                    >
+                        <tr>
+                            <th
+                                class="px-6 py-4 font-medium text-muted-foreground"
+                            >
+                                Platform
+                            </th>
+
+                            <th
+                                class="px-6 py-4 font-medium text-muted-foreground"
+                            >
+                                Deliverable
+                            </th>
+
+                            <th
+                                class="px-6 py-4 text-right font-medium text-muted-foreground"
+                            >
+                                Price
+                            </th>
+
+                            <th
+                                class="px-6 py-4 font-medium text-muted-foreground"
+                            >
+                                Duration
+                            </th>
+
+                            <th
+                                class="px-6 py-4 text-center font-medium text-muted-foreground"
+                            >
+                                Revision
+                            </th>
+
+                            <th
+                                class="px-6 py-4 font-medium text-muted-foreground"
+                            >
+                                Usage Rights
+                            </th>
+
+                            <th
+                                class="px-6 py-4 font-medium text-muted-foreground"
+                            >
+                                Valid Until
+                            </th>
+
+                            <th
+                                class="px-6 py-4 text-right font-medium text-muted-foreground"
+                            >
+                                Action
+                            </th>
+                        </tr>
+                    </thead>
+
+                    <tbody class="divide-y divide-border">
+                        <tr
+                            v-for="rateCard in rateCards"
+                            :key="rateCard.id"
+                            class="transition hover:bg-muted/20"
+                        >
+                            <td class="px-6 py-4">
+                                <span
+                                    class="rounded-md bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-600 dark:text-blue-400"
+                                >
+                                    {{ rateCard.platform }}
+                                </span>
+                            </td>
+
+                            <td
+                                class="px-6 py-4 font-medium text-foreground"
+                            >
+                                {{ rateCard.deliverable }}
+                            </td>
+
+                            <td
+                                class="px-6 py-4 text-right font-medium text-foreground"
+                            >
+                                Rp
+                                {{
+                                    Number(rateCard.price).toLocaleString(
+                                        'id-ID',
+                                    )
+                                }}
+                            </td>
+
+                            <td class="px-6 py-4 text-foreground">
+                                {{ rateCard.duration || '—' }}
+                            </td>
+
+                            <td
+                                class="px-6 py-4 text-center text-foreground"
+                            >
+                                {{ rateCard.revision }}
+                            </td>
+
+                            <td class="px-6 py-4 text-foreground">
+                                {{ rateCard.usage_rights || '—' }}
+                            </td>
+
+                            <td class="px-6 py-4 text-foreground">
+                                {{
+                                    rateCard.valid_until
+                                        ? formatDate(rateCard.valid_until)
+                                        : '—'
+                                }}
+                            </td>
+
+                            <td class="px-6 py-4 text-right">
+                                <button
+                                    type="button"
+                                    class="rounded-lg p-2 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
+                                    title="Delete Rate Card"
+                                    @click="deleteRateCard(rateCard.id)"
+                                >
+                                    <Trash2 class="size-4" />
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
