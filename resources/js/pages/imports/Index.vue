@@ -5,6 +5,7 @@ import {
     FileSpreadsheet,
     CalendarDays,
     Loader2,
+    ArrowLeft,
     } from '@lucide/vue'
 
 const page = usePage<{
@@ -31,17 +32,32 @@ const submit = () => {
 <template>
     <Head title="Import Data" />
 
-    <div class="space-y-6">
+    <div class="min-h-full bg-background p-4 text-foreground md:p-6">
         <!-- Header -->
-        <div>
-            <h1 class="text-2xl font-semibold tracking-tight">
-                Import Data
-            </h1>
+        <div class="mb-6">
+            <div class="flex items-center gap-4">
+                <!-- Back to Dashboard -->
+                <Link
+                    href="/dashboard"
+                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted"
+                    title="Kembali ke Dashboard"
+                >
+                    <ArrowLeft class="h-5 w-5" />
+                </Link>
 
-            <p class="mt-1 text-sm text-muted-foreground">
-                Import data performance affiliate dari Seller Center.
-            </p>
+                <!-- Title -->
+                <div>
+                    <h1 class="text-2xl font-semibold tracking-tight">
+                        Import Data
+                    </h1>
+
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Import data performance affiliate dari Seller Center.
+                    </p>
+                </div>
+            </div>
         </div>
+
         <!-- Success Message -->
         <div
             v-if="page.props.flash?.success"

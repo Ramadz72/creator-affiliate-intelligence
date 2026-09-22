@@ -6,20 +6,38 @@ use App\Models\Campaign;
 use App\Models\Creator;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class CampaignController extends Controller
 {
     /**
      * Menampilkan daftar campaign.
      */
-    public function index()
+    public function index(Request $request): Response
     {
-        $campaigns = Campaign::with('creator')
+        $search = trim((string) $request->input('search', ''));
+
+        $campaigns = Campaign::query()
+            ->with('creator:id,name,username')
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('campaign_name', 'like', "%{$search}%")
+                        ->orWhere('product_name', 'like', "%{$search}%")
+                        ->orWhere('platform', 'like', "%{$search}%")
+                        ->orWhere('status', 'like', "%{$search}%")
+                        ->orWhereHas('creator', function ($query) use ($search) {
+                            $query->where('name', 'like', "%{$search}%")
+                                ->orWhere('username', 'like', "%{$search}%");
+                        });
+                });
+            })
             ->latest('id')
-            ->get();
+            ->paginate(20)
+            ->withQueryString();
 
         return Inertia::render('campaigns/Index', [
             'campaigns' => $campaigns,
+            'search' => $search,
         ]);
     }
 

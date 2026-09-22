@@ -6,18 +6,31 @@ use App\Models\Creator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class CreatorController extends Controller
 {
     /**
      * Menampilkan daftar Creator.
      */
-    public function index()
+    public function index(Request $request): Response
     {
-        $creators = Creator::latest()->get();
+        $search = trim((string) $request->input('search', ''));
+
+        $creators = Creator::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $query->where(function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('username', 'like', "%{$search}%");
+                });
+            })
+            ->latest()
+            ->paginate(6)
+            ->withQueryString();
 
         return Inertia::render('creators/Index', [
             'creators' => $creators,
+            'search' => $search,
         ]);
     }
 

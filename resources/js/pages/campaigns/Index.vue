@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { Link, router } from '@inertiajs/vue3'
-import { Plus, Eye, Pencil, Trash2, Megaphone } from '@lucide/vue'
+import { Head, Link, router } from '@inertiajs/vue3'
+import { ArrowLeft, Search, Plus, Eye, Pencil, Trash2, Megaphone } from '@lucide/vue'
+import { ref } from 'vue'
 
 interface Creator {
     id: number
@@ -24,9 +25,42 @@ interface Campaign {
     created_at: string
 }
 
-defineProps<{
-    campaigns: Campaign[]
+const props = defineProps<{
+    campaigns: {
+        data: Campaign[]
+        current_page: number
+        last_page: number
+        total: number
+    }
+    search: string
 }>()
+
+const search = ref(props.search ?? '')
+
+const submitSearch = () => {
+    router.get(
+        '/campaigns',
+        {
+            search: search.value || undefined,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+        },
+    )
+}
+
+const campaignPageUrl = (page: number) => {
+    const params = new URLSearchParams()
+
+    if (search.value) {
+        params.set('search', search.value)
+    }
+
+    params.set('page', String(page))
+
+    return `/campaigns?${params.toString()}`
+}
 
 const formatRupiah = (value: string | number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -78,41 +112,73 @@ const deleteCampaign = (campaign: Campaign) => {
 </script>
 
 <template>
-    <div class="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div class="min-h-full bg-background p-4 text-foreground md:p-6">
         <!-- Header -->
-        <div class="flex items-start justify-between gap-6">
-            <div>
-                <div class="mb-4 flex items-center gap-3">
-                    <div
-                        class="flex h-10 w-10 items-center justify-center rounded-lg border border-border bg-card"
-                    >
-                        <Megaphone class="h-5 w-5 text-muted-foreground" />
-                    </div>
+        <div class="mb-6 flex items-start justify-between gap-6">
+            <div class="flex items-center gap-4">
+                <!-- Back -->
+                <Link
+                    href="/dashboard"
+                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted"
+                >
+                    <ArrowLeft class="h-5 w-5" />
+                </Link>
 
-                    <div>
-                        <h1 class="text-2xl font-semibold tracking-tight">
-                            Campaign
-                        </h1>
+                <!-- Title -->
+                <div>
+                    <div class="flex items-center gap-2">
+                        <div
+                            class="flex h-10 w-10 items-center justify-center"
+                        >
+                            <Megaphone class="h-10 w-8 semibold"/>
+                        </div>
 
-                        <p class="mt-1 text-sm text-muted-foreground">
-                            Kelola campaign creator setelah proses analisis dan keputusan deal.
-                        </p>
+                        <div>
+                            <h1 class="text-2xl font-semibold tracking-tight">
+                                Campaign
+                            </h1>
+
+                            <p class="mt-1 text-sm text-muted-foreground">
+                                Kelola campaign creator setelah proses analisis dan keputusan deal.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <Link
-                href="/campaigns/create"
-                class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
-            >
-                <Plus class="h-4 w-4" />
-                Tambah Campaign
-            </Link>
+            <!-- Search + Add -->
+            <div class="flex items-center gap-3">
+                <!-- Search -->
+                <form
+                    class="relative w-72"
+                    @submit.prevent="submitSearch"
+                >
+                    <Search
+                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                    />
+
+                    <input
+                        v-model="search"
+                        type="text"
+                        placeholder="Cari campaign, creator..."
+                        class="h-10 w-full rounded-lg border border-border bg-card pl-9 pr-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                    />
+                </form>
+
+                <!-- Add Campaign -->
+                <Link
+                    href="/campaigns/create"
+                    class="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+                >
+                    <Plus class="h-4 w-4" />
+                    Tambah Campaign
+                </Link>
+            </div>
         </div>
 
         <!-- Empty State -->
         <div
-            v-if="campaigns.length === 0"
+            v-if="campaigns.data.length === 0"
             class="rounded-lg border border-border bg-card p-10 text-center shadow-sm"
         >
             <div
@@ -142,7 +208,7 @@ const deleteCampaign = (campaign: Campaign) => {
         <!-- Campaign Table -->
         <div
             v-else
-            class="overflow-hidden rounded-lg border border-border bg-card shadow-sm"
+            class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
         >
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
@@ -180,7 +246,7 @@ const deleteCampaign = (campaign: Campaign) => {
 
                     <tbody class="divide-y divide-border">
                         <tr
-                            v-for="campaign in campaigns"
+                            v-for="campaign in campaigns.data"
                             :key="campaign.id"
                             class="transition-colors hover:bg-muted/20"
                         >
@@ -287,7 +353,72 @@ const deleteCampaign = (campaign: Campaign) => {
                         </tr>
                     </tbody>
                 </table>
-            </div>
+                </div>
+                        <!-- Pagination -->
+                        <div
+                            v-if="campaigns.last_page > 1"
+                            class="flex items-center justify-between border-t border-border px-6 py-4"
+                        >
+                            <p class="text-sm text-muted-foreground">
+                                Menampilkan halaman
+                                <span class="font-medium text-foreground">
+                                    {{ campaigns.current_page }}
+                                </span>
+                                dari
+                                <span class="font-medium text-foreground">
+                                    {{ campaigns.last_page }}
+                                </span>
+
+                                <span class="ml-1">
+                                    ({{ campaigns.total }} campaign)
+                                </span>
+                            </p>
+
+                            <div class="flex items-center gap-2">
+                                <!-- Previous -->
+                                <Link
+                                    v-if="campaigns.current_page > 1"
+                                    :href="campaignPageUrl(campaigns.current_page - 1)"
+                                    preserve-scroll
+                                    preserve-state
+                                    class="inline-flex h-9 items-center rounded-lg border border-border bg-card px-3 text-sm font-medium transition hover:bg-muted"
+                                >
+                                    Sebelumnya
+                                </Link>
+
+                                <!-- Page Numbers -->
+                                <template
+                                    v-for="page in campaigns.last_page"
+                                    :key="page"
+                                >
+                                    <Link
+                                        :href="campaignPageUrl(page)"
+                                        preserve-scroll
+                                        preserve-state
+                                        class="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition"
+                                        :class="
+                                            page === campaigns.current_page
+                                                ? 'border-primary bg-primary text-primary-foreground'
+                                                : 'border-border bg-card hover:bg-muted'
+                                        "
+                                    >
+                                        {{ page }}
+                                    </Link>
+                                </template>
+
+                                <!-- Next -->
+                                <Link
+                                    v-if="campaigns.current_page < campaigns.last_page"
+                                    :href="campaignPageUrl(campaigns.current_page + 1)"
+                                    preserve-scroll
+                                    preserve-state
+                                    class="inline-flex h-9 items-center rounded-lg border border-border bg-card px-3 text-sm font-medium transition hover:bg-muted"
+                                >
+                                    Berikutnya
+                                </Link>
+                            </div>
+                        </div>
+            
         </div>
     </div>
 </template>

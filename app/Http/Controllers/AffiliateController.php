@@ -6,15 +6,18 @@ use App\Models\AffiliatePerformance;
 use App\Models\ImportBatch;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Http\Request;
 
 class AffiliateController extends Controller
 {
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $latestBatch = ImportBatch::query()
             ->where('status', 'completed')
             ->latest('id')
             ->first();
+        
+            $search = trim((string) $request->input('search', ''));
 
         if (!$latestBatch) {
             return Inertia::render('affiliates/Index', [
@@ -35,6 +38,12 @@ class AffiliateController extends Controller
                 'affiliate:id,name,username,platform,status',
             ])
             ->where('affiliate_performances.import_batch_id', $latestBatch->id)
+            ->when($search !== '', function ($query) use ($search) {
+                $query->whereHas('affiliate', function ($query) use ($search) {
+                    $query->where('name', 'like', "%{$search}%")
+                        ->orWhere('username', 'like', "%{$search}%");
+                });
+            })
             ->leftJoin('affiliate_scores', function ($join) use ($latestBatch) {
                 $join->on(
                     'affiliate_performances.affiliate_id',
@@ -97,6 +106,7 @@ class AffiliateController extends Controller
                 'end' => $latestBatch->period_end?->format('Y-m-d'),
             ],
             'latest_batch_id' => $latestBatch->id,
+            'search' => $search,
         ]);
     }
 }

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
+import { ref } from 'vue'
 import {
-    ArrowUpRight,
-    ChevronRight,
+    ArrowLeft,
+    Search,
     Users,
 } from '@lucide/vue'
-import { Link } from '@inertiajs/vue3'
 
 interface Performance {
     gmv: string | number
@@ -39,9 +39,13 @@ interface Props {
         last_page: number
         total: number
     }
+
+    search: string
 }
 
-defineProps<Props>()
+const props = defineProps<Props>()
+
+const search = ref(props.search ?? '')
 
 const formatCurrency = (value: string | number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -57,6 +61,64 @@ const formatNumber = (value: string | number) => {
 
 const formatPercent = (value: string | number) => {
     return `${Number(value ?? 0).toFixed(2)}%`
+}
+
+const submitSearch = () => {
+    router.get(
+        '/affiliates',
+        {
+            search: search.value || undefined,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+        }
+    )
+}
+
+const pageNumbers = (current: number, last: number) => {
+    const pages: (number | string)[] = []
+
+    if (last <= 7) {
+        for (let i = 1; i <= last; i++) {
+            pages.push(i)
+        }
+
+        return pages
+    }
+
+    pages.push(1)
+
+    if (current > 3) {
+        pages.push('...')
+    }
+
+    const start = Math.max(2, current - 1)
+    const end = Math.min(last - 1, current + 1)
+
+    for (let i = start; i <= end; i++) {
+        pages.push(i)
+    }
+
+    if (current < last - 2) {
+        pages.push('...')
+    }
+
+    pages.push(last)
+
+    return pages
+}
+
+const affiliatePageUrl = (page: number) => {
+    const params = new URLSearchParams()
+
+    if (search.value) {
+        params.set('search', search.value)
+    }
+
+    params.set('page', String(page))
+
+    return `/affiliates?${params.toString()}`
 }
 
 const actionClass = (action: string) => {
@@ -83,16 +145,30 @@ const actionClass = (action: string) => {
 <template>
     <Head title="Affiliate" />
 
-    <div class="space-y-6">
+    <div class="min-h-full bg-background p-4 text-foreground md:p-6">
         <!-- Header -->
-        <div>
-            <h1 class="text-2xl font-semibold tracking-tight">
-                Affiliate
-            </h1>
+        <div class="mb-6">
+            <div class="flex items-center gap-4">
+                <!-- Back to Dashboard -->
+                <Link
+                    href="/dashboard"
+                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted"
+                    title="Kembali ke Dashboard"
+                >
+                    <ArrowLeft class="h-5 w-5" />
+                </Link>
 
-            <p class="mt-1 text-sm text-muted-foreground">
-                Monitor performa affiliate berdasarkan data Seller Center.
-            </p>
+                <!-- Title -->
+                <div>
+                    <h1 class="text-2xl font-semibold tracking-tight">
+                        Affiliate
+                    </h1>
+
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Monitor performa affiliate berdasarkan data Seller Center.
+                    </p>
+                </div>
+            </div>
         </div>
 
         <!-- Summary -->
@@ -159,15 +235,37 @@ const actionClass = (action: string) => {
             class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
         >
             <div
-                class="border-b border-border px-6 py-4"
+                class="flex flex-col gap-4 border-b border-border px-6 py-4 md:flex-row md:items-center md:justify-between"
             >
-                <h2 class="font-semibold">
-                    Daftar Affiliate
-                </h2>
+                <!-- Title -->
+                <div>
+                    <h2 class="font-semibold">
+                        Daftar Affiliate
+                    </h2>
 
-                <p class="mt-1 text-sm text-muted-foreground">
-                    Performance yang ditampilkan berasal dari snapshot import terbaru.
-                </p>
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Performance yang ditampilkan berasal dari snapshot import terbaru.
+                    </p>
+                </div>
+
+                <!-- Search -->
+                <form
+                    @submit.prevent="submitSearch"
+                    class="w-full md:w-80"
+                >
+                    <div class="relative">
+                        <Search
+                            class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                        />
+
+                        <input
+                            v-model="search"
+                            type="search"
+                            placeholder="Cari affiliate..."
+                            class="h-10 w-full rounded-lg border border-border bg-background pl-9 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        />
+                    </div>
+                </form>
             </div>
 
             <!-- Empty -->
@@ -223,8 +321,6 @@ const actionClass = (action: string) => {
                             <th class="px-6 py-3 text-right font-medium">
                                 CTOR
                             </th>
-
-                            <th class="px-6 py-3 text-right">
                             
                             <th class="px-6 py-3 text-right font-medium">
                                 Opportunity
@@ -232,7 +328,6 @@ const actionClass = (action: string) => {
 
                             <th class="px-6 py-3 text-center font-medium">
                                 Action
-                            </th>
                             </th>
                         </tr>
                     </thead>
@@ -379,20 +474,90 @@ const actionClass = (action: string) => {
                 </table>
             </div>
 
-            <!-- Pagination -->
             <div
                 v-if="affiliates.last_page > 1"
-                class="flex items-center justify-between border-t border-border px-6 py-4 text-sm text-muted-foreground"
+                class="flex flex-col gap-4 border-t border-border px-6 py-4 sm:flex-row sm:items-center sm:justify-between"
             >
-                <span>
-                    Halaman {{ affiliates.current_page }}
-                    dari {{ affiliates.last_page }}
-                </span>
+                <!-- Info -->
+                <div class="text-sm text-muted-foreground">
+                    Menampilkan halaman
+                    <span class="font-medium text-foreground">
+                        {{ affiliates.current_page }}
+                    </span>
+                    dari
+                    <span class="font-medium text-foreground">
+                        {{ affiliates.last_page }}
+                    </span>
 
-                <span>
+                    <span class="mx-1">·</span>
+
                     {{ affiliates.total.toLocaleString('id-ID') }}
                     affiliate
-                </span>
+                </div>
+
+                <!-- Pagination -->
+                <div class="flex items-center gap-1">
+                    <!-- Previous -->
+                    <Link
+                        v-if="affiliates.current_page > 1"
+                        :href="`/affiliates?page=${affiliates.current_page - 1}`"
+                        preserve-scroll
+                        preserve-state
+                        class="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium transition hover:bg-muted"
+                    >
+                        ←
+                        <span class="ml-1 hidden sm:inline">
+                            Sebelumnya
+                        </span>
+                    </Link>
+
+                    <!-- Page Numbers -->
+                    <template
+                        v-for="(page, index) in pageNumbers(
+                            affiliates.current_page,
+                            affiliates.last_page
+                        )"
+                        :key="`${page}-${index}`"
+                    >
+                        <!-- Ellipsis -->
+                        <span
+                            v-if="page === '...'"
+                            class="flex h-9 w-9 items-center justify-center text-sm text-muted-foreground"
+                        >
+                            …
+                        </span>
+
+                        <!-- Page -->
+                        <Link
+                            v-else
+                            :href="affiliatePageUrl(Number(page))"
+                            preserve-scroll
+                            preserve-state
+                            class="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition"
+                            :class="
+                                page === affiliates.current_page
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : 'border-border hover:bg-muted'
+                            "
+                        >
+                            {{ page }}
+                        </Link>
+                    </template>
+
+                    <!-- Next -->
+                    <Link
+                        v-if="affiliates.current_page < affiliates.last_page"
+                        :href="affiliatePageUrl(affiliates.current_page + 1)"
+                        preserve-scroll
+                        preserve-state
+                        class="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium transition hover:bg-muted"
+                    >
+                        <span class="mr-1 hidden sm:inline">
+                            Berikutnya
+                        </span>
+                        →
+                    </Link>
+                </div>
             </div>
         </div>
     </div>

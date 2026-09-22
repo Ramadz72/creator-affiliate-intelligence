@@ -165,3 +165,17 @@ use App\Http\Controllers\AffiliateDetailController;
 Route::get('/affiliates/{affiliate}', [AffiliateDetailController::class, 'show'])
     ->middleware(['auth'])
     ->name('affiliates.show');
+
+use App\Http\Controllers\HistoryController;
+
+Route::get('/history', [HistoryController::class, 'index'])
+    ->middleware(['auth'])
+    ->name('history.index');
+
+Route::get('/history/{batch}', [HistoryController::class, 'show'])
+    ->middleware(['auth'])
+    ->name('history.show');
+
+Route::delete('/history/{batch}', [HistoryController::class, 'destroy'])
+    ->middleware(['auth'])
+    ->name('history.destroy');

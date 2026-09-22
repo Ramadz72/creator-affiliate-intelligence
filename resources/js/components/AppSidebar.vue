@@ -28,6 +28,19 @@ import {
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
+/*
+|--------------------------------------------------------------------------
+| Dashboard
+|--------------------------------------------------------------------------
+*/
+
+const dashboardNavItems: NavItem[] = [
+    {
+        title: 'Dashboard',
+        href: dashboard(),
+        icon: LayoutGrid,
+    },
+];
 
 /*
 |--------------------------------------------------------------------------
@@ -36,11 +49,6 @@ import type { NavItem } from '@/types';
 */
 
 const intelligenceNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
     {
         title: 'Creator / KOL',
         href: '/creators',
@@ -112,11 +120,11 @@ const footerNavItems: NavItem[] = [];
                 <SidebarMenuItem class="overflow-visible">
                     <SidebarMenuButton
                         as-child
-                        class="h-28 w-full justify-center bg-transparent p-0 hover:bg-transparent focus:bg-transparent"
+                        class="h-10 w-full justify-center bg-transparent p-0 hover:bg-transparent focus:bg-transparent"
                     >
                         <Link
                             :href="dashboard()"
-                            class="flex h-28 w-full items-center justify-center overflow-visible"
+                            class="flex h-6 w-full items-center justify-center overflow-visible"
                         >
                             <AppLogo />
                         </Link>
@@ -129,22 +137,32 @@ const footerNavItems: NavItem[] = [];
         <!-- Navigation -->
         <SidebarContent>
 
+            <!-- Dashboard -->
+            <NavMain
+                label=""
+                :items="dashboardNavItems"
+            />
+
+            <!-- Intelligence -->
             <NavMain
                 label="INTELLIGENCE"
                 :items="intelligenceNavItems"
             />
 
+            <!-- Management -->
             <NavMain
                 label="MANAGEMENT"
                 :items="managementNavItems"
             />
 
+            <!-- System -->
             <NavMain
                 label="SYSTEM"
                 :items="systemNavItems"
             />
 
         </SidebarContent>
+
 
 
         <!-- Footer -->

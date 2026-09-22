@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { Head } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import {
     CheckCircle2,
     Clock3,
     FileSpreadsheet,
     XCircle,
+    ArrowLeft,
+    Eye,
+    Trash2,
 } from '@lucide/vue'
+import { ref } from 'vue'
 
 interface Batch {
     id: number
@@ -44,21 +48,59 @@ const statusLabel = (status: string) => {
             return status
     }
 }
+
+const deleteTarget = ref<Batch | null>(null)
+const deleting = ref(false)
+
+const openDeleteModal = (batch: Batch) => {
+    deleteTarget.value = batch
+}
+
+const closeDeleteModal = () => {
+    if (deleting.value) return
+
+    deleteTarget.value = null
+}
+
+const deleteBatch = () => {
+    if (!deleteTarget.value) return
+
+    deleting.value = true
+
+    router.delete(`/history/${deleteTarget.value.id}`, {
+        preserveScroll: true,
+        onFinish: () => {
+            deleting.value = false
+            deleteTarget.value = null
+        },
+    })
+}
 </script>
 
 <template>
     <Head title="History" />
 
-    <div class="space-y-6">
+    <div class="min-h-full bg-background p-4 text-foreground md:p-6">
         <!-- Header -->
-        <div>
-            <h1 class="text-2xl font-semibold tracking-tight">
-                History Import
-            </h1>
+        <div class="mb-6">
+            <div class="flex items-center gap-4">
+                <Link
+                    href="/dashboard"
+                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted"
+                >
+                    <ArrowLeft class="h-5 w-5" />
+                </Link>
 
-            <p class="mt-1 text-sm text-muted-foreground">
-                Riwayat seluruh import data Seller Center yang telah diproses.
-            </p>
+                <div>
+                    <h1 class="text-2xl font-semibold tracking-tight">
+                        History Import
+                    </h1>
+
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Riwayat seluruh import data Seller Center yang telah diproses.
+                    </p>
+                </div>
+            </div>
         </div>
 
         <!-- Summary -->
@@ -110,9 +152,9 @@ const statusLabel = (status: string) => {
         </div>
 
         <!-- History Table -->
-        <div
-            class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
-        >
+            <div
+                class="mt-6 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+            >
             <div
                 class="flex items-center gap-3 border-b border-border px-6 py-4"
             >
@@ -181,6 +223,9 @@ const statusLabel = (status: string) => {
 
                             <th class="px-6 py-3 text-left font-medium">
                                 Waktu
+                            </th>
+                            <th class="px-6 py-3 text-right font-medium">
+                                Aksi
                             </th>
                         </tr>
                     </thead>
@@ -290,6 +335,27 @@ const statusLabel = (status: string) => {
                             >
                                 {{ batch.uploaded_at }}
                             </td>
+
+                            <!-- Action -->
+                            <td class="px-6 py-4">
+                                <div class="flex justify-end">
+                                    <Link
+                                        :href="`/history/${batch.id}`"
+                                        class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                                        title="Lihat detail"
+                                    >
+                                        <Eye class="h-4 w-4" />
+                                    </Link>
+                                </div>
+                            </td>
+                            <button
+                                type="button"
+                                class="rounded-md p-7 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                title="Hapus history"
+                                @click="openDeleteModal(batch)"
+                            >
+                                <Trash2 class="h-4 w-4" />
+                            </button>
                         </tr>
                     </tbody>
                 </table>
@@ -298,10 +364,118 @@ const statusLabel = (status: string) => {
             <!-- Pagination -->
             <div
                 v-if="batches.last_page > 1"
-                class="border-t border-border px-6 py-4 text-sm text-muted-foreground"
+                class="flex items-center justify-between border-t border-border px-6 py-4"
             >
-                Halaman {{ batches.current_page }}
-                dari {{ batches.last_page }}
+                <div class="text-sm text-muted-foreground">
+                    Menampilkan halaman
+                    <span class="font-medium text-foreground">
+                        {{ batches.current_page }}
+                    </span>
+                    dari
+                    <span class="font-medium text-foreground">
+                        {{ batches.last_page }}
+                    </span>
+                    <span class="ml-1">
+                        ({{ batches.total }} import)
+                    </span>
+                </div>
+
+                <div class="flex items-center gap-1">
+                    <!-- Previous -->
+                    <Link
+                        v-if="batches.current_page > 1"
+                        :href="`/history?page=${batches.current_page - 1}`"
+                        preserve-scroll
+                        preserve-state
+                        class="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium transition hover:bg-muted"
+                    >
+                        ←
+                    </Link>
+
+                    <!-- Page numbers -->
+                    <template
+                        v-for="page in batches.last_page"
+                        :key="page"
+                    >
+                        <Link
+                            :href="`/history?page=${page}`"
+                            preserve-scroll
+                            preserve-state
+                            class="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition"
+                            :class="
+                                page === batches.current_page
+                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    : 'border-border hover:bg-muted'
+                            "
+                        >
+                            {{ page }}
+                        </Link>
+                    </template>
+
+                    <!-- Next -->
+                    <Link
+                        v-if="batches.current_page < batches.last_page"
+                        :href="`/history?page=${batches.current_page + 1}`"
+                        preserve-scroll
+                        preserve-state
+                        class="inline-flex h-9 items-center rounded-lg border border-border px-3 text-sm font-medium transition hover:bg-muted"
+                    >
+                        →
+                    </Link>
+                </div>
+            </div>
+        </div>
+        <div
+            v-if="deleteTarget"
+            class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        >
+            <div
+                class="w-full max-w-md rounded-xl border border-border bg-card p-6 shadow-xl"
+            >
+                <h2 class="text-lg font-semibold">
+                    Hapus History Import?
+                </h2>
+
+                <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                    Kamu akan menghapus history import:
+                </p>
+
+                <div
+                    class="mt-4 rounded-lg border border-border bg-muted/30 p-4"
+                >
+                    <p class="font-medium">
+                        {{ deleteTarget.file_name }}
+                    </p>
+
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        Batch #{{ deleteTarget.id }}
+                    </p>
+                </div>
+
+                <p class="mt-4 text-sm text-destructive">
+                    Data performance dan scoring dari batch ini juga akan dihapus.
+                    Tindakan ini tidak dapat dibatalkan.
+                </p>
+
+                <div class="mt-6 flex justify-end gap-3">
+                    <button
+                        type="button"
+                        class="rounded-lg border border-border px-4 py-2 text-sm font-medium transition hover:bg-muted"
+                        :disabled="deleting"
+                        @click="closeDeleteModal"
+                    >
+                        Batal
+                    </button>
+
+                    <button
+                        type="button"
+                        class="rounded-lg bg-destructive px-4 py-2 text-sm font-medium text-destructive-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                        :disabled="deleting"
+                        @click="deleteBatch"
+                    >
+                        {{ deleting ? 'Menghapus...' : 'Hapus Batch' }}
+                    </button>
+                </div>
             </div>
         </div>
     </div>
