@@ -148,12 +148,6 @@ Route::post('/imports/affiliate', [AffiliateImportController::class, 'store'])
     ->middleware(['auth'])
     ->name('imports.affiliate.store');
 
-use App\Http\Controllers\ImportHistoryController;
-
-Route::get('/history', [ImportHistoryController::class, 'index'])
-    ->middleware(['auth'])
-    ->name('history.index');
-
 use App\Http\Controllers\AffiliateController;
 
 Route::get('/affiliates', [AffiliateController::class, 'index'])

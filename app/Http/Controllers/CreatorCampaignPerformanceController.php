@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Campaign;
 use App\Models\CreatorCampaignPerformance;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class CreatorCampaignPerformanceController
@@ -13,6 +14,8 @@ class CreatorCampaignPerformanceController
     {
         $campaign->load('creator');
 
+        abort_unless($campaign->creator->user_id === Auth::id(), 404);
+
         return Inertia::render('campaigns/PerformanceCreate', [
             'campaign' => $campaign,
         ]);
@@ -20,6 +23,10 @@ class CreatorCampaignPerformanceController
 
     public function store(Request $request, Campaign $campaign)
     {
+        $campaign->load('creator');
+
+        abort_unless($campaign->creator->user_id === Auth::id(), 404);
+
         $validated = $request->validate([
             'views' => ['required', 'integer', 'min:0'],
             'likes' => ['required', 'integer', 'min:0'],
@@ -94,6 +101,8 @@ class CreatorCampaignPerformanceController
 
         $campaign->load('creator');
 
+        abort_unless($campaign->creator->user_id === Auth::id(), 404);
+
         return Inertia::render('campaigns/PerformanceEdit', [
             'campaign' => $campaign,
             'performance' => $performance,
@@ -106,6 +115,10 @@ class CreatorCampaignPerformanceController
     CreatorCampaignPerformance $performance
     ) {
         abort_unless($performance->campaign_id === $campaign->id, 404);
+
+        $campaign->load('creator');
+        
+        abort_unless($campaign->creator->user_id === Auth::id(), 404);
 
         $validated = $request->validate([
             'views' => ['required', 'integer', 'min:0'],

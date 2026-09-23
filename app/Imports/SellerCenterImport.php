@@ -27,7 +27,9 @@ class SellerCenterImport implements ToCollection, WithHeadingRow, WithChunkReadi
             }
 
             $affiliate = Affiliate::firstOrCreate(
-                ['name' => $name],
+                ['name' => $name,
+                'user_id' => $this->batch->uploaded_by,],
+                
                 [
                     'username' => Str::slug($name),
                     'platform' => 'TikTok',

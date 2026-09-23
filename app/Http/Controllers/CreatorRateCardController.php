@@ -5,12 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Creator;
 use App\Models\CreatorRateCard;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class CreatorRateCardController extends Controller
 {
     public function create(Creator $creator)
     {
+        abort_unless($creator->user_id === Auth::id(), 404);
         return Inertia::render('creators/rate-cards/Create', [
             'creator' => $creator,
         ]);
@@ -18,6 +20,8 @@ class CreatorRateCardController extends Controller
 
     public function store(Request $request, Creator $creator)
     {
+        abort_unless($creator->user_id === Auth::id(), 404);
+
         $validated = $request->validate([
             'platform' => ['required', 'string', 'max:50'],
             'deliverable' => ['required', 'string', 'max:100'],
@@ -40,6 +44,8 @@ class CreatorRateCardController extends Controller
         Creator $creator,
         CreatorRateCard $rateCard
     ) {
+        abort_unless($creator->user_id === Auth::id(), 404);
+        
         if ($rateCard->creator_id !== $creator->id) {
             abort(404);
         }

@@ -13,6 +13,7 @@ class Creator extends Model
     protected $table = 'creators';
 
     protected $fillable = [
+        'user_id',
         'name',
         'username',
         'platform',

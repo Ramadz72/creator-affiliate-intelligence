@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ImportBatch;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -12,6 +13,7 @@ class HistoryController extends Controller
     public function index(Request $request): Response
     {
         $batches = ImportBatch::query()
+            ->where('uploaded_by', Auth::id())
             ->with('uploader:id,name')
             ->withCount('performances')
             ->latest('id')
@@ -37,7 +39,9 @@ class HistoryController extends Controller
     }
         public function show(int $batch): Response
     {
-        $batch = ImportBatch::findOrFail($batch);
+        $batch = ImportBatch::query()
+        ->where('uploaded_by', Auth::id())
+        ->findOrFail($batch);
 
         $summary = [
             'total_affiliates' => $batch->performances()
@@ -101,7 +105,9 @@ class HistoryController extends Controller
     }
     public function destroy(int $batch)
     {
-        $batch = ImportBatch::findOrFail($batch);
+        $batch = ImportBatch::query()
+        ->where('uploaded_by', Auth::id())
+        ->findOrFail($batch);
 
         $batch->performances()->delete();
 

@@ -12,6 +12,7 @@ class Affiliate extends Model
     protected $table = 'affiliates';
 
     protected $fillable = [
+        'user_id',
         'name',
         'username',
         'platform',

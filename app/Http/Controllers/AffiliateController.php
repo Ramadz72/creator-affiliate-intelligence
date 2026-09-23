@@ -7,6 +7,7 @@ use App\Models\ImportBatch;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class AffiliateController extends Controller
 {
@@ -14,6 +15,7 @@ class AffiliateController extends Controller
     {
         $latestBatch = ImportBatch::query()
             ->where('status', 'completed')
+            ->where('uploaded_by', Auth::id())
             ->latest('id')
             ->first();
         
@@ -38,6 +40,9 @@ class AffiliateController extends Controller
                 'affiliate:id,name,username,platform,status',
             ])
             ->where('affiliate_performances.import_batch_id', $latestBatch->id)
+            ->whereHas('affiliate', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
             ->when($search !== '', function ($query) use ($search) {
                 $query->whereHas('affiliate', function ($query) use ($search) {
                     $query->where('name', 'like', "%{$search}%")

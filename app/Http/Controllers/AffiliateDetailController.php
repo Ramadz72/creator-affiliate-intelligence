@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Affiliate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Illuminate\Support\Facades\Auth;
 
 class AffiliateDetailController extends Controller
 {
         public function show(Affiliate $affiliate): Response
     {   
+        abort_unless($affiliate->user_id === Auth::id(), 404);
+        
         $performances = $affiliate->performances()
             ->with('importBatch:id,period_start,period_end,status')
             ->whereHas('importBatch', function ($query) {

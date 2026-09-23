@@ -6,6 +6,7 @@ use App\Models\Creator;
 use App\Models\CreatorScore;
 use App\Models\CreatorAnalysisSnapshot;
 use App\Services\CreatorAnalysisService;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class CreatorAnalysisController extends Controller
@@ -14,6 +15,8 @@ class CreatorAnalysisController extends Controller
         Creator $creator,
         CreatorAnalysisService $analysisService
     ) {
+        abort_unless($creator->user_id === Auth::id(), 404);
+
         $analysis = $analysisService->analyze($creator);
 
         /*
@@ -68,6 +71,7 @@ class CreatorAnalysisController extends Controller
 
     public function history(Creator $creator)
     {
+        abort_unless($creator->user_id === Auth::id(), 404);
         $history = CreatorScore::where('creator_id', $creator->id)
             ->orderByDesc('period_end')
             ->orderByDesc('id')
@@ -84,6 +88,8 @@ class CreatorAnalysisController extends Controller
     CreatorScore $score
     ) {
         abort_unless($score->creator_id === $creator->id, 404);
+
+        abort_unless($creator->user_id === Auth::id(), 404);
 
         $snapshot = CreatorAnalysisSnapshot::where(
             'creator_score_id',

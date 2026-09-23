@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Campaign;
 use App\Models\Creator;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -18,6 +19,9 @@ class CampaignController extends Controller
         $search = trim((string) $request->input('search', ''));
 
         $campaigns = Campaign::query()
+            ->whereHas('creator', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
             ->with('creator:id,name,username')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
@@ -46,7 +50,8 @@ class CampaignController extends Controller
      */
     public function create()
     {
-        $creators = Creator::where('status', 'active')
+        $creators = Creator::where('user_id', Auth::id())
+            ->where('status', 'active')
             ->orderBy('name')
             ->get([
                 'id',
@@ -66,7 +71,10 @@ class CampaignController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'creator_id' => ['required', 'exists:creators,id'],
+            'creator_id' => [
+                'required',
+                'exists:creators,id,user_id,' . Auth::id(),
+            ],
             'campaign_name' => ['required', 'string', 'max:150'],
             'product_name' => ['required', 'string', 'max:150'],
             'platform' => ['required', 'string', 'max:50'],
@@ -92,6 +100,8 @@ class CampaignController extends Controller
      */
     public function show(Campaign $campaign)
     {
+        abort_unless($campaign->creator->user_id === Auth::id(), 404);
+
         $campaign->load('creator', 'performances');
 
         return Inertia::render('campaigns/Show', [
@@ -104,7 +114,10 @@ class CampaignController extends Controller
      */
     public function edit(Campaign $campaign)
     {
-        $creators = Creator::where('status', 'active')
+        abort_unless($campaign->creator->user_id === Auth::id(), 404);
+       
+        $creators = Creator::where('user_id', Auth::id())
+            ->where('status', 'active')
             ->orderBy('name')
             ->get([
                 'id',
@@ -124,8 +137,14 @@ class CampaignController extends Controller
      */
     public function update(Request $request, Campaign $campaign)
     {
+
+        abort_unless($campaign->creator->user_id === Auth::id(), 404);
+
         $validated = $request->validate([
-            'creator_id' => ['required', 'exists:creators,id'],
+            'creator_id' => [
+                'required',
+                'exists:creators,id,user_id,' . Auth::id(),
+            ],
             'campaign_name' => ['required', 'string', 'max:150'],
             'product_name' => ['required', 'string', 'max:150'],
             'platform' => ['required', 'string', 'max:50'],
@@ -170,6 +189,7 @@ class CampaignController extends Controller
      */
     public function destroy(Campaign $campaign)
     {
+        abort_unless($campaign->creator->user_id === Auth::id(), 404);
         $campaign->delete();
 
         return redirect()

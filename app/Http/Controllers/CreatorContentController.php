@@ -5,18 +5,23 @@ namespace App\Http\Controllers;
 use App\Models\Creator;
 use App\Models\CreatorContent;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 
 class CreatorContentController extends Controller
 {
     public function create(Creator $creator)
     {
+        abort_unless($creator->user_id === Auth::id(), 404);
+
         return Inertia::render('creators/contents/Create', [
             'creator' => $creator,
         ]);
     }
     public function store(Request $request, Creator $creator)
     {
+        abort_unless($creator->user_id === Auth::id(), 404);
+
         $validated = $request->validate([
             'content_date' => ['required', 'date'],
             'content_url' => ['nullable', 'url', 'max:500'],
@@ -38,6 +43,8 @@ class CreatorContentController extends Controller
         Creator $creator,
         CreatorContent $content
     ) {
+        abort_unless($creator->user_id === Auth::id(), 404);
+        
         if ($content->creator_id !== $creator->id) {
             abort(404);
         }
