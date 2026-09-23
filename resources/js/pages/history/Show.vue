@@ -88,7 +88,7 @@ const formatDate = (value: string | null) => {
 <template>
     <Head title="History Detail" />
 
-    <div class="min-h-full bg-background p-4 text-foreground md:p-6">
+    <div class="app-textured-bg min-h-full p-4 text-foreground md:p-6">
         <!-- Header -->
         <div class="mb-6">
             <div class="flex items-start gap-4">

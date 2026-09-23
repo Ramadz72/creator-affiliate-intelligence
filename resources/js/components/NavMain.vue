@@ -38,10 +38,16 @@ const { isCurrentUrl } = useCurrentUrl();
                     as-child
                     :is-active="isCurrentUrl(item.href)"
                     :tooltip="item.title"
+                    class="data-[active=true]:bg-transparent data-[active=true]:text-sky-600 hover:data-[active=true]:bg-transparent hover:data-[active=true]:text-sky-600"
                 >
-                    <Link :href="item.href">
+                    <Link
+                        :href="item.href"
+                        class="transition-transform duration-200 ease-out hover:scale-[1.03]"
+                    >
                         <component :is="item.icon" />
-                        <span>{{ item.title }}</span>
+                        <span class="text-[15px] font-medium">
+                            {{ item.title }}
+                        </span>
                     </Link>
                 </SidebarMenuButton>
             </SidebarMenuItem>

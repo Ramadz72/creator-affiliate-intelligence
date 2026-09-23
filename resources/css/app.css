@@ -183,3 +183,30 @@ html {
         scroll-behavior: auto;
     }
 }
+
+.app-textured-bg {
+    background-color: #f0f2f5;
+    background-image:
+        radial-gradient(
+            circle,
+            rgba(100, 116, 139, 0.10) 1px,
+            transparent 1.5px
+        ),
+        radial-gradient(
+            circle,
+            rgba(100, 116, 139, 0.06) 1px,
+            transparent 1.5px
+        );
+    background-position:
+        0 0,
+        14px 14px;
+    background-size:
+        28px 28px,
+        28px 28px;
+}
+
+/* Dark mode: kembali ke background bawaan */
+.dark .app-textured-bg {
+    background-color: hsl(var(--background));
+    background-image: none;
+} 

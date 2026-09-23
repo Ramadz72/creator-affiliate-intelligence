@@ -3,7 +3,7 @@
 
 <template>
     <div
-        class="flex w-full items-center gap-2 px-1 transition-all duration-200 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0"
+        class="flex w-full items-center gap-0 px-1 transition-all duration-200 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0"
     >
         <!-- Logo -->
         <div
