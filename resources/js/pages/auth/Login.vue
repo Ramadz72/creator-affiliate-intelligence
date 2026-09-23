@@ -42,7 +42,7 @@ defineProps<{
                 <!-- Logo -->
                 <div class="relative z-10">
                     <img
-                        src="/images/logo-creator-affiliate.png"
+                        src="/images/creator kecil.png"
                         alt="Creator Affiliate Intelligence"
                         class="h-14 w-auto object-contain"
                     />
@@ -125,7 +125,7 @@ defineProps<{
                     <!-- Logo mobile -->
                     <div class="mb-8 flex justify-center lg:hidden">
                         <img
-                            src="/images/logo-creator-affiliate.png"
+                            src="/images/creator kecil.png"
                             alt="Creator Affiliate Intelligence"
                             class="h-14 w-auto object-contain"
                         />

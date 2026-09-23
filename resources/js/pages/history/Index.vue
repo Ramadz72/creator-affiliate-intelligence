@@ -348,14 +348,18 @@ const deleteBatch = () => {
                                     </Link>
                                 </div>
                             </td>
-                            <button
-                                type="button"
-                                class="rounded-md p-7 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
-                                title="Hapus history"
-                                @click="openDeleteModal(batch)"
-                            >
-                                <Trash2 class="h-4 w-4" />
-                            </button>
+
+                            <!-- Delete Action -->
+                            <td class="px-4 py-3 text-right">
+                                <button
+                                    type="button"
+                                    class="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                                    title="Hapus history"
+                                    @click="openDeleteModal(batch)"
+                                >
+                                    <Trash2 class="h-4 w-4" />
+                                </button>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
