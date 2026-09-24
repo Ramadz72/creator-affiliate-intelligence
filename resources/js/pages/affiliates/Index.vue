@@ -232,7 +232,7 @@ const actionClass = (action: string) => {
 
         <!-- Table -->
         <div
-            class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+            class="mt-3 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
         >
             <div
                 class="flex flex-col gap-4 border-b border-border px-6 py-4 md:flex-row md:items-center md:justify-between"

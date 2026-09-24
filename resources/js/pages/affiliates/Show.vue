@@ -13,6 +13,12 @@ import {
     Sparkles,
     Lightbulb,
 } from '@lucide/vue'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
 
 interface AffiliateScore {
     performance_score: number
@@ -28,8 +34,6 @@ interface AffiliateScore {
     }
     insights: string[]
 }
-
-
 
 interface Performance {
     id: number
@@ -133,20 +137,59 @@ function actionClass(action: string): string {
     }
 }
 
+const actionInfo = (action: string) => {
+    switch (action) {
+        case 'CHASE':
+            return {
+                title: 'PRIORITASKAN UNTUK DI KEJAR',
+                description:
+                    'Prioritaskan affiliate ini untuk kolaborasi, campaign, sample, dan dorong lebih banyak konten.',
+            }
+
+        case 'SUPPORT':
+            return {
+                title: 'PERTAHANKAN DAN DORONG',
+                description:
+                    'Berikan dukungan seperti sample, brief, promo, atau insentif untuk membantu meningkatkan performa.',
+            }
+
+        case 'MONITOR':
+            return {
+                title: 'PANTAU TERLEBIH DAHULU',
+                description:
+                    'Pantau perkembangan affiliate dan evaluasi kembali setelah tersedia lebih banyak data performance.',
+            }
+
+        case 'DEPRIORITIZE':
+            return {
+                title: 'KURANGI PRIORITAS',
+                description:
+                    'Kurangi alokasi resource untuk affiliate ini dan fokuskan effort pada peluang yang lebih menjanjikan.',
+            }
+
+        default:
+            return {
+                title: 'BELUM ADA REKOMENDASI',
+                description:
+                    'Belum tersedia rekomendasi tindakan untuk affiliate ini.',
+            }
+    }
+}
+
 </script>
 
 <template>
     <Head :title="`Affiliate - ${affiliate.name}`" />
 
-    <div class="app-textured-bg space-y-6">
+    <div class="app-textured-bg w-full max-w-[1600px] space-y-6 px-6 py-6">
 
         <!-- Header -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-6">
             <Link
                 href="/affiliates"
-                class="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-card hover:bg-muted"
+                class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card hover:bg-muted"
             >
-                <ArrowLeft class="h-4 w-4" />
+                <ArrowLeft class="h-5 w-5" />
             </Link>
 
             <div>
@@ -177,11 +220,23 @@ function actionClass(action: string): string {
                         </p>
                     </div>
 
-                    <div
-                        class="inline-flex w-fit items-center rounded-full px-4 py-2 text-sm font-semibold"
-                        :class="actionClass(props.score.action)"
-                    >
-                        {{ props.score.action }}
+                    <div class="flex items-center gap-2">
+                        <div class="max-w-xs text-right leading-tight">
+                            <p class="text-sm font-semibold text-foreground">
+                                {{ actionInfo(props.score.action).title }}
+                            </p>
+
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                {{ actionInfo(props.score.action).description }}
+                            </p>
+                        </div>
+
+                        <div
+                            class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold"
+                            :class="actionClass(props.score.action)"
+                        >
+                            {{ props.score.action }}
+                        </div>
                     </div>
                 </div>
 
@@ -405,12 +460,24 @@ function actionClass(action: string): string {
                         Performance
                     </h2>
                 </div>
-
+                
+                <TooltipProvider>
                 <div class="mt-6 space-y-4">
                     <div class="flex justify-between">
-                        <span class="text-sm text-muted-foreground">
-                            AOV
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <span
+                                    class="inline-flex cursor-help items-center gap-1 text-sm text-muted-foreground"
+                                >
+                                    AOV
+                                    <span class="text-xs text-muted-foreground/100">ⓘ</span>
+                                </span>
+                            </TooltipTrigger>
+
+                            <TooltipContent>
+                                Rata-rata nilai GMV yang dihasilkan untuk setiap order.
+                            </TooltipContent>
+                        </Tooltip>
 
                         <span class="font-medium">
                             {{ formatCurrency(latest_performance.aov) }}
@@ -418,9 +485,20 @@ function actionClass(action: string): string {
                     </div>
 
                     <div class="flex justify-between">
-                        <span class="text-sm text-muted-foreground">
-                            CTR
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <span
+                                    class="inline-flex cursor-help items-center gap-1 text-sm text-muted-foreground"
+                                >
+                                    CTR
+                                    <span class="text-xs text-muted-foreground/100">ⓘ</span>
+                                </span>
+                            </TooltipTrigger>
+
+                            <TooltipContent>
+                                Persentase impressions yang menghasilkan klik.
+                            </TooltipContent>
+                        </Tooltip>
 
                         <span class="font-medium">
                             {{ formatPercent(latest_performance.ctr) }}
@@ -428,9 +506,20 @@ function actionClass(action: string): string {
                     </div>
 
                     <div class="flex justify-between">
-                        <span class="text-sm text-muted-foreground">
-                            CTOR
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <span
+                                    class="inline-flex cursor-help items-center gap-1 text-sm text-muted-foreground"
+                                >
+                                    CTOR
+                                    <span class="text-xs text-muted-foreground/100">ⓘ</span>
+                                </span>
+                            </TooltipTrigger>
+
+                            <TooltipContent>
+                                Persentase klik yang menghasilkan order.
+                            </TooltipContent>
+                        </Tooltip>
 
                         <span class="font-medium">
                             {{ formatPercent(latest_performance.ctor) }}
@@ -438,9 +527,20 @@ function actionClass(action: string): string {
                     </div>
 
                     <div class="flex justify-between">
-                        <span class="text-sm text-muted-foreground">
-                            Impressions
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <span
+                                    class="inline-flex cursor-help items-center gap-1 text-sm text-muted-foreground"
+                                >
+                                    Impressions
+                                    <span class="text-xs text-muted-foreground/100">ⓘ</span>
+                                </span>
+                            </TooltipTrigger>
+
+                            <TooltipContent>
+                                Jumlah total tayangan konten affiliate.
+                            </TooltipContent>
+                        </Tooltip>
 
                         <span class="font-medium">
                             {{ formatNumber(latest_performance.impressions) }}
@@ -448,15 +548,27 @@ function actionClass(action: string): string {
                     </div>
 
                     <div class="flex justify-between">
-                        <span class="text-sm text-muted-foreground">
-                            Video Views
-                        </span>
+                        <Tooltip>
+                            <TooltipTrigger as-child>
+                                <span
+                                    class="inline-flex cursor-help items-center gap-1 text-sm text-muted-foreground"
+                                >
+                                    Video Views
+                                    <span class="text-xs text-muted-foreground/70">ⓘ</span>
+                                </span>
+                            </TooltipTrigger>
+
+                            <TooltipContent>
+                                Jumlah total penayangan video affiliate.
+                            </TooltipContent>
+                        </Tooltip>
 
                         <span class="font-medium">
                             {{ formatNumber(latest_performance.video_views) }}
                         </span>
                     </div>
                 </div>
+                </TooltipProvider>
             </div>
 
             <div class="rounded-xl border border-border bg-card p-6">
