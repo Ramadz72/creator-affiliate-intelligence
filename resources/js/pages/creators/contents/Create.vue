@@ -32,7 +32,7 @@ const submit = () => {
 <template>
     <Head :title="`Tambah Konten - ${creator.name}`" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 p-6">
+    <div class="app-textured-bg flex h-full flex-1 flex-col gap-6 p-6">
         <!-- Header -->
         <div class="flex items-center gap-4">
             <Link
@@ -244,7 +244,7 @@ const submit = () => {
                 >
                     <Link
                         :href="`/creators/${creator.id}`"
-                        class="rounded-lg border border-border bg-background px-4 py-2 text-sm font-medium text-foreground transition hover:bg-muted"
+                        class="rounded-lg border border-border bg-background px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
                     >
                         Batal
                     </Link>
@@ -252,7 +252,7 @@ const submit = () => {
                     <button
                         type="submit"
                         :disabled="form.processing"
-                        class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                        class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
                     >
                         <Save class="size-4" />
 

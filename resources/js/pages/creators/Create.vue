@@ -45,7 +45,7 @@ const submit = () => {
 <template>
     <Head title="Add Creator" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 p-6">
+    <div class="app-textured-bg flex h-full flex-1 flex-col gap-6 p-6">
 
         <!-- Header -->
         <div>
@@ -57,7 +57,7 @@ const submit = () => {
             </Link>
 
             <h1 class="mt-3 text-2xl font-semibold tracking-tight">
-                Add Creator
+                Tambah Creator
             </h1>
 
             <p class="text-sm text-muted-foreground">

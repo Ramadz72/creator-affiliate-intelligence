@@ -138,7 +138,7 @@ function actionClass(action: string): string {
 <template>
     <Head :title="`Affiliate - ${affiliate.name}`" />
 
-    <div class="space-y-6">
+    <div class="app-textured-bg space-y-6">
 
         <!-- Header -->
         <div class="flex items-center gap-4">

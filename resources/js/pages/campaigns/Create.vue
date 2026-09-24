@@ -33,7 +33,7 @@ const submit = () => {
 </script>
 
 <template>
-    <div class="w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div class="app-textured-bg w-full space-y-6 px-4 py-6 sm:px-6 lg:px-8">
         <!-- Header -->
         <div class="flex items-start gap-4">
             <Link
@@ -319,7 +319,7 @@ const submit = () => {
                 <button
                     type="submit"
                     :disabled="form.processing"
-                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+                    class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
                 >
                     <Save class="h-4 w-4" />
                     {{ form.processing ? 'Menyimpan...' : 'Simpan Campaign' }}

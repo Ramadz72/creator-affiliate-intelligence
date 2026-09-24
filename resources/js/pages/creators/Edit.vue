@@ -67,7 +67,7 @@ const submit = () => {
 <template>
     <Head :title="`Edit - ${creator.name}`" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 p-6">
+    <div class="app-textured-bg flex h-full flex-1 flex-col gap-6 p-6">
         <!-- Header -->
         <div class="flex items-center gap-4">
             <Link

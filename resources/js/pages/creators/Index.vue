@@ -143,10 +143,10 @@ const creatorPageUrl = (page: number) => {
                 <!-- Kanan -->
                 <Link
                     href="/creators/create"
-                    class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                    class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
                 >
                     <Plus class="h-4 w-4" />
-                    Add Creator
+                    Tambah Creator
                 </Link>
                 </div>
             </div>
@@ -181,7 +181,7 @@ const creatorPageUrl = (page: number) => {
                     class="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
                 >
                     <Plus class="size-4" />
-                    Add Creator
+                    Tambah Creator
                 </Link>
             </div>
 

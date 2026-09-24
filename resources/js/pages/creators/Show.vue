@@ -111,7 +111,7 @@ const formatDate = (date: string) => {
 <template>
     <Head :title="`Detail - ${creator.name}`" />
 
-    <div class="flex h-full flex-1 flex-col gap-6 p-6">
+    <div class="app-textured-bg flex h-full flex-1 flex-col gap-6 p-6">
         <!-- Header -->
         <div class="flex items-center justify-between">
             <div class="flex items-center gap-4">
@@ -135,7 +135,7 @@ const formatDate = (date: string) => {
 
             <Link
                 :href="`/creators/${creator.id}/edit`"
-                class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
             >
                 <Pencil class="size-4" />
                 Edit Creator
@@ -143,8 +143,8 @@ const formatDate = (date: string) => {
             
             <Link
                 :href="`/creators/${creator.id}/analysis`"
-                class="inline-flex items-center gap-2 rounded-lg bg-blue-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-600"
-            >
+                class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-blue-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
+                >
                 <Brain class="h-4 w-4" />
                 Analyze Creator
             </Link>
@@ -347,10 +347,10 @@ const formatDate = (date: string) => {
 
                 <Link
                     :href="`/creators/${creator.id}/rate-cards/create`"
-                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                    class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
                 >
                     <Plus class="size-4" />
-                    Add Rate Card
+                    Tambah Rate Card
                 </Link>
             </div>
 
@@ -376,7 +376,7 @@ const formatDate = (date: string) => {
 
                 <Link
                     :href="`/creators/${creator.id}/rate-cards/create`"
-                    class="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                    class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
                 >
                     <Plus class="size-4" />
                     Add First Rate Card
@@ -531,10 +531,10 @@ const formatDate = (date: string) => {
 
                 <Link
                     :href="`/creators/${creator.id}/contents/create`"
-                    class="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition hover:opacity-90"
+                    class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
                 >
                     <Plus class="size-4" />
-                    Add Content
+                    Tambah Content
                 </Link>
             </div>
 
