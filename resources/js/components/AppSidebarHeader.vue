@@ -6,9 +6,11 @@ import {
     Bell,
     ChevronDown,
     LayoutGrid,
+    Moon,
     PanelLeft,
     Plus,
     Search,
+    Sun,
     UserCircle,
     X,
 } from '@lucide/vue';
@@ -19,6 +21,7 @@ import {
     useAppTabs,
     type AppTab,
 } from '@/composables/useAppTabs';
+import { useAppearance } from '@/composables/useAppearance';
 
 const {
     tabs,
@@ -30,6 +33,19 @@ const {
     activateTab,
     closeTab,
 } = useAppTabs();
+
+const {
+    resolvedAppearance,
+    updateAppearance,
+} = useAppearance();
+
+const toggleAppearance = () => {
+    updateAppearance(
+        resolvedAppearance.value === 'dark'
+            ? 'light'
+            : 'dark',
+    );
+};
 
 const searchOpen = ref(false);
 const search = ref('');
@@ -628,6 +644,27 @@ onUnmounted(() => {
                     </div>
                 </div>
             </div>
+
+            <!-- THEME -->
+            <button
+                type="button"
+                @click="toggleAppearance"
+                class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
+                :title="
+                    resolvedAppearance === 'dark'
+                        ? 'Gunakan mode terang'
+                        : 'Gunakan mode gelap'
+                "
+            >
+                <Sun
+                    v-if="resolvedAppearance === 'dark'"
+                    class="h-4 w-4 transition-transform duration-200"
+                />
+                <Moon
+                    v-else
+                    class="h-4 w-4 transition-transform duration-200"
+                />
+            </button>
 
             <!-- NOTIFICATION -->
             <div class="relative">

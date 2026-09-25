@@ -269,7 +269,7 @@ const openAppTab = (href: any, title: string) => {
                                 item.href === '/campaigns'
                             )
                         "
-                        class="ml-5 overflow-hidden border-l border-border/60 pl-3"
+                        class="ml-5 overflow-hidden border-l border-border/60 pl-3 group-data-[collapsible=icon]:hidden"
                     >
                         <!-- ADD CREATOR -->
                         <Link
@@ -345,7 +345,7 @@ const openAppTab = (href: any, title: string) => {
                 <!-- CHILD PAGE -->
                 <div
                     v-if="getChildPages(item).length"
-                    class="ml-5 border-l border-border/60 pl-3"
+                    class="ml-5 border-l border-border/60 pl-3 group-data-[collapsible=icon]:hidden"
                 >
                     <Link
                         v-for="child in getChildPages(item)"
