@@ -241,9 +241,7 @@ const pageNumbers = (current: number, last: number) => {
 }
 
 const affiliatePageUrl = (page: number) => {
-    return affiliateIndexUrl({
-        page,
-    })
+    const params = new URLSearchParams()
 
     if (selectedBatchId.value) {
         params.set('batch_id', String(selectedBatchId.value))

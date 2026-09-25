@@ -17,6 +17,7 @@ void createInertiaApp({
         // Login & Register menggunakan layout custom mereka sendiri
         case name === 'auth/Login':
         case name === 'auth/Register':
+        case name === 'auth/ForgotPassword':
             return null;
 
         // Auth lainnya tetap menggunakan layout starter kit
