@@ -13,15 +13,106 @@ class AffiliateController extends Controller
 {
     public function index(Request $request): Response
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Import Batch
+        |--------------------------------------------------------------------------
+        */
+
         $latestBatch = ImportBatch::query()
             ->where('status', 'completed')
             ->where('uploaded_by', Auth::id())
             ->latest('id')
             ->first();
-        
-            $search = trim((string) $request->input('search', ''));
 
-        if (!$latestBatch) {
+        $batchId = $request->input('batch_id');
+
+        $selectedBatch = $batchId
+            ? ImportBatch::query()
+                ->where('status', 'completed')
+                ->where('uploaded_by', Auth::id())
+                ->where('id', $batchId)
+                ->first()
+            : $latestBatch;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Filters
+        |--------------------------------------------------------------------------
+        */
+
+        $search = trim((string) $request->input('search', ''));
+        $sort = (string) $request->input('sort', 'opportunity');
+        $direction = strtolower((string) $request->input('direction', 'desc'));
+        $action = trim((string) $request->input('action', ''));
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sorting
+        |--------------------------------------------------------------------------
+        */
+
+        $allowedSorts = [
+            'opportunity' => 'affiliate_scores.opportunity_score',
+            'performance' => 'affiliate_scores.performance_score',
+            'gmv' => 'affiliate_performances.gmv',
+            'orders' => 'affiliate_performances.attributed_orders',
+            'aov' => 'affiliate_performances.aov',
+            'ctr' => 'affiliate_performances.ctr',
+            'ctor' => 'affiliate_performances.ctor',
+            'name' => 'affiliates.name',
+        ];
+
+        if (!array_key_exists($sort, $allowedSorts)) {
+            $sort = 'opportunity';
+        }
+
+        if (!in_array($direction, ['asc', 'desc'], true)) {
+            $direction = 'desc';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Action Filter
+        |--------------------------------------------------------------------------
+        */
+
+        $allowedActions = [
+            'CHASE',
+            'SUPPORT',
+            'MONITOR',
+            'DEPRIORITIZE',
+        ];
+
+        if (!in_array($action, $allowedActions, true)) {
+            $action = '';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Available Import Batches
+        |--------------------------------------------------------------------------
+        */
+
+        $importBatches = ImportBatch::query()
+            ->where('status', 'completed')
+            ->where('uploaded_by', Auth::id())
+            ->orderByDesc('period_start')
+            ->orderByDesc('id')
+            ->get([
+                'id',
+                'file_name',
+                'period_start',
+                'period_end',
+            ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | No Data
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$selectedBatch) {
             return Inertia::render('affiliates/Index', [
                 'affiliates' => [
                     'data' => [],
@@ -30,16 +121,41 @@ class AffiliateController extends Controller
                     'current_page' => 1,
                     'last_page' => 1,
                 ],
+
                 'latest_period' => null,
+
+                'selected_period' => null,
+
                 'latest_batch_id' => null,
+
+                'selected_batch_id' => null,
+
+                'import_batches' => $importBatches,
+
+                'search' => $search,
+
+                'sort' => $sort,
+
+                'direction' => $direction,
+
+                'action' => $action,
             ]);
         }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Affiliate Performance
+        |--------------------------------------------------------------------------
+        */
 
         $performances = AffiliatePerformance::query()
             ->with([
                 'affiliate:id,name,username,platform,status',
             ])
-            ->where('affiliate_performances.import_batch_id', $latestBatch->id)
+            ->where(
+                'affiliate_performances.import_batch_id',
+                $selectedBatch->id
+            )
             ->whereHas('affiliate', function ($query) {
                 $query->where('user_id', Auth::id());
             })
@@ -49,7 +165,7 @@ class AffiliateController extends Controller
                         ->orWhere('username', 'like', "%{$search}%");
                 });
             })
-            ->leftJoin('affiliate_scores', function ($join) use ($latestBatch) {
+            ->leftJoin('affiliate_scores', function ($join) use ($selectedBatch) {
                 $join->on(
                     'affiliate_performances.affiliate_id',
                     '=',
@@ -58,25 +174,39 @@ class AffiliateController extends Controller
                 ->where(
                     'affiliate_scores.import_batch_id',
                     '=',
-                    $latestBatch->id
+                    $selectedBatch->id
                 );
             })
+            ->when($action !== '', function ($query) use ($action) {
+                $query->where('affiliate_scores.action', $action);
+            })
+            ->leftJoin(
+                'affiliates',
+                'affiliate_performances.affiliate_id',
+                '=',
+                'affiliates.id'
+            )
             ->select([
                 'affiliate_performances.*',
                 'affiliate_scores.performance_score',
                 'affiliate_scores.opportunity_score',
                 'affiliate_scores.action',
             ])
-            ->orderByDesc('affiliate_scores.opportunity_score')
+            ->orderBy($allowedSorts[$sort], $direction)
             ->paginate(20)
-            ->through(function ($performance) use ($latestBatch) {
+            ->withQueryString()
+            ->through(function ($performance) use ($selectedBatch) {
                 $affiliate = $performance->affiliate;
 
                 return [
                     'id' => $affiliate?->id,
+
                     'name' => $affiliate?->name ?? '-',
+
                     'username' => $affiliate?->username ?? '-',
+
                     'platform' => $affiliate?->platform ?? 'TikTok',
+
                     'status' => $affiliate?->status ?? 'active',
 
                     'score' => [
@@ -93,25 +223,63 @@ class AffiliateController extends Controller
 
                     'latest_performance' => [
                         'gmv' => $performance->gmv,
+
                         'attributed_orders' => $performance->attributed_orders,
+
                         'products_sold' => $performance->products_sold,
+
                         'aov' => $performance->aov,
+
                         'ctr' => $performance->ctr,
+
                         'ctor' => $performance->ctor,
-                        'period_start' => $latestBatch->period_start?->format('Y-m-d'),
-                        'period_end' => $latestBatch->period_end?->format('Y-m-d'),
+
+                        'period_start' => $selectedBatch->period_start?->format('Y-m-d'),
+
+                        'period_end' => $selectedBatch->period_end?->format('Y-m-d'),
                     ],
                 ];
             });
 
+        /*
+        |--------------------------------------------------------------------------
+        | Response
+        |--------------------------------------------------------------------------
+        */
+
         return Inertia::render('affiliates/Index', [
             'affiliates' => $performances,
-            'latest_period' => [
-                'start' => $latestBatch->period_start?->format('Y-m-d'),
-                'end' => $latestBatch->period_end?->format('Y-m-d'),
+
+            // Tetap dipertahankan untuk kompatibilitas dengan UI lama
+            'latest_period' => $latestBatch
+                ? [
+                    'start' => $latestBatch->period_start?->format('Y-m-d'),
+                    'end' => $latestBatch->period_end?->format('Y-m-d'),
+                ]
+                : null,
+
+            // Periode yang sedang aktif ditampilkan
+            'selected_period' => [
+                'start' => $selectedBatch->period_start?->format('Y-m-d'),
+                'end' => $selectedBatch->period_end?->format('Y-m-d'),
             ],
-            'latest_batch_id' => $latestBatch->id,
+
+            // Batch terbaru tetap disimpan
+            'latest_batch_id' => $latestBatch?->id,
+
+            // Batch yang sedang dipilih
+            'selected_batch_id' => $selectedBatch->id,
+
+            // Semua periode yang bisa dipilih
+            'import_batches' => $importBatches,
+
             'search' => $search,
+
+            'sort' => $sort,
+
+            'direction' => $direction,
+
+            'action' => $action,
         ]);
     }
 }

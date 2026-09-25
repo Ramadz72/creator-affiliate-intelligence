@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm, usePage } from '@inertiajs/vue3'
+import { Head, useForm, usePage, router } from '@inertiajs/vue3'
 import {
     Upload,
     FileSpreadsheet,
@@ -37,13 +37,14 @@ const submit = () => {
         <div class="mb-6">
             <div class="flex items-center gap-4">
                 <!-- Back to Dashboard -->
-                <Link
-                    href="/dashboard"
+                <button
+                    type="button"
+                    @click="router.visit('/dashboard')"
                     class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted"
                     title="Kembali ke Dashboard"
                 >
                     <ArrowLeft class="h-5 w-5" />
-                </Link>
+                </button>
 
                 <!-- Title -->
                 <div>

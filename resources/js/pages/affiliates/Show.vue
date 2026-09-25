@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
+import { computed, ref, onBeforeUnmount, onMounted } from 'vue'
 import {
     ArrowLeft,
     BarChart3,
@@ -69,12 +70,89 @@ interface Affiliate {
     status: string
 }
 
+interface ImportBatch {
+    id: number
+    file_name: string
+    period_start: string | null
+    period_end: string | null
+}
+
 const props = defineProps<{
     affiliate: Affiliate
     latest_performance: Performance | null
     performance_history: Performance[]
     score: AffiliateScore
+    import_batches: ImportBatch[]
+    selected_batch_id: number | null
 }>()
+
+const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as HTMLElement
+
+    if (!target.closest('[data-batch-dropdown]')) {
+        showBatchDropdown.value = false
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('click', handleClickOutside)
+})
+
+onBeforeUnmount(() => {
+    document.removeEventListener('click', handleClickOutside)
+})
+
+const selectedBatchId = ref<number | null>(
+    props.selected_batch_id ?? null
+)
+
+const showBatchDropdown = ref(false)
+
+const selectedBatch = computed(() => {
+    return props.import_batches?.find(
+        (batch) => batch.id === selectedBatchId.value
+    ) ?? null
+})
+
+const formatPeriodDate = (date: string | null | undefined) => {
+    if (!date) return '-'
+
+    const parsed = new Date(date)
+
+    if (Number.isNaN(parsed.getTime())) {
+        return date
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    }).format(parsed)
+}
+
+const selectedPeriodLabel = computed(() => {
+    if (!selectedBatch.value) {
+        return 'Pilih periode data'
+    }
+
+    return `${formatPeriodDate(selectedBatch.value.period_start)} — ${formatPeriodDate(selectedBatch.value.period_end)}`
+})
+
+const selectBatch = (batchId: number) => {
+    selectedBatchId.value = batchId
+    showBatchDropdown.value = false
+
+    router.get(
+        `/affiliates/${props.affiliate.id}`,
+        {
+            batch_id: batchId,
+        },
+        {
+            preserveScroll: true,
+            preserveState: false,
+        }
+    )
+}
 
 const formatCurrency = (value: number | string | null | undefined) => {
     const number = Number(value ?? 0)
@@ -181,27 +259,119 @@ const actionInfo = (action: string) => {
 <template>
     <Head :title="`Affiliate - ${affiliate.name}`" />
 
-    <div class="app-textured-bg w-full max-w-[1600px] space-y-6 px-6 py-6">
+    <div class="app-textured-bg w-full max-w-[1600px] space-y-4 px-6 py-6">
 
         <!-- Header -->
-        <div class="flex items-center gap-6">
-            <Link
-                href="/affiliates"
-                class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card hover:bg-muted"
-            >
-                <ArrowLeft class="h-5 w-5" />
-            </Link>
+            <div class="flex items-center justify-between gap-6">
+                <div class="flex items-center gap-6">
+                    <Link
+                        :href="selectedBatchId
+                            ? `/affiliates?batch_id=${selectedBatchId}`
+                            : '/affiliates'"
+                        class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card hover:bg-muted"
+                    >
+                        <ArrowLeft class="h-5 w-5" />
+                    </Link>
 
-            <div>
-                <h1 class="text-2xl font-semibold tracking-tight">
-                    {{ affiliate.name }}
-                </h1>
+                    <div>
+                        <h1 class="text-2xl font-semibold tracking-tight">
+                            {{ affiliate.name }}
+                        </h1>
 
-                <p class="text-sm text-muted-foreground">
-                    @{{ affiliate.username }}
-                    · {{ affiliate.platform }}
-                </p>
-            </div>
+                        <p class="text-sm text-muted-foreground">
+                            @{{ affiliate.username }}
+                            · {{ affiliate.platform }}
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Periode Data -->
+                <div
+                    class="relative shrink-0"
+                    data-batch-dropdown
+                >
+                    <button
+                        type="button"
+                        @click="showBatchDropdown = !showBatchDropdown"
+                        class="flex h-10 min-w-[245px] items-center justify-between gap-3 rounded-lg border border-border bg-background px-3.5 text-sm text-foreground shadow-sm transition-all hover:border-sky-300 hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                    >
+                        <div class="flex min-w-0 items-center gap-2">
+                            <span class="text-muted-foreground">
+                                Periode:
+                            </span>
+
+                            <span class="truncate font-medium">
+                                {{ selectedPeriodLabel }}
+                            </span>
+                        </div>
+
+                        <svg
+                            class="h-4 w-4 shrink-0 text-muted-foreground transition-transform"
+                            :class="{ 'rotate-180': showBatchDropdown }"
+                            viewBox="0 0 20 20"
+                            fill="currentColor"
+                        >
+                            <path
+                                fill-rule="evenodd"
+                                d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
+                                clip-rule="evenodd"
+                            />
+                        </svg>
+                    </button>
+
+                    <Transition
+                        enter-active-class="transition duration-150 ease-out"
+                        enter-from-class="translate-y-1 opacity-0"
+                        enter-to-class="translate-y-0 opacity-100"
+                        leave-active-class="transition duration-100 ease-in"
+                        leave-from-class="translate-y-0 opacity-100"
+                        leave-to-class="translate-y-1 opacity-0"
+                    >
+                        <div
+                            v-if="showBatchDropdown"
+                            class="absolute right-0 z-50 mt-2 w-[285px] overflow-hidden rounded-xl border border-border bg-popover p-1.5 shadow-xl shadow-black/10"
+                        >
+                            <button
+                                v-for="batch in props.import_batches"
+                                :key="batch.id"
+                                type="button"
+                                @click="selectBatch(batch.id)"
+                                class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left transition hover:bg-muted"
+                                :class="
+                                    batch.id === selectedBatchId
+                                        ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400'
+                                        : 'text-foreground'
+                                "
+                            >
+                                <div class="min-w-0">
+                                    <p class="text-sm font-medium">
+                                        {{ formatPeriodDate(batch.period_start) }}
+                                        —
+                                        {{ formatPeriodDate(batch.period_end) }}
+                                    </p>
+
+                                    <p class="mt-0.5 truncate text-xs text-muted-foreground">
+                                        {{ batch.file_name }}
+                                    </p>
+                                </div>
+
+                                <span
+                                    v-if="batch.id === selectedBatchId"
+                                    class="ml-3 shrink-0 text-xs font-semibold"
+                                >
+                                    ✓
+                                </span>
+                            </button>
+
+                            <div
+                                v-if="!props.import_batches?.length"
+                                class="px-3 py-4 text-center text-sm text-muted-foreground"
+                            >
+                                Belum ada periode data.
+                            </div>
+                        </div>
+                    </Transition>
+                </div>
             </div>
 
             <div class="mb-6 rounded-2xl border border-border bg-card p-6">
@@ -251,8 +421,10 @@ const actionInfo = (action: string) => {
                         </p>
                     </div>
 
-                    <div>
-                        <p class="text-sm text-muted-foreground">Growth</p>
+                    <div class="rounded-xl bg-muted/30 p-4">
+                        <p class="text-sm text-muted-foreground">
+                            Growth
+                        </p>
 
                         <p class="mt-2 text-3xl font-semibold">
                             {{ formatAvailableScore(
@@ -276,8 +448,10 @@ const actionInfo = (action: string) => {
                         </p>
                     </div>
 
-                    <div>
-                        <p class="text-sm text-muted-foreground">Consistency</p>
+                    <div class="rounded-xl bg-muted/30 p-4">
+                        <p class="text-sm text-muted-foreground">
+                            Consistency
+                        </p>
 
                         <p class="mt-2 text-3xl font-semibold">
                             {{ formatAvailableScore(

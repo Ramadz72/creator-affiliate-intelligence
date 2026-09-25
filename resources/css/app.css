@@ -207,9 +207,39 @@ html {
 
 /* Dark mode: kembali ke background bawaan */
 .dark .app-textured-bg {
-    background-color: hsl(var(--background));
-    background-image: none;
-} 
+    background-color: #020305;
+    background-image:
+        radial-gradient(
+            circle at 20% 20%,
+            rgba(27, 79, 190, 0.16) 0,
+            transparent 35%
+        ),
+        radial-gradient(
+            circle at 80% 70%,
+            rgba(14, 165, 233, 0.10) 0,
+            transparent 35%
+        ),
+        radial-gradient(
+            circle,
+            rgba(96, 165, 250, 0.08) 1px,
+            transparent 1.5px
+        ),
+        radial-gradient(
+            circle,
+            rgba(59, 130, 246, 0.045) 1px,
+            transparent 1.5px
+        );
+    background-position:
+        0 0,
+        100% 100%,
+        0 0,
+        14px 14px;
+    background-size:
+        100% 100%,
+        100% 100%,
+        28px 28px,
+        28px 28px;
+}
 
 /* Sidebar scrollbar - dark mode */
 .dark [data-slot='sidebar-content']::-webkit-scrollbar {

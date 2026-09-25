@@ -3,16 +3,30 @@
 namespace App\Http\Controllers;
 
 use App\Models\Affiliate;
+use App\Models\ImportBatch;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class AffiliateDetailController extends Controller
 {
-        public function show(Affiliate $affiliate): Response
+        public function show(Request $request, Affiliate $affiliate): Response
     {   
         abort_unless($affiliate->user_id === Auth::id(), 404);
         
+        $batchId = $request->input('batch_id');
+
+        $selectedBatch = $batchId
+            ? $affiliate->performances()
+                ->with('importBatch:id,period_start,period_end,status')
+                ->where('import_batch_id', $batchId)
+                ->whereHas('importBatch', function ($query) {
+                    $query->where('status', 'completed');
+                })
+                ->first()?->importBatch
+            : null;
+
         $performances = $affiliate->performances()
             ->with('importBatch:id,period_start,period_end,status')
             ->whereHas('importBatch', function ($query) {
@@ -49,10 +63,18 @@ class AffiliateDetailController extends Controller
             });
 
 
-        $latestPerformance = $performances->first();
+        $latestPerformance = $selectedBatch
+        ? $performances->first(function ($performance) use ($selectedBatch) {
+            return $performance['period_start'] === $selectedBatch->period_start?->format('Y-m-d')
+                && $performance['period_end'] === $selectedBatch->period_end?->format('Y-m-d');
+        })
+        : $performances->first();;
 
         $latestScore = $affiliate->scores()
             ->with('importBatch:id,period_start,period_end')
+            ->when($selectedBatch, function ($query) use ($selectedBatch) {
+                $query->where('import_batch_id', $selectedBatch->id);
+            })
             ->latest('id')
             ->first();
             
@@ -64,7 +86,7 @@ class AffiliateDetailController extends Controller
                 'platform' => $affiliate->platform,
                 'status' => $affiliate->status,
             ],
-
+            
             'latest_performance' => $latestPerformance,
 
             'performance_history' => $performances->values(),
@@ -86,6 +108,19 @@ class AffiliateDetailController extends Controller
                     ->distinct('import_batch_id')
                     ->count('import_batch_id'),
             ] : null,
+            'import_batches' => ImportBatch::query()
+                ->where('status', 'completed')
+                ->where('uploaded_by', Auth::id())
+                ->orderByDesc('period_start')
+                ->orderByDesc('id')
+                ->get([
+                    'id',
+                    'file_name',
+                    'period_start',
+                    'period_end',
+                ]),
+
+            'selected_batch_id' => $selectedBatch?->id,
         ]);
     }
 }
