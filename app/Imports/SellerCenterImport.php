@@ -10,9 +10,17 @@ use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Events\AfterChunk;
+use Maatwebsite\Excel\Events\BeforeImport;
 
-class SellerCenterImport implements ToCollection, WithHeadingRow, WithChunkReading
+class SellerCenterImport implements ToCollection, WithHeadingRow, WithChunkReading, WithEvents
 {
+    private int $processedRows = 0;
+    private int $successfulRows = 0;
+    private int $skippedRows = 0;
+    private int $errorRows = 0;
+
     public function __construct(protected ImportBatch $batch)
     {
     }
@@ -20,95 +28,150 @@ class SellerCenterImport implements ToCollection, WithHeadingRow, WithChunkReadi
     public function collection(Collection $rows): void
     {
         foreach ($rows as $row) {
+            $this->processedRows++;
+
             $name = trim((string) ($row['creator_name'] ?? ''));
 
             if ($name === '') {
+                $this->skippedRows++;
                 continue;
             }
 
-            $affiliate = Affiliate::firstOrCreate(
-                ['name' => $name,
-                'user_id' => $this->batch->uploaded_by,],
-                
-                [
-                    'username' => Str::slug($name),
-                    'platform' => 'TikTok',
-                    'status' => 'active',
-                ]
-            );
+            try {
+                $affiliate = Affiliate::firstOrCreate(
+                    [
+                        'name' => $name,
+                        'user_id' => $this->batch->uploaded_by,
+                    ],
+                    [
+                        'username' => Str::slug($name),
+                        'platform' => 'TikTok',
+                        'status' => 'active',
+                    ]
+                );
 
-            AffiliatePerformance::create([
-                'affiliate_id' => $affiliate->id,
-                'import_batch_id' => $this->batch->id,
+                AffiliatePerformance::create([
+                    'affiliate_id' => $affiliate->id,
+                    'import_batch_id' => $this->batch->id,
 
-                'gmv' => $this->number($row['gmv_dari_kreator'] ?? 0),
-                'gmv_live' => $this->number($row['gmv_dari_live_kreator'] ?? 0),
-                'gmv_video' => $this->number($row['gmv_dari_video_afiliasi'] ?? 0),
-                'gmv_product_card' => $this->number(
-                    $row['gmv_dari_kartu_produk_afiliasi'] ?? 0
-                ),
+                    'gmv' => $this->number($row['gmv_dari_kreator'] ?? 0),
+                    'gmv_live' => $this->number($row['gmv_dari_live_kreator'] ?? 0),
+                    'gmv_video' => $this->number($row['gmv_dari_video_afiliasi'] ?? 0),
+                    'gmv_product_card' => $this->number(
+                        $row['gmv_dari_kartu_produk_afiliasi'] ?? 0
+                    ),
 
-                'refund' => $this->number($row['pengembalian_dana'] ?? 0),
+                    'refund' => $this->number($row['pengembalian_dana'] ?? 0),
 
-                'attributed_orders' => $this->integer(
-                    $row['pesanan_teratribusi'] ?? 0
-                ),
+                    'attributed_orders' => $this->integer(
+                        $row['pesanan_teratribusi'] ?? 0
+                    ),
 
-                'products_sold' => $this->integer(
-                    $row['produk_yang_terjual_dari_kreator'] ?? 0
-                ),
+                    'products_sold' => $this->integer(
+                        $row['produk_yang_terjual_dari_kreator'] ?? 0
+                    ),
 
-                'aov' => $this->number($row['aov'] ?? 0),
+                    'aov' => $this->number($row['aov'] ?? 0),
 
-                'ctr' => $this->percentage($row['ctr'] ?? 0),
-                'ctor' => $this->percentage($row['ctor'] ?? 0),
+                    'ctr' => $this->percentage($row['ctr'] ?? 0),
+                    'ctor' => $this->percentage($row['ctor'] ?? 0),
 
-                'impressions' => $this->integer(
-                    $row['impresi_produk'] ?? 0
-                ),
+                    'impressions' => $this->integer(
+                        $row['impresi_produk'] ?? 0
+                    ),
 
-                'video_views' => $this->integer(
-                    $row['tayangan_video'] ?? 0
-                ),
+                    'video_views' => $this->integer(
+                        $row['tayangan_video'] ?? 0
+                    ),
 
-                'buyers' => $this->integer(
-                    $row['pembeli'] ?? 0
-                ),
+                    'buyers' => $this->integer(
+                        $row['pembeli'] ?? 0
+                    ),
 
-                'commission' => $this->number(
-                    $row['perkiraan_komisi'] ?? 0
-                ),
+                    'commission' => $this->number(
+                        $row['perkiraan_komisi'] ?? 0
+                    ),
 
-                'live_count' => $this->integer(
-                    $row['siaran_live'] ?? 0
-                ),
+                    'live_count' => $this->integer(
+                        $row['siaran_live'] ?? 0
+                    ),
 
-                'video_count' => $this->integer(
-                    $row['video'] ?? 0
-                ),
+                    'video_count' => $this->integer(
+                        $row['video'] ?? 0
+                    ),
 
-                'showcase_products' => $this->integer(
-                    $row['produk_yang_ditambahkan_ke_showcase'] ?? 0
-                ),
+                    'showcase_products' => $this->integer(
+                        $row['produk_yang_ditambahkan_ke_showcase'] ?? 0
+                    ),
 
-                'content_samples' => $this->integer(
-                    $row['jumlah_konten_sampel'] ?? 0
-                ),
+                    'content_samples' => $this->integer(
+                        $row['jumlah_konten_sampel'] ?? 0
+                    ),
 
-                'samples_sent' => $this->integer(
-                    $row['sampel_terkirim'] ?? 0
-                ),
+                    'samples_sent' => $this->integer(
+                        $row['sampel_terkirim'] ?? 0
+                    ),
 
-                'products_returned' => $this->integer(
-                    $row['produk_yang_dikembalikan_dananya'] ?? 0
-                ),
-            ]);
+                    'products_returned' => $this->integer(
+                        $row['produk_yang_dikembalikan_dananya'] ?? 0
+                    ),
+                ]);
+
+                $this->successfulRows++;
+            } catch (\Throwable $e) {
+                $this->errorRows++;
+
+                report($e);
+            }
         }
+    }
+
+    public function registerEvents(): array
+    {
+        return [
+            BeforeImport::class => function (BeforeImport $event) {
+                $totalRows = $event->reader->getTotalRows();
+
+                $totalRows = array_sum($totalRows);
+
+                $this->batch->update([
+                    'total_rows' => $totalRows,
+                    'started_at' => now(),
+                    'progress' => 0,
+                ]);
+            },
+
+            AfterChunk::class => function () {
+                $this->updateProgress();
+            },
+        ];
     }
 
     public function chunkSize(): int
     {
         return 500;
+    }
+
+    private function updateProgress(): void
+    {
+        $total = (int) $this->batch->total_rows;
+
+        $progress = $total > 0
+            ? min(
+                100,
+                (int) floor(
+                    ($this->processedRows / $total) * 100
+                )
+            )
+            : 0;
+
+        $this->batch->update([
+            'processed_rows' => $this->processedRows,
+            'successful_rows' => $this->successfulRows,
+            'skipped_rows' => $this->skippedRows,
+            'error_rows' => $this->errorRows,
+            'progress' => $progress,
+        ]);
     }
 
     /**

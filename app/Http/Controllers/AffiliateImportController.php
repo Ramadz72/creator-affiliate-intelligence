@@ -2,20 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Imports\SellerCenterImport;
+use App\Jobs\ProcessAffiliateImportJob;
 use App\Models\ImportBatch;
 use App\Models\Affiliate;
-use App\Services\AffiliateScoreService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Facades\Excel;
 
 class AffiliateImportController extends Controller
 {
-    public function store(
-    Request $request,
-    AffiliateScoreService $scoreService
-    )
+    public function store(Request $request)
     {
         $validated = $request->validate([
             'file' => [
@@ -39,46 +34,73 @@ class AffiliateImportController extends Controller
 
         $file = $validated['file'];
 
-        /*
-         * Buat batch import terlebih dahulu.
-         */
         $batch = ImportBatch::create([
             'file_name' => $file->getClientOriginalName(),
             'period_start' => $validated['period_start'],
             'period_end' => $validated['period_end'],
             'uploaded_by' => Auth::id(),
-            'status' => 'processing',
+            'status' => 'queued',
             'total_rows' => 0,
+            'processed_rows' => 0,
+            'successful_rows' => 0,
+            'skipped_rows' => 0,
+            'error_rows' => 0,
+            'progress' => 0,
             'uploaded_at' => now(),
         ]);
 
         try {
-            Excel::import(new SellerCenterImport($batch), $file);
-
-            $totalRows = $batch->performances()->count();
-
-            $batch->update([
-                'status' => 'completed',
-                'total_rows' => $totalRows,
-            ]);
-
-            $scoreService->scoreBatch($batch);
-
-            return back()->with(
-                'success',
-                "Import berhasil. {$totalRows} data performance berhasil diproses."
+            $filePath = $file->store(
+                'imports',
+                'local'
             );
+
+            ProcessAffiliateImportJob::dispatch(
+                $batch->id,
+                $filePath
+            );
+
+            return back()->with([
+                'success' => 'File berhasil diunggah. Proses import sedang berjalan.',
+                'import_batch_id' => $batch->id,
+            ]);
         } catch (\Throwable $e) {
             $batch->update([
-                'status' => 'failed'
+                'status' => 'failed',
+                'error_message' => $e->getMessage(),
+                'completed_at' => now(),
             ]);
 
             report($e);
 
             return back()->with(
                 'error',
-                'Import gagal. Silakan periksa format file dan data Seller Center.'
+                'File gagal diproses. Silakan coba lagi.'
             );
         }
+    }
+
+    public function progress(ImportBatch $batch)
+    {
+        abort_unless(
+            $batch->uploaded_by === Auth::id(),
+            403
+        );
+
+        return response()->json([
+            'id' => $batch->id,
+            'status' => $batch->status,
+            'progress' => (int) $batch->progress,
+
+            'total_rows' => (int) $batch->total_rows,
+            'processed_rows' => (int) $batch->processed_rows,
+            'successful_rows' => (int) $batch->successful_rows,
+            'skipped_rows' => (int) $batch->skipped_rows,
+            'error_rows' => (int) $batch->error_rows,
+
+            'started_at' => $batch->started_at?->toISOString(),
+            'completed_at' => $batch->completed_at?->toISOString(),
+            'error_message' => $batch->error_message,
+        ]);
     }
 }

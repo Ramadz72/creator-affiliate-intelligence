@@ -27,6 +27,12 @@ class AffiliateController extends Controller
 
         $batchId = $request->input('batch_id');
 
+        if ($batchId) {
+            session()->put('affiliate_batch_id', $batchId);
+        } else {
+            $batchId = session('affiliate_batch_id');
+        }
+
         $selectedBatch = $batchId
             ? ImportBatch::query()
                 ->where('status', 'completed')
@@ -34,6 +40,15 @@ class AffiliateController extends Controller
                 ->where('id', $batchId)
                 ->first()
             : $latestBatch;
+
+        if (!$selectedBatch) {
+            session()->forget('affiliate_batch_id');
+            $selectedBatch = $latestBatch;
+
+            if ($selectedBatch) {
+                session()->put('affiliate_batch_id', $selectedBatch->id);
+            }
+        }
 
         /*
         |--------------------------------------------------------------------------

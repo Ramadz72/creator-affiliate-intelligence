@@ -19,7 +19,15 @@ class ImportBatch extends Model
         'uploaded_by',
         'status',
         'total_rows',
+        'processed_rows',
+        'successful_rows',
+        'skipped_rows',
+        'error_rows',
+        'progress',
         'uploaded_at',
+        'started_at',
+        'completed_at',
+        'error_message',
     ];
 
     protected $casts = [
@@ -27,7 +35,14 @@ class ImportBatch extends Model
         'period_end' => 'date',
         'uploaded_by' => 'integer',
         'total_rows' => 'integer',
+        'processed_rows' => 'integer',
+        'successful_rows' => 'integer',
+        'skipped_rows' => 'integer',
+        'error_rows' => 'integer',
+        'progress' => 'integer',
         'uploaded_at' => 'datetime',
+        'started_at' => 'datetime',
+        'completed_at' => 'datetime',
         'created_at' => 'datetime',
     ];
 

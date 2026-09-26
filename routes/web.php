@@ -2,12 +2,13 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\DashboardController;
 
 Route::inertia('/', 'Welcome')->name('home');
 
-Route::middleware(['auth', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'Dashboard')->name('dashboard');
-});
+Route::get('dashboard', [DashboardController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('dashboard');
 
 require __DIR__.'/settings.php';
 
@@ -147,6 +148,10 @@ Route::get('/imports', function () {
 Route::post('/imports/affiliate', [AffiliateImportController::class, 'store'])
     ->middleware(['auth'])
     ->name('imports.affiliate.store');
+
+Route::get('/imports/{batch}/progress', [AffiliateImportController::class, 'progress'])
+    ->middleware(['auth', 'verified'])
+    ->name('imports.progress');
 
 use App\Http\Controllers\AffiliateController;
 
