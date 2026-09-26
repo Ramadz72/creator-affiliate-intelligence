@@ -2,6 +2,12 @@
 import { Head, Link, router } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
 import { ref } from 'vue'
+import {
+    UserSearch,
+    Headphones,
+    Eye,
+    CircleSlash,
+} from '@lucide/vue';
 
 defineOptions({
     layout: {
@@ -281,6 +287,7 @@ const maxGMV = Math.max(
 const getBarHeight = (gmv: number) => {
     return `${Math.max((gmv / maxGMV) * 100, 4)}%`
 }
+
 
 </script>
 
@@ -688,7 +695,17 @@ const getBarHeight = (gmv: number) => {
                 </div>
 
                 <!-- Realtime Affiliate Performance -->
-                <div class="mt-6 h-64">
+                <div class="relative mt-6 h-64">
+                    <!-- Modern chart grid -->
+                    <div
+                        class="pointer-events-none absolute inset-x-0 inset-y-0 flex flex-col justify-between pb-8"
+                    >
+                        <div class="border-t border-border/30" />
+                        <div class="border-t border-border/20" />
+                        <div class="border-t border-border/20" />
+                        <div class="border-t border-border/20" />
+                        <div class="border-t border-border/30" />
+                    </div>
                     <div
                         v-if="chartData.length"
                         class="flex h-full items-end gap-3"
@@ -711,13 +728,23 @@ const getBarHeight = (gmv: number) => {
                                 </p>
                             </div>
 
-                            <!-- Bar -->
                             <div
-                                class="w-full rounded-t-md bg-blue-500/70 transition-all duration-300 group-hover:bg-blue-500"
+                                class="group/bar relative w-full overflow-hidden rounded-t-md bg-blue-500/70 shadow-[0_-4px_18px_rgba(59,130,246,0.08)] transition-all duration-300 hover:-translate-y-1 hover:bg-blue-500 hover:shadow-[0_-6px_24px_rgba(59,130,246,0.20)]"
                                 :style="{ height: getBarHeight(item.gmv) }"
-                            ></div>
+                            >
+                                <!-- subtle top highlight -->
+                                <div
+                                    class="absolute inset-x-0 top-0 h-px bg-white/50"
+                                />
+
+                                <!-- subtle vertical highlight -->
+                                <div
+                                    class="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white/[0.10] to-transparent opacity-0 transition-opacity duration-300 group-hover/bar:opacity-100"
+                                />
+                            </div>
                         </div>
                     </div>
+                    
 
                     <!-- Empty state -->
                     <div
@@ -752,9 +779,7 @@ const getBarHeight = (gmv: number) => {
             </div>
 
             <!-- Action Required -->
-            <div
-                class="rounded-xl border border-border bg-card p-5"
-            >
+            <div class="rounded-xl border border-border bg-card p-5">
                 <div>
                     <p class="text-base font-medium">
                         Action Center
@@ -767,61 +792,105 @@ const getBarHeight = (gmv: number) => {
 
                 <div class="mt-6 space-y-3">
 
+                    <!-- Creators -->
                     <Link
                         href="/creators"
-                        class="block rounded-lg border border-border bg-muted/30 p-4 transition hover:border-orange-500/40 hover:bg-muted/60"
+                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/40 hover:bg-orange-500/[0.04] hover:shadow-[0_6px_18px_rgba(249,115,22,0.08)]"
                     >
                         <div class="flex items-center justify-between">
-                            <span class="text-sm">
-                                🔥 Creators to review
-                            </span>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-orange-500/15 group-hover:shadow-[0_0_14px_rgba(249,115,22,0.18)]"
+                                >
+                                    <UserSearch
+                                        class="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+                                    />
+                                </div>
 
-                            <span class="font-semibold">
+                                <span class="text-sm transition-colors duration-300 group-hover:text-orange-500">
+                                    Creators to review
+                                </span>
+                            </div>
+
+                            <span class="font-semibold transition-transform duration-300 group-hover:translate-x-1">
                                 {{ props.action_required.creators_to_review }}
                             </span>
                         </div>
                     </Link>
 
+                    <!-- Affiliates -->
                     <Link
                         href="/affiliates"
-                        class="block rounded-lg border border-border bg-muted/30 p-4 transition hover:border-emerald-500/40 hover:bg-muted/60"
+                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:bg-emerald-500/[0.04] hover:shadow-[0_6px_18px_rgba(16,185,129,0.08)]"
                     >
                         <div class="flex items-center justify-between">
-                            <span class="text-sm">
-                                🟢 Affiliates to support
-                            </span>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-emerald-500/15 group-hover:shadow-[0_0_14px_rgba(16,185,129,0.18)]"
+                                >
+                                    <Headphones
+                                        class="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
+                                    />
+                                </div>
 
-                            <span class="font-semibold">
+                                <span class="text-sm transition-colors duration-300 group-hover:text-emerald-500">
+                                    Affiliates to support
+                                </span>
+                            </div>
+
+                            <span class="font-semibold transition-transform duration-300 group-hover:translate-x-1">
                                 {{ props.action_required.affiliates_to_support }}
                             </span>
                         </div>
                     </Link>
 
+                    <!-- Monitoring -->
                     <Link
                         href="/affiliates"
-                        class="block rounded-lg border border-border bg-muted/30 p-4 transition hover:border-amber-500/40 hover:bg-muted/60"
+                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-500/40 hover:bg-amber-500/[0.04] hover:shadow-[0_6px_18px_rgba(245,158,11,0.08)]"
                     >
                         <div class="flex items-center justify-between">
-                            <span class="text-sm">
-                                🟡 Need monitoring
-                            </span>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-amber-500/15 group-hover:shadow-[0_0_14px_rgba(245,158,11,0.18)]"
+                                >
+                                    <Eye
+                                        class="h-4 w-4 transition-transform duration-300 group-hover:scale-110"
+                                    />
+                                </div>
 
-                            <span class="font-semibold">
+                                <span class="text-sm transition-colors duration-300 group-hover:text-amber-500">
+                                    Need monitoring
+                                </span>
+                            </div>
+
+                            <span class="font-semibold transition-transform duration-300 group-hover:translate-x-1">
                                 {{ props.action_required.need_monitoring }}
                             </span>
                         </div>
                     </Link>
 
+                    <!-- Deprioritize -->
                     <Link
                         href="/affiliates"
-                        class="block rounded-lg border border-border bg-muted/30 p-4 transition hover:border-muted-foreground/40 hover:bg-muted/60"
+                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-muted-foreground/40 hover:bg-muted/60 hover:shadow-[0_6px_18px_rgba(100,116,139,0.08)]"
                     >
                         <div class="flex items-center justify-between">
-                            <span class="text-sm">
-                                🔴 Deprioritize
-                            </span>
+                            <div class="flex items-center gap-3">
+                                <div
+                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-all duration-300 group-hover:scale-110 group-hover:bg-muted/80 group-hover:shadow-[0_0_14px_rgba(100,116,139,0.15)]"
+                                >
+                                    <CircleSlash
+                                        class="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
+                                    />
+                                </div>
 
-                            <span class="font-semibold">
+                                <span class="text-sm transition-colors duration-300 group-hover:text-foreground">
+                                    Deprioritize
+                                </span>
+                            </div>
+
+                            <span class="font-semibold transition-transform duration-300 group-hover:translate-x-1">
                                 {{ props.action_required.deprioritize }}
                             </span>
                         </div>
@@ -829,7 +898,7 @@ const getBarHeight = (gmv: number) => {
 
                 </div>
             </div>
-        </div>
+         </div>
 
         <!-- Bottom Overview -->
         <div class="mt-4 grid gap-4 md:grid-cols-2">
