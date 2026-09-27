@@ -21,7 +21,7 @@ interface Performance {
     affiliate_id: number
     gmv: string | number
     attributed_orders: number
-    buyers: number
+    products_sold: number
     commission: string | number
     aov: string | number
     ctr: string | number
@@ -44,7 +44,7 @@ interface Summary {
     total_affiliates: number
     total_gmv: number
     total_orders: number
-    total_buyers: number
+    total_products_sold: number
     total_commission: number
 }
 
@@ -91,33 +91,29 @@ const formatDate = (value: string | null) => {
     <div class="app-textured-bg min-h-full p-4 text-foreground md:p-6">
         <!-- Header -->
         <div class="mb-6">
-            <div class="flex items-start gap-4">
+            <div class="flex items-center gap-4">
+                <!-- Back -->
                 <Link
                     href="/history"
-                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted"
+                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted"
                 >
                     <ArrowLeft class="h-5 w-5" />
                 </Link>
 
-                <div class="min-w-0">
-                    <div class="flex items-center gap-3">
-                        <div
-                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10"
-                        >
-                            <FileSpreadsheet
-                                class="h-5 w-5 text-primary"
-                            />
-                        </div>
+                <!-- Icon + Title -->
+                <div class="flex items-center gap-3">
+                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                        <FileSpreadsheet class="h-5 w-5 text-primary" />
+                    </div>
 
-                        <div class="min-w-0">
-                            <h1 class="text-2xl font-semibold tracking-tight">
-                                History Detail
-                            </h1>
+                    <div>
+                        <h1 class="text-2xl font-semibold tracking-tight">
+                            History Detail
+                        </h1>
 
-                            <p class="mt-1 truncate text-sm text-muted-foreground">
-                                {{ batch.file_name }}
-                            </p>
-                        </div>
+                        <p class="text-sm text-muted-foreground">
+                            {{ batch.file_name }}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -227,14 +223,14 @@ const formatDate = (value: string | null) => {
             >
                 <div class="flex items-center justify-between">
                     <p class="text-sm text-muted-foreground">
-                        Buyers
+                        Terjual
                     </p>
 
                     <UserCheck class="h-5 w-5 text-muted-foreground" />
                 </div>
 
                 <p class="mt-3 text-2xl font-semibold">
-                    {{ formatNumber(summary.total_buyers) }}
+                    {{ formatNumber(summary.total_products_sold) }}
                 </p>
             </div>
 
@@ -316,7 +312,7 @@ const formatDate = (value: string | null) => {
                             </th>
 
                             <th class="px-6 py-4 text-right font-medium text-muted-foreground">
-                                Buyers
+                                Terjual
                             </th>
 
                             <th class="px-6 py-4 text-right font-medium text-muted-foreground">
@@ -364,7 +360,7 @@ const formatDate = (value: string | null) => {
                             </td>
 
                             <td class="px-6 py-4 text-right">
-                                {{ formatNumber(performance.buyers) }}
+                                {{ formatNumber(performance.products_sold) }}
                             </td>
 
                             <td class="px-6 py-4 text-right">

@@ -54,8 +54,8 @@ class HistoryController extends Controller
             'total_orders' => $batch->performances()
                 ->sum('attributed_orders'),
 
-            'total_buyers' => $batch->performances()
-                ->sum('buyers'),
+            'total_products_sold' => $batch->performances()
+                ->sum('products_sold'),
 
             'total_commission' => $batch->performances()
                 ->sum('commission'),
@@ -78,7 +78,7 @@ class HistoryController extends Controller
 
                     'gmv' => $performance->gmv,
                     'attributed_orders' => $performance->attributed_orders,
-                    'buyers' => $performance->buyers,
+                    'products_sold' => $performance->products_sold,
                     'aov' => $performance->aov,
                     'ctr' => $performance->ctr,
                     'ctor' => $performance->ctor,

@@ -8,6 +8,7 @@ use App\Models\Creator;
 use App\Models\AffiliatePerformance;
 use App\Models\AffiliateScore;
 use App\Models\CreatorScore;
+use App\Models\ImportBatch;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -49,8 +50,24 @@ class DashboardController extends Controller
                 break;
 
             case 'last_week':
-                $startDate = Carbon::now()->subWeek()->startOfWeek();
-                $endDate = Carbon::now()->subWeek()->endOfWeek();
+                $lastWeekBatch = ImportBatch::query()
+                    ->where('uploaded_by', $user->id)
+                    ->where('status', 'completed')
+                    ->whereNotNull('period_start')
+                    ->whereNotNull('period_end')
+                    ->whereDate('period_end', '<=', Carbon::now()->startOfWeek())
+                    ->orderByDesc('period_end')
+                    ->first();
+
+                if ($lastWeekBatch) {
+                    $startDate = $lastWeekBatch->period_start->copy();
+                    $endDate = $lastWeekBatch->period_end->copy();
+                } else {
+                    // Fallback jika belum ada import mingguan
+                    $startDate = Carbon::now()->subWeek()->startOfWeek();
+                    $endDate = Carbon::now()->subWeek()->endOfWeek();
+                }
+
                 break;
 
             case 'this_month':
@@ -82,6 +99,8 @@ class DashboardController extends Controller
                         : null);
 
                 if ($customStartDate && $customEndDate && $customStartDate <= $customEndDate) {
+                    $startDate = $customStartDate;
+                    $endDate = $customEndDate;
 
                     session()->put('dashboard_custom_start_date', $customStartDate->format('Y-m-d'));
                     session()->put('dashboard_custom_end_date', $customEndDate->format('Y-m-d'));
@@ -270,6 +289,7 @@ class DashboardController extends Controller
                 'period_start' => $performance->importBatch?->period_start?->format('Y-m-d'),
                 'period_end' => $performance->importBatch?->period_end?->format('Y-m-d'),
                 'gmv' => (float) $performance->total_gmv,
+                'orders' => (int) $performance->importBatch->performances()->sum('attributed_orders'),
             ];
         });
 
