@@ -9,6 +9,7 @@ use App\Models\AffiliatePerformance;
 use App\Models\AffiliateScore;
 use App\Models\CreatorScore;
 use App\Models\ImportBatch;
+use App\Services\InsightEngine;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,7 @@ use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, InsightEngine $insightEngine)
     {
         $user = Auth::user();
 
@@ -444,6 +445,18 @@ class DashboardController extends Controller
 
         $customStartDate = $startDate?->format('Y-m-d');
         $customEndDate = $endDate?->format('Y-m-d');
+
+        $latestInsightBatch = ImportBatch::query()
+            ->where('uploaded_by', $user->id)
+            ->where('status', 'completed')
+            ->whereNotNull('period_start')
+            ->whereNotNull('period_end')
+            ->orderByDesc('period_end')
+            ->first();
+
+        $dashboardInsight = $latestInsightBatch
+            ? $insightEngine->generateForBatch($latestInsightBatch)
+            : null;
                 
         return Inertia::render('Dashboard', [
             'stats' => [
@@ -473,6 +486,14 @@ class DashboardController extends Controller
             'action_required' => $actionRequired,
             'creator_overview' => $creatorOverview,
             'affiliate_overview' => $affiliateOverview,
+            'insight_preview' => $dashboardInsight
+            ? [
+                'period' => $dashboardInsight['period'],
+                'summary' => $dashboardInsight['summary'],
+                'insights' => $dashboardInsight['insights'],
+                'top_gmv' => array_slice($dashboardInsight['top_gmv'], 0, 3),
+            ]
+            : null,
         ]);
     }
 }

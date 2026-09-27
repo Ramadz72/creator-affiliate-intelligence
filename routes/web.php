@@ -178,3 +178,9 @@ Route::get('/history/{batch}', [HistoryController::class, 'show'])
 Route::delete('/history/{batch}', [HistoryController::class, 'destroy'])
     ->middleware(['auth'])
     ->name('history.destroy');
+
+use App\Http\Controllers\InsightsController;
+
+Route::get('insights', [InsightsController::class, 'index'])
+    ->middleware(['auth', 'verified'])
+    ->name('insights.index');

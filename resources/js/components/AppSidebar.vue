@@ -8,6 +8,7 @@ import {
     Settings,
     Users,
     UserRoundSearch,
+    Sparkles,
 } from '@lucide/vue';
 
 import AppLogo from '@/components/AppLogo.vue';
@@ -58,6 +59,11 @@ const intelligenceNavItems: NavItem[] = [
         title: 'Affiliate',
         href: '/affiliates',
         icon: Users,
+    },
+    {
+        title: 'Insights',
+        href: '/insights',
+        icon: Sparkles,
     },
 ];
 

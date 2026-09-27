@@ -354,6 +354,20 @@ const getPageTitle = (url: string) => {
         return 'Affiliate';
     }
 
+      // =========================
+    // INSIGHTS
+    // =========================
+    if (
+        /^\/insights\/[^/]+$/.test(
+            pathname,
+        )
+    ) 
+
+    if (pathname === '/insights') {
+        return 'insights';
+    }
+   
+
     // =========================
     // CAMPAIGN
     // =========================

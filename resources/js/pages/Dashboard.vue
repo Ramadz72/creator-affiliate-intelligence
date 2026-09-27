@@ -67,6 +67,38 @@ const props = defineProps<{
     creator_overview: CreatorOverview[]
     affiliate_overview: AffiliateOverview[]
 
+    insight_preview: {
+    period: {
+        start: string | null
+        end: string | null
+    }
+    summary: {
+        total_gmv: number
+        total_orders: number
+        total_products_sold: number
+        affiliate_count: number
+    }
+    insights: Array<{
+        type: string
+        title: string
+        headline: string
+        description: string
+        recommended_action: string
+        affiliate_id?: number
+        count?: number
+    }>
+    top_gmv: Array<{
+        affiliate_id: number
+        name: string | null
+        username: string | null
+        gmv: number
+        orders: number
+        products_sold: number
+        overall_score: number | null
+        action: string | null
+    }>
+} | null
+
     action_required: {
         creators_to_review: number
         affiliates_to_support: number
@@ -288,6 +320,26 @@ const getBarHeight = (gmv: number) => {
     return `${Math.max((gmv / maxGMV) * 100, 4)}%`
 }
 
+const getInsight = (type: string) => {
+    return props.insight_preview?.insights.find(
+        (item) => item.type === type,
+    ) ?? null
+}
+
+const topPerformer = () => {
+    return props.insight_preview?.top_gmv?.[0] ?? null
+}
+
+const insightPeriodLabel = () => {
+    if (!props.insight_preview?.period?.start || !props.insight_preview?.period?.end) {
+        return ''
+    }
+
+    return formatPeriod(
+        props.insight_preview.period.start,
+        props.insight_preview.period.end,
+    )
+}
 
 </script>
 
@@ -899,6 +951,299 @@ const getBarHeight = (gmv: number) => {
                 </div>
             </div>
          </div>
+
+         <!-- Insights Preview -->
+        <div class="mt-4 rounded-xl border border-border bg-card p-5">
+            <!-- Header -->
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <p class="text-base font-semibold">
+                            Performance Insights
+                        </p>
+
+                        <span
+                            v-if="props.insight_preview"
+                            class="rounded-md bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-600 dark:text-sky-400"
+                        >
+                            LIVE ANALYSIS
+                        </span>
+                    </div>
+
+                    <p class="mt-1 text-sm text-muted-foreground">
+                        {{
+                            props.insight_preview
+                                ? `Analisis otomatis · ${insightPeriodLabel()}`
+                                : 'Belum ada analisis performa.'
+                        }}
+                    </p>
+                </div>
+
+                <Link
+                    href="/insights"
+                    class="inline-flex w-fit items-center gap-1.5 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm font-medium transition hover:border-sky-500/40 hover:bg-muted"
+                >
+                    Lihat semua insights
+                    <span class="transition-transform group-hover:translate-x-0.5">
+                        →
+                    </span>
+                </Link>
+            </div>
+
+            <!-- Insight Cards -->
+            <div
+                v-if="props.insight_preview"
+                class="mt-5 grid gap-4 lg:grid-cols-3"
+            >
+                <!-- Top Performer -->
+                <Link
+                    href="/insights"
+                    class="group relative overflow-hidden rounded-xl border border-blue-500/20 bg-blue-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500/50 hover:bg-blue-500/[0.06] hover:shadow-lg"
+                >
+                    <div
+                        class="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl transition-opacity group-hover:opacity-100"
+                    />
+
+                    <div class="relative">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500"
+                                >
+                                    ↑
+                                </div>
+
+                                <span class="text-xs font-semibold uppercase tracking-wide text-blue-500">
+                                    Top Performer
+                                </span>
+                            </div>
+
+                            <span
+                                class="text-xs text-muted-foreground transition-transform group-hover:translate-x-1"
+                            >
+                                →
+                            </span>
+                        </div>
+
+                        <template v-if="topPerformer()">
+                            <p class="mt-5 truncate text-lg font-semibold">
+                                {{ topPerformer()?.name ?? '-' }}
+                            </p>
+
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                Kontributor GMV terbesar
+                            </p>
+
+                            <div class="mt-4 grid grid-cols-2 gap-2">
+                                <div class="rounded-lg bg-background/60 p-3">
+                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                        GMV
+                                    </p>
+
+                                    <p class="mt-1 text-sm font-semibold">
+                                        {{ formatGMV(topPerformer()?.gmv ?? 0) }}
+                                    </p>
+                                </div>
+
+                                <div class="rounded-lg bg-background/60 p-3">
+                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                        Orders
+                                    </p>
+
+                                    <p class="mt-1 text-sm font-semibold">
+                                        {{ formatNumber(topPerformer()?.orders ?? 0) }}
+                                    </p>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 flex items-center justify-between text-xs">
+                                <span class="text-muted-foreground">
+                                    Lihat performa lengkap
+                                </span>
+
+                                <span class="font-medium text-blue-500">
+                                    Analisis →
+                                </span>
+                            </div>
+                        </template>
+
+                        <p
+                            v-else
+                            class="mt-5 text-sm text-muted-foreground"
+                        >
+                            Belum ada top performer.
+                        </p>
+                    </div>
+                </Link>
+
+                <!-- High GMV / Low Consistency -->
+                <Link
+                    href="/insights"
+                    class="group relative overflow-hidden rounded-xl border border-amber-500/20 bg-amber-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500/50 hover:bg-amber-500/[0.06] hover:shadow-lg"
+                >
+                    <div
+                        class="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl"
+                    />
+
+                    <div class="relative">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500"
+                                >
+                                    !
+                                </div>
+
+                                <span class="text-xs font-semibold uppercase tracking-wide text-amber-500">
+                                    Attention
+                                </span>
+                            </div>
+
+                            <span
+                                class="text-xs text-muted-foreground transition-transform group-hover:translate-x-1"
+                            >
+                                →
+                            </span>
+                        </div>
+
+                        <template v-if="getInsight('monitoring')">
+                            <p class="mt-5 text-2xl font-semibold">
+                                {{ getInsight('monitoring')?.count ?? 0 }}
+                            </p>
+
+                            <p class="mt-1 text-sm font-medium">
+                                High GMV, Low Consistency
+                            </p>
+
+                            <p class="mt-2 text-xs leading-relaxed text-muted-foreground">
+                                Affiliate dengan kontribusi GMV tinggi tetapi consistency score masih rendah.
+                            </p>
+
+                            <div class="mt-4 flex items-center justify-between rounded-lg bg-background/60 px-3 py-2.5">
+                                <span class="text-xs text-muted-foreground">
+                                    Fokus
+                                </span>
+
+                                <span class="text-xs font-medium text-amber-500">
+                                    Konsistensi konten
+                                </span>
+                            </div>
+
+                            <div class="mt-4 flex items-center justify-between text-xs">
+                                <span class="text-muted-foreground">
+                                    Buka detail perhatian
+                                </span>
+
+                                <span class="font-medium text-amber-500">
+                                    Analisis →
+                                </span>
+                            </div>
+                        </template>
+
+                        <p
+                            v-else
+                            class="mt-5 text-sm text-muted-foreground"
+                        >
+                            Tidak ada pola yang perlu diperhatikan.
+                        </p>
+                    </div>
+                </Link>
+
+                <!-- Potential Opportunity -->
+                <Link
+                    href="/insights"
+                    class="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-emerald-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/[0.06] hover:shadow-lg"
+                >
+                    <div
+                        class="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl"
+                    />
+
+                    <div class="relative">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div
+                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500"
+                                >
+                                    ✦
+                                </div>
+
+                                <span class="text-xs font-semibold uppercase tracking-wide text-emerald-500">
+                                    Opportunity
+                                </span>
+                            </div>
+
+                            <span
+                                class="text-xs text-muted-foreground transition-transform group-hover:translate-x-1"
+                            >
+                                →
+                            </span>
+                        </div>
+
+                        <template v-if="getInsight('potential')">
+                            <p class="mt-5 text-2xl font-semibold">
+                                {{ getInsight('potential')?.count ?? 0 }}
+                            </p>
+
+                            <p class="mt-1 text-sm font-medium">
+                                Potential Opportunity
+                            </p>
+
+                            <p class="mt-2 text-xs leading-relaxed text-muted-foreground">
+                                Affiliate dengan opportunity score tinggi meskipun kontribusi GMV masih kecil.
+                            </p>
+
+                            <div class="mt-4 flex items-center justify-between rounded-lg bg-background/60 px-3 py-2.5">
+                                <span class="text-xs text-muted-foreground">
+                                    Fokus
+                                </span>
+
+                                <span class="text-xs font-medium text-emerald-500">
+                                    Aktivasi & support
+                                </span>
+                            </div>
+
+                            <div class="mt-4 flex items-center justify-between text-xs">
+                                <span class="text-muted-foreground">
+                                    Eksplorasi peluang
+                                </span>
+
+                                <span class="font-medium text-emerald-500">
+                                    Analisis →
+                                </span>
+                            </div>
+                        </template>
+
+                        <p
+                            v-else
+                            class="mt-5 text-sm text-muted-foreground"
+                        >
+                            Belum ada potential opportunity.
+                        </p>
+                    </div>
+                </Link>
+            </div>
+
+            <!-- No data -->
+            <div
+                v-else
+                class="mt-5 rounded-xl border border-dashed border-border p-8 text-center"
+            >
+                <p class="text-sm font-medium">
+                    Belum ada Performance Insights
+                </p>
+
+                <p class="mt-1 text-xs text-muted-foreground">
+                    Import data affiliate terlebih dahulu untuk menghasilkan insight.
+                </p>
+
+                <Link
+                    href="/imports"
+                    class="mt-4 inline-flex items-center rounded-lg bg-sky-600 px-4 py-2 text-xs font-medium text-white transition hover:bg-sky-700"
+                >
+                    Import Data →
+                </Link>
+            </div>
+        </div>
 
         <!-- Bottom Overview -->
         <div class="mt-4 grid gap-4 md:grid-cols-2">
