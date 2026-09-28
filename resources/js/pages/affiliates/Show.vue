@@ -13,6 +13,7 @@ import {
     Wallet,
     Sparkles,
     Lightbulb,
+    Info,
 } from '@lucide/vue'
 import {
     Tooltip,
@@ -728,87 +729,234 @@ const actionInfo = (action: string) => {
                 <!-- Score -->
                 <div
                     v-if="props.score"
-                    class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+                    class="mt-5 grid gap-4 md:grid-cols-4"
                 >
+
                     <!-- Performance -->
-                    <div class="rounded-xl bg-muted/30 p-4">
-                        <p class="text-sm text-muted-foreground">
-                            Performance
+                    <div class="group relative rounded-lg bg-muted/20 p-4">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm text-muted-foreground">
+                                Performance
+                            </p>
+
+                            <div class="relative">
+                                <Info
+                                    class="h-4 w-4 cursor-help text-muted-foreground"
+                                />
+
+                                <div
+                                    class="pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-[450px] rounded-lg border border-border bg-popover p-4 text-left text-xs text-popover-foreground shadow-lg group-hover:block"
+                                >
+                                    <p class="font-semibold">
+                                        Cara menghitung Performance
+                                    </p>
+
+                                    <p class="mt-2 leading-relaxed text-muted-foreground">
+                                        Performance Score dihitung dari performa affiliate
+                                        pada periode yang dipilih dan dibandingkan dengan
+                                        affiliate lain pada periode yang sama.
+                                    </p>
+
+                                    <div class="mt-3 space-y-1 text-muted-foreground">
+                                        <p>• GMV — 40%</p>
+                                        <p>• Orders — 25%</p>
+                                        <p>• Buyers — 15%</p>
+                                        <p>• Content Activity — 10%</p>
+                                        <p>• Engagement — 10%</p>
+                                    </div>
+
+                                    <p class="mt-3 leading-relaxed text-muted-foreground">
+                                        Engagement terdiri dari CTR dan CTOR dengan bobot
+                                        masing-masing 50%.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="mt-2 text-2xl font-semibold">
+                            {{
+                                props.score?.performance_score !== null &&
+                                props.score?.performance_score !== undefined
+                                    ? Number(props.score.performance_score).toFixed(2)
+                                    : '—'
+                            }}
                         </p>
 
-                        <p class="mt-2 text-3xl font-bold">
-                            {{ formatScore(props.score.performance_score) }}
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Performance score
                         </p>
                     </div>
+
 
                     <!-- Growth -->
-                    <div class="rounded-xl bg-muted/30 p-4">
-                        <p class="text-sm text-muted-foreground">
-                            Growth
-                        </p>
+                    <div class="group relative rounded-lg bg-muted/20 p-4">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm text-muted-foreground">
+                                Growth
+                            </p>
 
-                        <p class="mt-2 text-3xl font-semibold">
+                            <div class="relative">
+                                <Info
+                                    class="h-4 w-4 cursor-help text-muted-foreground"
+                                />
+
+                                <div
+                                    class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-[420px] -translate-x-1/2 rounded-lg border border-border bg-popover p-4 text-left text-xs text-popover-foreground shadow-lg group-hover:block"
+                                >
+                                    <p class="font-semibold">
+                                        Cara menghitung Growth
+                                    </p>
+
+                                    <p class="mt-2 leading-relaxed text-muted-foreground">
+                                        Growth Score berasal dari perubahan GMV dibandingkan
+                                        dengan periode pembanding dengan durasi yang sama.
+                                    </p>
+
+                                    <div class="mt-3 rounded-md bg-muted/50 p-2 font-mono text-[11px]">
+                                        Growth %
+                                        =
+                                        (GMV sekarang − GMV sebelumnya)
+                                        ÷ GMV sebelumnya × 100
+                                    </div>
+
+                                    <p class="mt-3 leading-relaxed text-muted-foreground">
+                                        Growth kemudian dinormalisasi menjadi score 0–100
+                                        untuk digunakan dalam perhitungan Opportunity.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="mt-2 text-2xl font-semibold">
                             {{
-                                formatAvailableScore(
-                                    props.score.growth_score,
-                                    props.score.period_count
-                                )
+                                props.score?.growth_score !== null &&
+                                props.score?.growth_score !== undefined
+                                    ? Number(props.score.growth_score).toFixed(2)
+                                    : '—'
                             }}
                         </p>
 
-                        <p
-                            v-if="props.score.period_count < 2"
-                            class="mt-2 text-xs text-muted-foreground"
-                        >
-                            Belum tersedia · butuh ≥ 2 periode
-                        </p>
-
-                        <p
-                            v-else
-                            class="mt-1 text-xs text-muted-foreground"
-                        >
-                            %
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Growth score
                         </p>
                     </div>
+
 
                     <!-- Consistency -->
-                    <div class="rounded-xl bg-muted/30 p-4">
-                        <p class="text-sm text-muted-foreground">
-                            Consistency
-                        </p>
+                    <div class="group relative rounded-lg bg-muted/20 p-4">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm text-muted-foreground">
+                                Consistency
+                            </p>
 
-                        <p class="mt-2 text-3xl font-semibold">
+                            <div class="relative">
+                                <Info
+                                    class="h-4 w-4 cursor-help text-muted-foreground"
+                                />
+
+                                <div
+                                    class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-[420px] -translate-x-1/2 rounded-lg border border-border bg-popover p-4 text-left text-xs text-popover-foreground shadow-lg group-hover:block"
+                                >
+                                    <p class="font-semibold">
+                                        Cara menghitung Consistency
+                                    </p>
+
+                                    <p class="mt-2 leading-relaxed text-muted-foreground">
+                                        Consistency mengukur seberapa stabil GMV affiliate
+                                        dari hari ke hari selama periode yang dipilih.
+                                    </p>
+
+                                    <p class="mt-3 leading-relaxed text-muted-foreground">
+                                        Semakin kecil variasi GMV harian, semakin tinggi
+                                        nilai consistency.
+                                    </p>
+
+                                    <div class="mt-3 rounded-md bg-muted/50 p-2 font-mono text-[11px]">
+                                        Consistency
+                                        =
+                                        100 − Coefficient of Variation × 100
+                                    </div>
+
+                                    <p class="mt-3 leading-relaxed text-muted-foreground">
+                                        Minimal dibutuhkan 2 snapshot harian untuk menghitung
+                                        nilai ini.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="mt-2 text-2xl font-semibold">
                             {{
-                                formatAvailableScore(
-                                    props.score.consistency_score,
-                                    props.score.period_count
-                                )
+                                props.score &&
+                                props.score.period_count >= 2 &&
+                                props.score.consistency_score !== null &&
+                                props.score.consistency_score !== undefined
+                                    ? Number(props.score.consistency_score).toFixed(2)
+                                    : '—'
                             }}
                         </p>
 
-                        <p
-                            v-if="props.score.period_count < 2"
-                            class="mt-2 text-xs text-muted-foreground"
-                        >
-                            Belum tersedia · butuh ≥ 2 periode
-                        </p>
-
-                        <p
-                            v-else
-                            class="mt-1 text-xs text-muted-foreground"
-                        >
-                            Stabilitas performa
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            {{
+                                props.score && props.score.period_count >= 2
+                                    ? 'Performance stability'
+                                    : 'Belum tersedia · butuh ≥ 2 hari'
+                            }}
                         </p>
                     </div>
 
+
                     <!-- Opportunity -->
-                    <div class="rounded-xl bg-muted/30 p-4">
-                        <p class="text-sm text-muted-foreground">
-                            Opportunity
+                    <div class="group relative rounded-lg bg-muted/20 p-4">
+                        <div class="flex items-center gap-2">
+                            <p class="text-sm text-muted-foreground">
+                                Opportunity
+                            </p>
+
+                            <div class="relative">
+                                <Info
+                                    class="h-4 w-4 cursor-help text-muted-foreground"
+                                />
+
+                                <div
+                                    class="pointer-events-none absolute bottom-full right-0 z-50 mb-2 hidden w-[420px] rounded-lg border border-border bg-popover p-4 text-left text-xs text-popover-foreground shadow-lg group-hover:block"
+                                >
+                                    <p class="font-semibold">
+                                        Cara menghitung Opportunity
+                                    </p>
+
+                                    <p class="mt-2 leading-relaxed text-muted-foreground">
+                                        Opportunity Score menunjukkan peluang affiliate
+                                        berdasarkan kombinasi performa, pertumbuhan,
+                                        dan kestabilan performanya.
+                                    </p>
+
+                                    <div class="mt-3 space-y-1 text-muted-foreground">
+                                        <p>• Performance — 50%</p>
+                                        <p>• Growth — 30%</p>
+                                        <p>• Consistency — 20%</p>
+                                    </div>
+
+                                    <p class="mt-3 leading-relaxed text-muted-foreground">
+                                        Jika periode hanya memiliki 1 snapshot harian,
+                                        consistency belum tersedia sehingga bobot yang
+                                        tersedia dinormalisasi.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="mt-2 text-2xl font-semibold">
+                            {{
+                                props.score?.opportunity_score !== null &&
+                                props.score?.opportunity_score !== undefined
+                                    ? Number(props.score.opportunity_score).toFixed(2)
+                                    : '—'
+                            }}
                         </p>
 
-                        <p class="mt-2 text-3xl font-bold">
-                            {{ formatScore(props.score.opportunity_score) }}
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Opportunity score
                         </p>
                     </div>
                 </div>
@@ -828,7 +976,7 @@ const actionInfo = (action: string) => {
                         Score akan tersedia setelah affiliate memiliki data performance yang sudah diproses.
                     </p>
                 </div>
-            </div>
+            </div
 
         <!-- Period -->
         <div
@@ -848,7 +996,7 @@ const actionInfo = (action: string) => {
 
                 <div
                     v-if="props.score && props.score.insights.length"
-                    class="mt-4 rounded-xl border border-border bg-muted/20 p-5"
+                    class="mt-1 rounded-xl border border-border bg-muted/20 p-5"
                 >
                     <div class="mb-3 flex items-center gap-2">
                         <Lightbulb class="h-4 w-4 text-amber-500" />
@@ -1077,6 +1225,103 @@ const actionInfo = (action: string) => {
                     class="text-sm text-muted-foreground"
                 >
                     Belum ada snapshot sebelumnya
+                </div>
+            </div>
+        </div>
+
+                <!-- Performance Metrics -->
+        <div
+            v-if="latest_performance"
+            class="rounded-xl border border-border bg-card p-6"
+        >
+            <div class="flex items-center gap-3">
+                <BarChart3 class="h-5 w-5 text-primary" />
+
+                <div>
+                    <h2 class="font-semibold">
+                        Performance Metrics
+                    </h2>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Metrik performa berdasarkan periode yang dipilih.
+                    </p>
+                </div>
+            </div>
+
+            <div class="mt-6 grid gap-4 sm:grid-cols-4 lg:grid-cols-5">
+
+                <!-- AOV -->
+                <div class="rounded-lg bg-muted/30 p-4">
+                    <p class="text-sm text-muted-foreground">
+                        AOV
+                    </p>
+
+                    <p class="mt-2 text-xl font-semibold">
+                        {{ formatCurrency(latest_performance.aov) }}
+                    </p>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Average Order Value
+                    </p>
+                </div>
+
+                <!-- CTR -->
+                <div class="rounded-lg bg-muted/30 p-4">
+                    <p class="text-sm text-muted-foreground">
+                        CTR
+                    </p>
+
+                    <p class="mt-2 text-xl font-semibold">
+                        {{ formatPercent(latest_performance.ctr) }}
+                    </p>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Click Through Rate
+                    </p>
+                </div>
+
+                <!-- CTOR -->
+                <div class="rounded-lg bg-muted/30 p-4">
+                    <p class="text-sm text-muted-foreground">
+                        CTOR
+                    </p>
+
+                    <p class="mt-2 text-xl font-semibold">
+                        {{ formatPercent(latest_performance.ctor) }}
+                    </p>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Click To Order Rate
+                    </p>
+                </div>
+                <!-- Impressions -->
+                <div class="rounded-lg bg-muted/30 p-4">
+                    <p class="text-sm text-muted-foreground">
+                        Impressions
+                    </p>
+
+                    <p class="mt-2 text-xl font-semibold">
+                        {{ formatNumber(latest_performance.impressions) }}
+                    </p>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Total impressions
+                    </p>
+                </div>
+
+                <!-- Video Views -->
+                <div class="rounded-lg bg-muted/30 p-4">
+                    <p class="text-sm text-muted-foreground">
+                        Video Views
+                    </p>
+
+                    <p class="mt-2 text-xl font-semibold">
+                        {{ formatNumber(latest_performance.video_views) }}
+                    </p>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Total video views
+                    </p>
                 </div>
             </div>
         </div>

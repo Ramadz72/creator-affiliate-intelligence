@@ -147,28 +147,18 @@ class AffiliateScoreService
             $growthScore = 0;
             $growthPercent = null;
 
-            $previous = $previousPerformances->get($affiliateId);
+            $previous = $previousByAffiliate->get($affiliateId);
 
-            if ($previous) {
-                $previousGmv = (float) $previous->gmv;
-                $currentGmv = (float) $performance->gmv;
+            if ($previous && $previous['gmv'] > 0) {
+                $growthPercent = (
+                    ($target['gmv'] - $previous['gmv'])
+                    / $previous['gmv']
+                ) * 100;
 
-                if ($previousGmv > 0) {
-                    $growthPercent =
-                        (($currentGmv - $previousGmv) / $previousGmv) * 100;
-
-                    /*
-                     * -50%  = 0
-                     *   0%  = 50
-                     * +50%  = 100
-                     */
-                    $growthScore = min(
-                        max(50 + $growthPercent, 0),
-                        100
-                    );
-
-                    $growthScore = round($growthScore, 2);
-                }
+                $growthScore = round(
+                    min(max(50 + $growthPercent, 0), 100),
+                    2
+                );
             }
 
             /*
@@ -282,6 +272,517 @@ class AffiliateScoreService
         }
 
         return count($rows);
+    }
+
+    /**
+     * Calculate score berdasarkan selected date range
+     * untuk seluruh affiliate.
+     *
+     * Berbeda dengan scoreBatch():
+     * - scoreBatch() = snapshot harian
+     * - scoreRange() = aggregate berdasarkan date range
+     */
+   public function scoreRange(
+        Collection $currentPerformances,
+        Collection $previousPerformances
+    ): Collection {
+
+        /*
+        * ============================================================
+        * NORMALIZE COLLECTION
+        * ============================================================
+        *
+        * Bisa menerima:
+        * - flat Collection
+        * - Collection yang sudah groupBy affiliate_id
+        */
+
+        $currentPerformances = $this->flattenPerformanceRows(
+            $currentPerformances
+        );
+
+        $previousPerformances = $this->flattenPerformanceRows(
+            $previousPerformances
+        );
+
+        if ($currentPerformances->isEmpty()) {
+            return collect();
+        }
+
+        /*
+        * ============================================================
+        * GROUP ONCE
+        * ============================================================
+        */
+
+        $currentGrouped = $currentPerformances->groupBy(
+            'affiliate_id'
+        );
+
+        $previousGrouped = $previousPerformances->groupBy(
+            'affiliate_id'
+        );
+
+        /*
+        * ============================================================
+        * AGGREGATE CURRENT RANGE
+        * ============================================================
+        */
+
+        $currentByAffiliate = $currentGrouped->map(
+            fn (Collection $rows) =>
+                $this->aggregateRangePerformance($rows)
+        );
+
+        /*
+        * ============================================================
+        * AGGREGATE PREVIOUS RANGE
+        * ============================================================
+        */
+
+        $previousByAffiliate = $previousGrouped->map(
+            fn (Collection $rows) =>
+                $this->aggregateRangePerformance($rows)
+        );
+
+        /*
+        * ============================================================
+        * PERCENTILE
+        * ============================================================
+        *
+        * Percentile dihitung berdasarkan aggregate seluruh
+        * affiliate dalam selected range.
+        */
+
+        $percentiles = [
+            'gmv' => $this->buildPercentileMap(
+                $currentByAffiliate->pluck('gmv')
+            ),
+
+            'orders' => $this->buildPercentileMap(
+                $currentByAffiliate->pluck('orders')
+            ),
+
+            'buyers' => $this->buildPercentileMap(
+                $currentByAffiliate->pluck('buyers')
+            ),
+
+            'content' => $this->buildPercentileMap(
+                $currentByAffiliate->pluck('content')
+            ),
+
+            'ctr' => $this->buildPercentileMap(
+                $currentByAffiliate->pluck('ctr')
+            ),
+
+            'ctor' => $this->buildPercentileMap(
+                $currentByAffiliate->pluck('ctor')
+            ),
+        ];
+
+        /*
+        * ============================================================
+        * BUILD SCORE
+        * ============================================================
+        */
+
+        return $currentByAffiliate->map(
+            function (
+                array $target,
+                $affiliateId
+            ) use (
+                $currentGrouped,
+                $previousByAffiliate,
+                $percentiles
+            ) {
+
+                /*
+                * Ambil rows affiliate langsung dari hasil groupBy.
+                *
+                * TIDAK melakukan:
+                * $currentPerformances->where(...)
+                */
+
+                $rows = $currentGrouped->get(
+                    $affiliateId,
+                    collect()
+                );
+
+                /*
+                * ====================================================
+                * PERFORMANCE SCORE
+                * ====================================================
+                */
+
+                $gmvScore = $percentiles['gmv'][
+                    $this->normalizeKey($target['gmv'])
+                ] ?? 0;
+
+                $ordersScore = $percentiles['orders'][
+                    $this->normalizeKey($target['orders'])
+                ] ?? 0;
+
+                $buyersScore = $percentiles['buyers'][
+                    $this->normalizeKey($target['buyers'])
+                ] ?? 0;
+
+                $contentScore = $percentiles['content'][
+                    $this->normalizeKey($target['content'])
+                ] ?? 0;
+
+                $ctrScore = $percentiles['ctr'][
+                    $this->normalizeKey($target['ctr'])
+                ] ?? 0;
+
+                $ctorScore = $percentiles['ctor'][
+                    $this->normalizeKey($target['ctor'])
+                ] ?? 0;
+
+                $engagementScore =
+                    ($ctrScore * 0.50) +
+                    ($ctorScore * 0.50);
+
+                $performanceScore = round(
+                    ($gmvScore * 0.40) +
+                    ($ordersScore * 0.25) +
+                    ($buyersScore * 0.15) +
+                    ($contentScore * 0.10) +
+                    ($engagementScore * 0.10),
+                    2
+                );
+
+                /*
+                * ====================================================
+                * GROWTH SCORE
+                * ====================================================
+                */
+
+                $growthScore = 0;
+                $growthPercent = null;
+
+                $previous = $previousByAffiliate->get(
+                    $affiliateId
+                );
+
+                if (
+                    $previous !== null &&
+                    $previous['gmv'] > 0
+                ) {
+
+                    $growthPercent =
+                        (
+                            ($target['gmv'] - $previous['gmv'])
+                            / $previous['gmv']
+                        ) * 100;
+
+                    /*
+                    * -50% = 0
+                    *   0% = 50
+                    * +50% = 100
+                    */
+
+                    $growthScore = min(
+                        max(50 + $growthPercent, 0),
+                        100
+                    );
+
+                    $growthScore = round(
+                        $growthScore,
+                        2
+                    );
+                }
+
+                /*
+                * ====================================================
+                * CONSISTENCY SCORE
+                * ====================================================
+                *
+                * Menggunakan GMV harian dalam selected range.
+                */
+
+                $dailyGmvs = $rows
+                    ->pluck('gmv')
+                    ->map(
+                        fn ($value) => (float) $value
+                    )
+                    ->filter(
+                        fn ($value) => $value > 0
+                    )
+                    ->values();
+
+                $consistencyScore = 0;
+
+                if ($dailyGmvs->count() >= 2) {
+
+                    $average = $dailyGmvs->avg();
+
+                    if ($average > 0) {
+
+                        $variance = $dailyGmvs
+                            ->map(
+                                fn ($value) =>
+                                    pow(
+                                        $value - $average,
+                                        2
+                                    )
+                            )
+                            ->avg();
+
+                        $standardDeviation = sqrt(
+                            $variance
+                        );
+
+                        $coefficientVariation =
+                            $standardDeviation / $average;
+
+                        $consistencyScore = round(
+                            max(
+                                0,
+                                min(
+                                    100,
+                                    100 -
+                                    ($coefficientVariation * 100)
+                                )
+                            ),
+                            2
+                        );
+                    }
+                }
+
+                /*
+                * ====================================================
+                * OPPORTUNITY SCORE
+                * ====================================================
+                */
+
+                $opportunityScore = $performanceScore;
+
+                if ($previous) {
+                    if ($dailyGmvs->count() >= 2) {
+                        // Semua komponen tersedia
+                        $opportunityScore = round(
+                            ($performanceScore * 0.50) +
+                            ($growthScore * 0.30) +
+                            ($consistencyScore * 0.20),
+                            2
+                        );
+                    } else {
+                        // Hanya performance + growth yang tersedia.
+                        // Bobot dinormalisasi dari 80% menjadi 100%.
+                        $opportunityScore = round(
+                            (
+                                ($performanceScore * 0.50) +
+                                ($growthScore * 0.30)
+                            ) / 0.80,
+                            2
+                        );
+                    }
+                }
+
+                /*
+                * ====================================================
+                * ACTION
+                * ====================================================
+                */
+
+                $action = $this->determineAction(
+                    $opportunityScore
+                );
+
+                /*
+                * ====================================================
+                * INSIGHTS
+                * ====================================================
+                */
+
+                $insights = $this->generateRangeInsights(
+                    $performanceScore,
+                    $growthScore,
+                    $consistencyScore,
+                    $opportunityScore,
+                    $growthPercent,
+                    $previous !== null,
+                    $dailyGmvs->count()
+                );
+
+                return [
+                    'performance_score' => $performanceScore,
+                    'growth_score' => $growthScore,
+                    'consistency_score' => $consistencyScore,
+                    'opportunity_score' => $opportunityScore,
+                    'overall_score' => $opportunityScore,
+                    'action' => $action,
+                    'growth_percent' => $growthPercent,
+                    'period_count' => $dailyGmvs->count(),
+                    'insights' => $insights,
+                ];
+            }
+        );
+    }
+
+    private function flattenPerformanceRows(
+        Collection $collection
+    ): Collection {
+
+        $result = collect();
+
+        foreach ($collection as $item) {
+
+            if ($item instanceof Collection) {
+                foreach ($item as $row) {
+                    if ($row instanceof AffiliatePerformance) {
+                        $result->push($row);
+                    }
+                }
+
+                continue;
+            }
+
+            if ($item instanceof AffiliatePerformance) {
+                $result->push($item);
+            }
+        }
+
+        return $result->values();
+    }
+
+    /**
+     * Aggregate beberapa snapshot menjadi satu range.
+     */
+    private function aggregateRangePerformance(
+        Collection $rows
+    ): array {
+        $sum = function (string $field) use ($rows): float {
+            return $rows->sum(
+                fn ($row) => (float) ($row->{$field} ?? 0)
+            );
+        };
+
+        $gmv = $sum('gmv');
+        $orders = $sum('attributed_orders');
+        $buyers = $sum('buyers');
+
+        $impressions = $sum('impressions');
+        $videoViews = $sum('video_views');
+
+        /*
+        * CTR weighted berdasarkan impressions.
+        */
+        $weightedCtr = $rows->sum(function ($row) {
+            return
+                (float) ($row->ctr ?? 0) *
+                (float) ($row->impressions ?? 0);
+        });
+
+        $ctr = $impressions > 0
+            ? $weightedCtr / $impressions
+            : 0;
+
+        /*
+        * CTOR weighted berdasarkan video views.
+        */
+        $weightedCtor = $rows->sum(function ($row) {
+            return
+                (float) ($row->ctor ?? 0) *
+                (float) ($row->video_views ?? 0);
+        });
+
+        $ctor = $videoViews > 0
+            ? $weightedCtor / $videoViews
+            : 0;
+
+        /*
+        * Content activity.
+        */
+        $content = $rows->sum(function ($row) {
+            return
+                (int) ($row->video_count ?? 0) +
+                (int) ($row->live_count ?? 0);
+        });
+
+        return [
+            'gmv' => $gmv,
+            'orders' => $orders,
+            'buyers' => $buyers,
+            'content' => $content,
+            'ctr' => $ctr,
+            'ctor' => $ctor,
+        ];
+    }
+
+    private function generateRangeInsights(
+        float $performanceScore,
+        float $growthScore,
+        float $consistencyScore,
+        float $opportunityScore,
+        ?float $growthPercent,
+        bool $hasPreviousPeriod,
+        int $periodCount
+    ): array {
+        $insights = [];
+
+        /*
+        * Performance
+        */
+        if ($performanceScore >= 75) {
+            $insights[] =
+                'Performance berada di level tinggi dibandingkan affiliate lain pada periode ini.';
+        } elseif ($performanceScore >= 50) {
+            $insights[] =
+                'Performance berada di level menengah dan masih memiliki ruang untuk ditingkatkan.';
+        } else {
+            $insights[] =
+                'Performance masih relatif rendah dibandingkan affiliate lain pada periode ini.';
+        }
+
+        /*
+        * Consistency
+        */
+        if ($periodCount >= 2) {
+            if ($consistencyScore >= 75) {
+                $insights[] =
+                    'Performa GMV relatif konsisten sepanjang periode yang dipilih.';
+            } elseif ($consistencyScore >= 50) {
+                $insights[] =
+                    'Performa cukup konsisten, tetapi masih terdapat fluktuasi GMV.';
+            } else {
+                $insights[] =
+                    'Performa GMV cukup fluktuatif sepanjang periode yang dipilih.';
+            }
+        }
+
+        /*
+        * Growth
+        */
+        if ($hasPreviousPeriod && $growthPercent !== null) {
+            if ($growthPercent > 0) {
+                $insights[] = sprintf(
+                    'GMV meningkat %.2f%% dibandingkan periode sebelumnya.',
+                    $growthPercent
+                );
+            } elseif ($growthPercent < 0) {
+                $insights[] = sprintf(
+                    'GMV menurun %.2f%% dibandingkan periode sebelumnya.',
+                    abs($growthPercent)
+                );
+            } else {
+                $insights[] =
+                    'GMV relatif stabil dibandingkan periode sebelumnya.';
+            }
+        }
+
+        /*
+        * Opportunity
+        */
+        if ($opportunityScore >= 75) {
+            $insights[] =
+                'Affiliate menunjukkan kombinasi performance, growth, dan consistency yang kuat pada periode ini.';
+        } elseif ($opportunityScore < 35) {
+            $insights[] =
+                'Affiliate perlu dipantau karena kombinasi score pada periode ini masih rendah.';
+        }
+
+        return $insights;
     }
 
     /**

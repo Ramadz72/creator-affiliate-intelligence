@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Affiliate;
 use App\Models\ImportBatch;
 use Carbon\Carbon;
+use App\Services\AffiliateScoreService;
+use App\Models\AffiliatePerformance;
 use Inertia\Inertia;
 use Inertia\Response;
 use Illuminate\Support\Facades\Auth;
@@ -131,6 +133,57 @@ class AffiliateDetailController extends Controller
                 $previousEndDate
             );
         });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Range Score Data
+        |--------------------------------------------------------------------------
+        |
+        | Score harus dibandingkan terhadap seluruh affiliate user
+        | dalam selected range.
+        |
+        */
+
+        $currentBatchIds = ImportBatch::query()
+            ->where('status', 'completed')
+            ->where('uploaded_by', Auth::id())
+            ->whereBetween('period_start', [
+                $startDate->toDateString(),
+                $endDate->toDateString(),
+            ])
+            ->pluck('id');
+
+        $comparisonBatchIds = ImportBatch::query()
+            ->where('status', 'completed')
+            ->where('uploaded_by', Auth::id())
+            ->whereBetween('period_start', [
+                $previousStartDate->toDateString(),
+                $previousEndDate->toDateString(),
+            ])
+            ->pluck('id');
+
+        $scoreCurrentPerformances = AffiliatePerformance::query()
+            ->whereIn('import_batch_id', $currentBatchIds)
+            ->whereHas('affiliate', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->get();
+
+        $scoreComparisonPerformances = AffiliatePerformance::query()
+            ->whereIn('import_batch_id', $comparisonBatchIds)
+            ->whereHas('affiliate', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->get();
+
+        $scoreService = app(AffiliateScoreService::class);
+
+        $rangeScores = $scoreService->scoreRange(
+            $scoreCurrentPerformances,
+            $scoreComparisonPerformances
+        );
+
+        $rangeScore = $rangeScores->get($affiliate->id);
 
         /*
         |--------------------------------------------------------------------------
@@ -298,41 +351,7 @@ class AffiliateDetailController extends Controller
             ]
             : null;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Latest Batch Inside Selected Range
-        |--------------------------------------------------------------------------
-        |
-        | Score tetap mengambil score dari snapshot terakhir
-        | yang tersedia dalam range tersebut.
-        |
-        */
 
-        $selectedBatch = ImportBatch::query()
-            ->where('status', 'completed')
-            ->where('uploaded_by', Auth::id())
-            ->whereDate('period_start', '>=', $startDate)
-            ->whereDate('period_start', '<=', $endDate)
-            ->orderByDesc('period_start')
-            ->orderByDesc('id')
-            ->first();
-
-        /*
-        |--------------------------------------------------------------------------
-        | Score
-        |--------------------------------------------------------------------------
-        */
-
-        $latestScore = $selectedBatch
-            ? $affiliate->scores()
-                ->with('importBatch:id,period_start,period_end')
-                ->where(
-                    'import_batch_id',
-                    $selectedBatch->id
-                )
-                ->latest('id')
-                ->first()
-            : null;
 
         /*
         |--------------------------------------------------------------------------
@@ -475,35 +494,40 @@ class AffiliateDetailController extends Controller
                 'end' => $previousEndDate->format('Y-m-d'),
             ],
 
-            'score' => $latestScore ? [
-                'performance_score' => $latestScore->performance_score,
-                'growth_score' => $latestScore->growth_score,
-                'consistency_score' => $latestScore->consistency_score,
-                'opportunity_score' => $latestScore->opportunity_score,
-                'action' => $latestScore->action,
+            'score' => $rangeScore ? [
+                'performance_score' =>
+                    $rangeScore['performance_score'],
 
-                'generated_at' => $latestScore->generated_at
-                    ?->format('Y-m-d H:i'),
+                'growth_score' =>
+                    $rangeScore['growth_score'],
 
-                'period_start' => $latestScore->importBatch
-                    ?->period_start
-                    ?->format('Y-m-d'),
+                'consistency_score' =>
+                    $rangeScore['consistency_score'],
 
-                'period_end' => $latestScore->importBatch
-                    ?->period_end
-                    ?->format('Y-m-d'),
+                'opportunity_score' =>
+                    $rangeScore['opportunity_score'],
 
-                'insights' => [],
+                'action' =>
+                    $rangeScore['action'],
 
-                'period_count' => $affiliate->performances()
-                    ->whereHas('importBatch', function ($query) {
-                        $query->where('status', 'completed');
-                    })
-                    ->distinct('import_batch_id')
-                    ->count('import_batch_id'),
+                'growth_percent' =>
+                    $rangeScore['growth_percent'],
+
+                'period_count' =>
+                    $rangeScore['period_count'],
+
+                'generated_at' => now()->format('Y-m-d H:i'),
+
+                'period_start' =>
+                    $startDate->format('Y-m-d'),
+
+                'period_end' =>
+                    $endDate->format('Y-m-d'),
+
+                'insights' =>
+                    $rangeScore['insights'] ?? [],
             ] : null,
 
-            'selected_batch_id' => $selectedBatch?->id,
         ]);
     }
 }

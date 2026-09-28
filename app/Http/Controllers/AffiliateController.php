@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\AffiliatePerformance;
 use App\Models\ImportBatch;
 use Carbon\Carbon;
+use App\Services\AffiliateScoreService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -358,19 +358,15 @@ class AffiliateController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $currentPerformances = AffiliatePerformance::query()
-            ->with([
-                'affiliate:id,name,username,platform,status',
-            ])
-            ->whereIn(
-                'import_batch_id',
-                $currentBatches->pluck('id')
-            )
+        $currentPerformanceRows = AffiliatePerformance::query()
+            ->with(['affiliate:id,name,username,platform,status'])
+            ->whereIn('import_batch_id', $currentBatches->pluck('id'))
             ->whereHas('affiliate', function ($query) {
                 $query->where('user_id', Auth::id());
             })
-            ->get()
-            ->groupBy('affiliate_id');
+            ->get();
+
+        $currentPerformances = $currentPerformanceRows->groupBy('affiliate_id');
 
         /*
         |--------------------------------------------------------------------------
@@ -378,51 +374,31 @@ class AffiliateController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $comparisonPerformances = AffiliatePerformance::query()
-            ->whereIn(
-                'import_batch_id',
-                $comparisonBatches->pluck('id')
-            )
-            ->get()
-            ->groupBy('affiliate_id');
+        $comparisonPerformanceRows = AffiliatePerformance::query()
+            ->whereIn('import_batch_id', $comparisonBatches->pluck('id'))
+            ->whereHas('affiliate', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->get();
 
+        $comparisonPerformances = $comparisonPerformanceRows->groupBy('affiliate_id');
+        
         /*
         |--------------------------------------------------------------------------
-        | Latest Score Per Affiliate
+        | Range Score
         |--------------------------------------------------------------------------
         |
-        | Score menggunakan snapshot terakhir yang tersedia
-        | di dalam periode yang sedang dipilih.
+        | Score dihitung ulang berdasarkan seluruh data dalam
+        | selected range, bukan mengambil score snapshot terakhir.
         |
         */
 
-        $scoreRows = DB::table('affiliate_scores')
-            ->join(
-                'import_batches',
-                'affiliate_scores.import_batch_id',
-                '=',
-                'import_batches.id'
-            )
-            ->where('import_batches.status', 'completed')
-            ->where('import_batches.uploaded_by', Auth::id())
-            ->whereIn(
-                'affiliate_scores.import_batch_id',
-                $currentBatches->pluck('id')
-            )
-            ->orderByDesc('import_batches.period_start')
-            ->orderByDesc('affiliate_scores.id')
-            ->get([
-                'affiliate_scores.affiliate_id',
-                'affiliate_scores.performance_score',
-                'affiliate_scores.opportunity_score',
-                'affiliate_scores.action',
-                'import_batches.period_start',
-                'import_batches.id as batch_id',
-            ])
-            ->groupBy('affiliate_id')
-            ->map(function ($rows) {
-                return $rows->first();
-            });
+        $scoreService = app(AffiliateScoreService::class);
+
+        $rangeScores = $scoreService->scoreRange(
+            $currentPerformanceRows,
+            $comparisonPerformanceRows
+        );
 
         /*
         |--------------------------------------------------------------------------
@@ -433,7 +409,7 @@ class AffiliateController extends Controller
         $affiliateRows = $currentPerformances
             ->map(function ($rows, $affiliateId) use (
                 $comparisonPerformances,
-                $scoreRows,
+                $rangeScores,
                 $startDate,
                 $endDate
             ) {
@@ -506,7 +482,7 @@ class AffiliateController extends Controller
                 | Score
                 */
 
-                $score = $scoreRows->get($affiliateId);
+                $score = $rangeScores->get($affiliateId);
 
                 return [
                     'id' => $first->affiliate?->id,
@@ -520,15 +496,21 @@ class AffiliateController extends Controller
                     'status' => $first->affiliate?->status ?? 'active',
 
                     'score' => [
-                        'performance' => $score?->performance_score !== null
-                            ? (float) $score->performance_score
-                            : null,
+                        'performance' => $score['performance_score'] ?? null,
 
-                        'opportunity' => $score?->opportunity_score !== null
-                            ? (float) $score->opportunity_score
-                            : null,
+                        'growth' => $score['growth_score'] ?? null,
 
-                        'action' => $score?->action ?? 'MONITOR',
+                        'consistency' => $score['consistency_score'] ?? null,
+
+                        'opportunity' => $score['opportunity_score'] ?? null,
+
+                        'action' => $score['action'] ?? 'MONITOR',
+
+                        'growth_percent' => $score['growth_percent'] ?? null,
+
+                        'period_count' => $score['period_count'] ?? 0,
+
+                        'insights' => $score['insights'] ?? [],
                     ],
 
                     'latest_performance' => [
