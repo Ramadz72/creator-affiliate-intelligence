@@ -36,6 +36,13 @@ interface AffiliateScore {
     insights: string[]
 }
 
+interface Movement {
+    status: 'UP' | 'DOWN' | 'STABLE' | 'NO_BASELINE'
+    previous_gmv: number | null
+    gmv_change: number | null
+    gmv_change_percent: number | null
+}
+
 interface Performance {
     id: number
     gmv: number | string
@@ -60,6 +67,8 @@ interface Performance {
     products_returned: number
     period_start: string | null
     period_end: string | null
+
+    movement?: Movement
 }
 
 interface Affiliate {
@@ -70,54 +79,111 @@ interface Affiliate {
     status: string
 }
 
-interface ImportBatch {
-    id: number
-    file_name: string
-    period_start: string | null
-    period_end: string | null
+
+interface Props {
+    affiliate: Affiliate
+
+    latest_performance: Performance | null
+
+    performance_history: Performance[]
+
+    selected_period: {
+        start: string
+        end: string
+    } | null
+
+    comparison_period: {
+        start: string
+        end: string
+    } | null
+
+    score: AffiliateScore | null
 }
 
-const props = defineProps<{
-    affiliate: Affiliate
-    latest_performance: Performance | null
-    performance_history: Performance[]
-    score: AffiliateScore
-    import_batches: ImportBatch[]
-    selected_batch_id: number | null
-}>()
+const props = defineProps<Props>()
 
 const handleClickOutside = (event: MouseEvent) => {
     const target = event.target as HTMLElement
 
-    if (!target.closest('[data-batch-dropdown]')) {
-        showBatchDropdown.value = false
+    if (!target.closest('[data-period-dropdown]')) {
+        showPeriodDropdown.value = false
     }
 }
 
 onMounted(() => {
-    document.addEventListener('click', handleClickOutside)
+    document.addEventListener(
+        'click',
+        handleClickOutside
+    )
 })
 
 onBeforeUnmount(() => {
-    document.removeEventListener('click', handleClickOutside)
+    document.removeEventListener(
+        'click',
+        handleClickOutside
+    )
 })
 
-const selectedBatchId = ref<number | null>(
-    props.selected_batch_id ?? null
+const startDate = ref(
+    props.selected_period?.start ?? ''
 )
 
-const showBatchDropdown = ref(false)
+const endDate = ref(
+    props.selected_period?.end ?? ''
+)
 
-const selectedBatch = computed(() => {
-    return props.import_batches?.find(
-        (batch) => batch.id === selectedBatchId.value
-    ) ?? null
-})
+const comparisonPeriod = computed(
+    () => props.comparison_period
+)
 
-const formatPeriodDate = (date: string | null | undefined) => {
+const showPeriodDropdown = ref(false)
+
+const periodPreset = ref<
+    '7days' | '30days' | 'today' | 'custom'
+>('custom')
+
+const formatDateInput = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+}
+
+const getToday = () => {
+    return formatDateInput(new Date())
+}
+
+const getDaysAgo = (days: number) => {
+    const date = new Date()
+
+    date.setDate(date.getDate() - days)
+
+    return formatDateInput(date)
+}
+
+const applyFilters = () => {
+    showPeriodDropdown.value = false
+
+    router.get(
+        `/affiliates/${props.affiliate.id}`,
+        {
+            start_date: startDate.value || undefined,
+            end_date: endDate.value || undefined,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+        }
+    )
+}
+
+const formatPeriodDate = (
+    date: string | null | undefined
+) => {
     if (!date) return '-'
 
-    const parsed = new Date(date)
+    const parsed = new Date(`${date}T00:00:00`)
 
     if (Number.isNaN(parsed.getTime())) {
         return date
@@ -131,27 +197,63 @@ const formatPeriodDate = (date: string | null | undefined) => {
 }
 
 const selectedPeriodLabel = computed(() => {
-    if (!selectedBatch.value) {
+    if (!startDate.value || !endDate.value) {
         return 'Pilih periode data'
     }
 
-    return `${formatPeriodDate(selectedBatch.value.period_start)} — ${formatPeriodDate(selectedBatch.value.period_end)}`
+    return `${formatPeriodDate(startDate.value)} — ${formatPeriodDate(endDate.value)}`
 })
 
-const selectBatch = (batchId: number) => {
-    selectedBatchId.value = batchId
-    showBatchDropdown.value = false
+const comparisonPeriodLabel = computed(() => {
+    if (!comparisonPeriod.value) {
+        return 'Belum ada periode pembanding'
+    }
 
-    router.get(
-        `/affiliates/${props.affiliate.id}`,
-        {
-            batch_id: batchId,
-        },
-        {
-            preserveScroll: true,
-            preserveState: false,
-        }
-    )
+    return `${formatPeriodDate(comparisonPeriod.value.start)} — ${formatPeriodDate(comparisonPeriod.value.end)}`
+})
+
+const selectPreset = (
+    preset: '7days' | '30days' | 'today'
+) => {
+    periodPreset.value = preset
+
+    if (preset === 'today') {
+        startDate.value = getToday()
+        endDate.value = getToday()
+    }
+
+    if (preset === '7days') {
+        startDate.value = getDaysAgo(6)
+        endDate.value = getToday()
+    }
+
+    if (preset === '30days') {
+        startDate.value = getDaysAgo(29)
+        endDate.value = getToday()
+    }
+
+    applyFilters()
+}
+
+const selectCustom = () => {
+    periodPreset.value = 'custom'
+}
+
+const applyCustomPeriod = () => {
+    if (!startDate.value || !endDate.value) {
+        return
+    }
+
+    if (startDate.value > endDate.value) {
+        const temp = startDate.value
+
+        startDate.value = endDate.value
+        endDate.value = temp
+    }
+
+    periodPreset.value = 'custom'
+
+    applyFilters()
 }
 
 const formatCurrency = (value: number | string | null | undefined) => {
@@ -170,6 +272,62 @@ const formatNumber = (value: number | string | null | undefined) => {
 
 const formatPercent = (value: number | string | null | undefined) => {
     return `${Number(value ?? 0).toFixed(2)}%`
+}
+
+const movementLabel = (movement?: Movement) => {
+    if (!movement) return 'Belum ada data sebelumnya'
+
+    switch (movement.status) {
+        case 'UP':
+            return 'Performa naik'
+
+        case 'DOWN':
+            return 'Performa turun'
+
+        case 'STABLE':
+            return 'Performa stabil'
+
+        default:
+            return 'Belum ada data sebelumnya'
+    }
+}
+
+const movementClass = (movement?: Movement) => {
+    if (!movement) {
+        return 'bg-muted text-muted-foreground'
+    }
+
+    switch (movement.status) {
+        case 'UP':
+            return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+
+        case 'DOWN':
+            return 'bg-red-500/10 text-red-600 dark:text-red-400'
+
+        case 'STABLE':
+            return 'bg-muted text-muted-foreground'
+
+        default:
+            return 'bg-muted text-muted-foreground'
+    }
+}
+
+const movementIcon = (movement?: Movement) => {
+    if (!movement) return '—'
+
+    switch (movement.status) {
+        case 'UP':
+            return '↑'
+
+        case 'DOWN':
+            return '↓'
+
+        case 'STABLE':
+            return '→'
+
+        default:
+            return '—'
+    }
 }
 
 const periodLabel = (performance: Performance | null) => {
@@ -265,8 +423,8 @@ const actionInfo = (action: string) => {
             <div class="flex items-center justify-between gap-6">
                 <div class="flex items-center gap-6">
                     <Link
-                        :href="selectedBatchId
-                            ? `/affiliates?batch_id=${selectedBatchId}`
+                        :href="startDate && endDate
+                            ? `/affiliates?start_date=${startDate}&end_date=${endDate}`
                             : '/affiliates'"
                         class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card hover:bg-muted"
                     >
@@ -287,35 +445,70 @@ const actionInfo = (action: string) => {
 
                 <!-- Periode Data -->
                 <div
-                    class="relative shrink-0"
-                    data-batch-dropdown
+                    class="relative ml-auto shrink-0"
+                    data-period-dropdown
                 >
                     <button
                         type="button"
-                        @click="showBatchDropdown = !showBatchDropdown"
-                        class="flex h-10 min-w-[245px] items-center justify-between gap-3 rounded-lg border border-border bg-background px-3.5 text-sm text-foreground shadow-sm transition-all hover:border-sky-300 hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                        @click="
+                            showPeriodDropdown = !showPeriodDropdown
+                        "
+                        class="flex h-10 min-w-[285px] items-center justify-between gap-3 rounded-lg border border-border bg-background px-3.5 text-sm text-foreground shadow-sm transition-all hover:border-sky-300 hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                     >
-                        <div class="flex min-w-0 items-center gap-2">
-                            <span class="text-muted-foreground">
-                                Periode:
-                            </span>
+                        <span class="flex min-w-0 items-center gap-2">
+                            <svg
+                                class="h-4 w-4 shrink-0 text-muted-foreground"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
+                                <rect
+                                    x="3"
+                                    y="4"
+                                    width="18"
+                                    height="18"
+                                    rx="2"
+                                />
 
-                            <span class="truncate font-medium">
+                                <line
+                                    x1="16"
+                                    y1="2"
+                                    x2="16"
+                                    y2="6"
+                                />
+
+                                <line
+                                    x1="8"
+                                    y1="2"
+                                    x2="8"
+                                    y2="6"
+                                />
+
+                                <line
+                                    x1="3"
+                                    y1="10"
+                                    x2="21"
+                                    y2="10"
+                                />
+                            </svg>
+
+                            <span class="truncate">
                                 {{ selectedPeriodLabel }}
                             </span>
-                        </div>
+                        </span>
 
                         <svg
-                            class="h-4 w-4 shrink-0 text-muted-foreground transition-transform"
-                            :class="{ 'rotate-180': showBatchDropdown }"
-                            viewBox="0 0 20 20"
-                            fill="currentColor"
+                            class="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200"
+                            :class="{
+                                'rotate-180': showPeriodDropdown
+                            }"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
                         >
-                            <path
-                                fill-rule="evenodd"
-                                d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z"
-                                clip-rule="evenodd"
-                            />
+                            <path d="m6 9 6 6 6-6" />
                         </svg>
                     </button>
 
@@ -328,52 +521,162 @@ const actionInfo = (action: string) => {
                         leave-to-class="translate-y-1 opacity-0"
                     >
                         <div
-                            v-if="showBatchDropdown"
-                            class="absolute right-0 z-50 mt-2 w-[285px] overflow-hidden rounded-xl border border-border bg-popover p-1.5 shadow-xl shadow-black/10"
+                            v-if="showPeriodDropdown"
+                            class="absolute right-0 z-50 mt-2 w-[420px] overflow-hidden rounded-xl border border-border bg-popover shadow-xl shadow-black/10"
                         >
-                            <button
-                                v-for="batch in props.import_batches"
-                                :key="batch.id"
-                                type="button"
-                                @click="selectBatch(batch.id)"
-                                class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left transition hover:bg-muted"
-                                :class="
-                                    batch.id === selectedBatchId
-                                        ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400'
-                                        : 'text-foreground'
-                                "
-                            >
-                                <div class="min-w-0">
-                                    <p class="text-sm font-medium">
-                                        {{ formatPeriodDate(batch.period_start) }}
-                                        —
-                                        {{ formatPeriodDate(batch.period_end) }}
-                                    </p>
+                            <div class="grid grid-cols-[150px_1fr]">
 
-                                    <p class="mt-0.5 truncate text-xs text-muted-foreground">
-                                        {{ batch.file_name }}
-                                    </p>
+                                <!-- Preset -->
+                                <div class="border-r border-border p-2">
+                                    <div class="px-3 py-2 text-xs font-medium text-muted-foreground">
+                                        Periode
+                                    </div>
+
+                                    <button
+                                        type="button"
+                                        @click="selectPreset('7days')"
+                                        class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
+                                        :class="{
+                                            'bg-muted font-medium':
+                                                periodPreset === '7days'
+                                        }"
+                                    >
+                                        7 hari terakhir
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        @click="selectPreset('30days')"
+                                        class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
+                                        :class="{
+                                            'bg-muted font-medium':
+                                                periodPreset === '30days'
+                                        }"
+                                    >
+                                        30 hari terakhir
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        @click="selectPreset('today')"
+                                        class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
+                                        :class="{
+                                            'bg-muted font-medium':
+                                                periodPreset === 'today'
+                                        }"
+                                    >
+                                        Hari ini
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        @click="selectCustom"
+                                        class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
+                                        :class="{
+                                            'bg-muted font-medium':
+                                                periodPreset === 'custom'
+                                        }"
+                                    >
+                                        <span>Kustom</span>
+
+                                        <span class="text-muted-foreground">
+                                            ›
+                                        </span>
+                                    </button>
                                 </div>
 
-                                <span
-                                    v-if="batch.id === selectedBatchId"
-                                    class="ml-3 shrink-0 text-xs font-semibold"
-                                >
-                                    ✓
-                                </span>
-                            </button>
+                                <!-- Custom Range -->
+                                <div class="p-4">
+                                    <div class="mb-4">
+                                        <p class="text-sm font-medium">
+                                            Pilih rentang tanggal
+                                        </p>
 
-                            <div
-                                v-if="!props.import_batches?.length"
-                                class="px-3 py-4 text-center text-sm text-muted-foreground"
-                            >
-                                Belum ada periode data.
+                                        <p class="mt-1 text-xs text-muted-foreground">
+                                            Data akan dibandingkan dengan periode sebelumnya
+                                            dengan jumlah hari yang sama.
+                                        </p>
+                                    </div>
+
+                                    <!-- Start -->
+                                    <div>
+                                        <label
+                                            class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >
+                                            Tanggal mulai
+                                        </label>
+
+                                        <input
+                                            v-model="startDate"
+                                            type="date"
+                                            @focus="selectCustom"
+                                            class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
+                                        />
+                                    </div>
+
+                                    <!-- End -->
+                                    <div class="mt-3">
+                                        <label
+                                            class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                        >
+                                            Tanggal akhir
+                                        </label>
+
+                                        <input
+                                            v-model="endDate"
+                                            type="date"
+                                            :min="startDate"
+                                            @focus="selectCustom"
+                                            class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
+                                        />
+                                    </div>
+
+                                    <!-- Preview -->
+                                    <div
+                                        class="mt-4 rounded-xl border border-border bg-card p-5 shadow-sm"
+                                    >
+                                        <p class="text-sm text-muted-foreground">
+                                            Periode Terpilih
+                                        </p>
+
+                                        <p class="mt-2 font-semibold">
+                                            {{ selectedPeriodLabel }}
+                                        </p>
+
+                                        <div
+                                            v-if="comparisonPeriod"
+                                            class="mt-3 border-t border-border pt-3"
+                                        >
+                                            <p class="text-xs text-muted-foreground">
+                                                Dibandingkan dengan
+                                            </p>
+
+                                            <p class="mt-1 text-sm font-medium">
+                                                {{ comparisonPeriodLabel }}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <!-- Apply -->
+                                    <button
+                                        type="button"
+                                        :disabled="
+                                            !startDate ||
+                                            !endDate
+                                        "
+                                        @click="applyCustomPeriod"
+                                        class="mt-4 flex h-10 w-full items-center justify-center rounded-lg bg-sky-600 px-4 text-sm font-medium text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                    >
+                                        Terapkan Periode
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </Transition>
                 </div>
             </div>
 
+            <!-- Affiliate Intelligence -->
             <div class="mb-6 rounded-2xl border border-border bg-card p-6">
                 <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                     <div>
@@ -390,7 +693,11 @@ const actionInfo = (action: string) => {
                         </p>
                     </div>
 
-                    <div class="flex items-center gap-2">
+                    <!-- Action -->
+                    <div
+                        v-if="props.score"
+                        class="flex items-center gap-2"
+                    >
                         <div class="max-w-xs text-right leading-tight">
                             <p class="text-sm font-semibold text-foreground">
                                 {{ actionInfo(props.score.action).title }}
@@ -408,9 +715,22 @@ const actionInfo = (action: string) => {
                             {{ props.score.action }}
                         </div>
                     </div>
+
+                    <!-- Jika belum ada score -->
+                    <div
+                        v-else
+                        class="rounded-full bg-muted px-4 py-2 text-sm font-medium text-muted-foreground"
+                    >
+                        Belum ada rekomendasi
+                    </div>
                 </div>
 
-                <div class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <!-- Score -->
+                <div
+                    v-if="props.score"
+                    class="mt-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
+                >
+                    <!-- Performance -->
                     <div class="rounded-xl bg-muted/30 p-4">
                         <p class="text-sm text-muted-foreground">
                             Performance
@@ -421,16 +741,19 @@ const actionInfo = (action: string) => {
                         </p>
                     </div>
 
+                    <!-- Growth -->
                     <div class="rounded-xl bg-muted/30 p-4">
                         <p class="text-sm text-muted-foreground">
                             Growth
                         </p>
 
                         <p class="mt-2 text-3xl font-semibold">
-                            {{ formatAvailableScore(
-                                props.score.growth_score,
-                                props.score.period_count
-                            ) }}
+                            {{
+                                formatAvailableScore(
+                                    props.score.growth_score,
+                                    props.score.period_count
+                                )
+                            }}
                         </p>
 
                         <p
@@ -448,16 +771,19 @@ const actionInfo = (action: string) => {
                         </p>
                     </div>
 
+                    <!-- Consistency -->
                     <div class="rounded-xl bg-muted/30 p-4">
                         <p class="text-sm text-muted-foreground">
                             Consistency
                         </p>
 
                         <p class="mt-2 text-3xl font-semibold">
-                            {{ formatAvailableScore(
-                                props.score.consistency_score,
-                                props.score.period_count
-                            ) }}
+                            {{
+                                formatAvailableScore(
+                                    props.score.consistency_score,
+                                    props.score.period_count
+                                )
+                            }}
                         </p>
 
                         <p
@@ -475,6 +801,7 @@ const actionInfo = (action: string) => {
                         </p>
                     </div>
 
+                    <!-- Opportunity -->
                     <div class="rounded-xl bg-muted/30 p-4">
                         <p class="text-sm text-muted-foreground">
                             Opportunity
@@ -484,6 +811,22 @@ const actionInfo = (action: string) => {
                             {{ formatScore(props.score.opportunity_score) }}
                         </p>
                     </div>
+                </div>
+
+                <!-- Empty Score -->
+                <div
+                    v-else
+                    class="mt-6 rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center"
+                >
+                    <Sparkles class="mx-auto h-8 w-8 text-muted-foreground" />
+
+                    <p class="mt-3 text-sm font-medium">
+                        Intelligence belum tersedia
+                    </p>
+
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Score akan tersedia setelah affiliate memiliki data performance yang sudah diproses.
+                    </p>
                 </div>
             </div>
 
@@ -499,12 +842,12 @@ const actionInfo = (action: string) => {
                     </p>
 
                     <p class="mt-1 font-medium">
-                        {{ periodLabel(latest_performance) }}
+                        {{ selectedPeriodLabel }}
                     </p>
                 </div>
 
                 <div
-                    v-if="props.score.insights.length"
+                    v-if="props.score && props.score.insights.length"
                     class="mt-4 rounded-xl border border-border bg-muted/20 p-5"
                 >
                     <div class="mb-3 flex items-center gap-2">
@@ -567,9 +910,41 @@ const actionInfo = (action: string) => {
                     </p>
                 </div>
 
-                <p class="mt-4 text-2xl font-semibold">
-                    {{ formatCurrency(latest_performance.gmv) }}
-                </p>
+                <div class="mt-4 flex items-end justify-between gap-4">
+                    <p class="text-2xl font-semibold">
+                        {{ formatCurrency(latest_performance.gmv) }}
+                    </p>
+
+                    <div
+                        v-if="latest_performance.movement"
+                        class="text-right"
+                    >
+                        <span
+                            class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+                            :class="movementClass(latest_performance.movement)"
+                        >
+                            {{ movementIcon(latest_performance.movement) }}
+
+                            <template
+                                v-if="latest_performance.movement.gmv_change_percent !== null"
+                            >
+                                {{
+                                    Math.abs(
+                                        latest_performance.movement.gmv_change_percent
+                                    ).toFixed(2)
+                                }}%
+                            </template>
+
+                            <template v-else>
+                                —
+                            </template>
+                        </span>
+
+                        <p class="mt-1 text-[10px] text-muted-foreground">
+                            {{ movementLabel(latest_performance.movement) }}
+                        </p>
+                    </div>
+                </div>
             </div>
 
             <div class="rounded-xl border border-border bg-card p-5">
@@ -624,186 +999,84 @@ const actionInfo = (action: string) => {
         <!-- Performance metrics -->
         <div
             v-if="latest_performance"
-            class="grid gap-4 lg:grid-cols-2"
+            class="rounded-xl border border-border bg-card p-5"
         >
-            <div class="rounded-xl border border-border bg-card p-6">
-                <div class="flex items-center gap-3">
-                    <BarChart3 class="h-5 w-5 text-primary" />
+            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-muted-foreground">
+                        Performance Movement
+                    </p>
 
-                    <h2 class="font-semibold">
-                        Performance
-                    </h2>
-                </div>
-                
-                <TooltipProvider>
-                <div class="mt-6 space-y-4">
-                    <div class="flex justify-between">
-                        <Tooltip>
-                            <TooltipTrigger as-child>
-                                <span
-                                    class="inline-flex cursor-help items-center gap-1 text-sm text-muted-foreground"
-                                >
-                                    AOV
-                                    <span class="text-xs text-muted-foreground/100">ⓘ</span>
-                                </span>
-                            </TooltipTrigger>
-
-                            <TooltipContent>
-                                Rata-rata nilai GMV yang dihasilkan untuk setiap order.
-                            </TooltipContent>
-                        </Tooltip>
-
-                        <span class="font-medium">
-                            {{ formatCurrency(latest_performance.aov) }}
-                        </span>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <Tooltip>
-                            <TooltipTrigger as-child>
-                                <span
-                                    class="inline-flex cursor-help items-center gap-1 text-sm text-muted-foreground"
-                                >
-                                    CTR
-                                    <span class="text-xs text-muted-foreground/100">ⓘ</span>
-                                </span>
-                            </TooltipTrigger>
-
-                            <TooltipContent>
-                                Persentase impressions yang menghasilkan klik.
-                            </TooltipContent>
-                        </Tooltip>
-
-                        <span class="font-medium">
-                            {{ formatPercent(latest_performance.ctr) }}
-                        </span>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <Tooltip>
-                            <TooltipTrigger as-child>
-                                <span
-                                    class="inline-flex cursor-help items-center gap-1 text-sm text-muted-foreground"
-                                >
-                                    CTOR
-                                    <span class="text-xs text-muted-foreground/100">ⓘ</span>
-                                </span>
-                            </TooltipTrigger>
-
-                            <TooltipContent>
-                                Persentase klik yang menghasilkan order.
-                            </TooltipContent>
-                        </Tooltip>
-
-                        <span class="font-medium">
-                            {{ formatPercent(latest_performance.ctor) }}
-                        </span>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <Tooltip>
-                            <TooltipTrigger as-child>
-                                <span
-                                    class="inline-flex cursor-help items-center gap-1 text-sm text-muted-foreground"
-                                >
-                                    Impressions
-                                    <span class="text-xs text-muted-foreground/100">ⓘ</span>
-                                </span>
-                            </TooltipTrigger>
-
-                            <TooltipContent>
-                                Jumlah total tayangan konten affiliate.
-                            </TooltipContent>
-                        </Tooltip>
-
-                        <span class="font-medium">
-                            {{ formatNumber(latest_performance.impressions) }}
-                        </span>
-                    </div>
-
-                    <div class="flex justify-between">
-                        <Tooltip>
-                            <TooltipTrigger as-child>
-                                <span
-                                    class="inline-flex cursor-help items-center gap-1 text-sm text-muted-foreground"
-                                >
-                                    Video Views
-                                    <span class="text-xs text-muted-foreground/70">ⓘ</span>
-                                </span>
-                            </TooltipTrigger>
-
-                            <TooltipContent>
-                                Jumlah total penayangan video affiliate.
-                            </TooltipContent>
-                        </Tooltip>
-
-                        <span class="font-medium">
-                            {{ formatNumber(latest_performance.video_views) }}
-                        </span>
-                    </div>
-                </div>
-                </TooltipProvider>
-            </div>
-
-            <div class="rounded-xl border border-border bg-card p-6">
-                <div class="flex items-center gap-3">
-                    <Wallet class="h-5 w-5 text-primary" />
-
-                    <h2 class="font-semibold">
-                        GMV Breakdown
-                    </h2>
+                    <p class="mt-1 text-xs text-muted-foreground">
+                        Dibandingkan dengan snapshot sebelumnya
+                    </p>
                 </div>
 
-                <div class="mt-6 space-y-4">
-                    <div class="flex justify-between">
-                        <span class="text-sm text-muted-foreground">
-                            GMV Creator
-                        </span>
-
-                        <span class="font-medium">
-                            {{ formatCurrency(latest_performance.gmv) }}
-                        </span>
+                <div
+                    v-if="latest_performance.movement"
+                    class="flex items-center gap-4"
+                >
+                    <div
+                        class="flex h-11 w-11 items-center justify-center rounded-full text-xl font-semibold"
+                        :class="movementClass(latest_performance.movement)"
+                    >
+                        {{ movementIcon(latest_performance.movement) }}
                     </div>
 
-                    <div class="flex justify-between">
-                        <span class="text-sm text-muted-foreground">
-                            GMV LIVE
-                        </span>
+                    <div>
+                        <p
+                            class="text-lg font-semibold"
+                            :class="{
+                                'text-emerald-600 dark:text-emerald-400':
+                                    latest_performance.movement.status === 'UP',
 
-                        <span class="font-medium">
-                            {{ formatCurrency(latest_performance.gmv_live) }}
-                        </span>
+                                'text-red-600 dark:text-red-400':
+                                    latest_performance.movement.status === 'DOWN',
+                            }"
+                        >
+                            <template
+                                v-if="latest_performance.movement.gmv_change_percent !== null"
+                            >
+                                {{
+                                    Math.abs(
+                                        latest_performance.movement.gmv_change_percent
+                                    ).toFixed(2)
+                                }}%
+                            </template>
+
+                            <template v-else>
+                                —
+                            </template>
+                        </p>
+
+                        <p class="text-xs text-muted-foreground">
+                            {{ movementLabel(latest_performance.movement) }}
+                        </p>
                     </div>
 
-                    <div class="flex justify-between">
-                        <span class="text-sm text-muted-foreground">
-                            GMV Video
-                        </span>
+                    <div
+                        v-if="latest_performance.movement.previous_gmv !== null"
+                        class="border-l border-border pl-4"
+                    >
+                        <p class="text-xs text-muted-foreground">
+                            GMV sebelumnya
+                        </p>
 
-                        <span class="font-medium">
-                            {{ formatCurrency(latest_performance.gmv_video) }}
-                        </span>
+                        <p class="mt-1 font-medium">
+                            {{
+                                formatCurrency(
+                                    latest_performance.movement.previous_gmv
+                                )
+                            }}
+                        </p>
                     </div>
+                </div>
 
-                    <div class="flex justify-between">
-                        <span class="text-sm text-muted-foreground">
-                            GMV Product Card
-                        </span>
-
-                        <span class="font-medium">
-                            {{ formatCurrency(latest_performance.gmv_product_card) }}
-                        </span>
-                    </div>
-
-                    <div class="flex justify-between border-t border-border pt-4">
-                        <span class="text-sm text-muted-foreground">
-                            Commission
-                        </span>
-
-                        <span class="font-medium">
-                            {{ formatCurrency(latest_performance.commission) }}
-                        </span>
-                    </div>
+                <div
+                    v-else
+                    class="text-sm text-muted-foreground"
+                >
+                    Belum ada snapshot sebelumnya
                 </div>
             </div>
         </div>
@@ -887,6 +1160,9 @@ const actionInfo = (action: string) => {
                                 GMV
                             </th>
                             <th class="px-6 py-4 text-right font-medium">
+                                Movement
+                            </th>
+                            <th class="px-6 py-4 text-right font-medium">
                                 Orders
                             </th>
                             <th class="px-6 py-4 text-right font-medium">
@@ -916,6 +1192,35 @@ const actionInfo = (action: string) => {
                             </td>
 
                             <td class="px-6 py-4 text-right">
+                                <template
+                                    v-if="
+                                        performance.movement &&
+                                        performance.movement.gmv_change_percent !== null
+                                    "
+                                >
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+                                        :class="movementClass(performance.movement)"
+                                    >
+                                        {{ movementIcon(performance.movement) }}
+
+                                        {{
+                                            Math.abs(
+                                                performance.movement.gmv_change_percent
+                                            ).toFixed(2)
+                                        }}%
+                                    </span>
+                                </template>
+
+                                <span
+                                    v-else
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    —
+                                </span>
+                            </td>
+
+                            <td class="px-6 py-4 text-right">
                                 {{ formatNumber(performance.attributed_orders) }}
                             </td>
 
@@ -934,7 +1239,7 @@ const actionInfo = (action: string) => {
 
                         <tr v-if="performance_history.length === 0">
                             <td
-                                colspan="6"
+                                colspan="7"
                                 class="px-6 py-10 text-center text-muted-foreground"
                             >
                                 Belum ada riwayat performance.

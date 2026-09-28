@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3'
-import { ref, computed, onMounted, onBeforeUnmount  } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
 import {
     ArrowLeft,
     Search,
@@ -18,33 +18,29 @@ interface Performance {
     period_end: string | null
 }
 
+interface Movement {
+    previous_gmv: number | null
+    gmv_change: number | null
+    gmv_change_percent: number | null
+    status: 'UP' | 'DOWN' | 'STABLE' | 'NO_BASELINE'
+}
+
 interface Affiliate {
     id: number
     name: string
     username: string
     platform: string
     status: string
+
     score: {
         performance: number | null
         opportunity: number | null
         action: string
     }
+
     latest_performance: Performance | null
-}
 
-interface Props {
-    affiliates: {
-        data: Affiliate[]
-        current_page: number
-        last_page: number
-        total: number
-    }
-
-    selected_batch_id: number | null
-    search: string
-    sort: string
-    direction: string
-    action: string
+    movement: Movement
 }
 
 interface ImportBatch {
@@ -55,84 +51,129 @@ interface ImportBatch {
 }
 
 interface Props {
-    // props yang sudah ada...
+    affiliates: {
+        data: Affiliate[]
+        current_page: number
+        last_page: number
+        total: number
+    }
 
     import_batches: ImportBatch[]
+
     selected_batch_id: number | null
+
     selected_period: {
         start: string
         end: string
     } | null
+
+    comparison_period: {
+        start: string
+        end: string
+    } | null
+
+    previous_batch_id: number | null
+
+    previous_period: {
+        start: string
+        end: string
+    } | null
+
+    search: string
+    sort: string
+    direction: string
+    action: string
 }
 
 const props = defineProps<Props>()
 
+/*
+|--------------------------------------------------------------------------
+| Search / Filter
+|--------------------------------------------------------------------------
+*/
+
 const search = ref(props.search ?? '')
-const selectedBatchId = ref<number | null>(
-    props.selected_batch_id ?? null
-)
-
-const affiliateIndexUrl = (extraParams: Record<string, string | number | undefined> = {}) => {
-    const params = new URLSearchParams()
-
-    if (selectedBatchId.value) {
-        params.set('batch_id', String(selectedBatchId.value))
-    }
-
-    if (search.value) {
-        params.set('search', search.value)
-    }
-
-    Object.entries(extraParams).forEach(([key, value]) => {
-        if (value !== undefined && value !== '') {
-            params.set(key, String(value))
-        }
-    })
-
-    const query = params.toString()
-
-    return query
-        ? `/affiliates?${query}`
-        : '/affiliates'
-}
 const sort = ref(props.sort ?? 'opportunity')
 const direction = ref(props.direction ?? 'desc')
 const action = ref(props.action ?? '')
 
-const showBatchDropdown = ref(false)
+/*
+|--------------------------------------------------------------------------
+| Date Range
+|--------------------------------------------------------------------------
+*/
+
+const startDate = ref(
+    props.selected_period?.start ?? ''
+)
+
+const endDate = ref(
+    props.selected_period?.end ?? ''
+)
+
+/*
+|--------------------------------------------------------------------------
+| Dropdown State
+|--------------------------------------------------------------------------
+*/
+
+const showPeriodDropdown = ref(false)
 const showActionDropdown = ref(false)
 const showSortDropdown = ref(false)
+
+/*
+|--------------------------------------------------------------------------
+| Preset
+|--------------------------------------------------------------------------
+*/
+
+const periodPreset = ref<'7days' | '30days' | 'today' | 'custom'>('custom')
+
+/*
+|--------------------------------------------------------------------------
+| Selected Period
+|--------------------------------------------------------------------------
+*/
+
 const selectedPeriod = computed(() => props.selected_period)
 
-const handleClickOutside = (event: MouseEvent) => {
-    const target = event.target as HTMLElement
+const comparisonPeriod = computed(() => props.comparison_period)
 
-    if (!target.closest('[data-sort-dropdown]')) {
-        showSortDropdown.value = false
-    }
+/*
+|--------------------------------------------------------------------------
+| Date Helpers
+|--------------------------------------------------------------------------
+*/
 
-    if (!target.closest('[data-action-dropdown]')) {
-        showActionDropdown.value = false
-    }
-    if (!target.closest('[data-batch-dropdown]')) {
-        showBatchDropdown.value = false
-    }
+const formatDateInput = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
 }
 
-onMounted(() => {
-    document.addEventListener('click', handleClickOutside)
-})
+const getToday = () => {
+    return formatDateInput(new Date())
+}
 
-onBeforeUnmount(() => {
-    document.removeEventListener('click', handleClickOutside)
-})
+const getDaysAgo = (days: number) => {
+    const date = new Date()
 
-const formatPeriodDate = (date: string | null | undefined) => {
+    date.setDate(date.getDate() - days)
+
+    return formatDateInput(date)
+}
+
+const formatPeriodDate = (
+    date: string | null | undefined
+) => {
     if (!date) {
         return '-'
     }
 
-    const parsed = new Date(date)
+    const parsed = new Date(`${date}T00:00:00`)
 
     if (Number.isNaN(parsed.getTime())) {
         return date
@@ -145,44 +186,124 @@ const formatPeriodDate = (date: string | null | undefined) => {
     }).format(parsed)
 }
 
-const selectedBatch = computed(() => {
-    return props.import_batches.find(
-        (batch) => batch.id === selectedBatchId.value
-    ) ?? null
-})
+const formatDateShort = (
+    date: string | null | undefined
+) => {
+    if (!date) {
+        return '-'
+    }
+
+    const parsed = new Date(`${date}T00:00:00`)
+
+    if (Number.isNaN(parsed.getTime())) {
+        return date
+    }
+
+    return new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: 'short',
+    }).format(parsed)
+}
+
+/*
+|--------------------------------------------------------------------------
+| Period Label
+|--------------------------------------------------------------------------
+*/
 
 const selectedPeriodLabel = computed(() => {
-    if (!selectedBatch.value) {
+    if (!startDate.value || !endDate.value) {
         return 'Pilih periode data'
     }
 
-    return `${formatPeriodDate(selectedBatch.value.period_start)} — ${formatPeriodDate(selectedBatch.value.period_end)}`
+    return `${formatPeriodDate(startDate.value)} — ${formatPeriodDate(endDate.value)}`
 })
 
-const formatCurrency = (value: string | number) => {
-    return new Intl.NumberFormat('id-ID', {
-        style: 'currency',
-        currency: 'IDR',
-        maximumFractionDigits: 0,
-    }).format(Number(value ?? 0))
+const comparisonPeriodLabel = computed(() => {
+    if (!comparisonPeriod.value) {
+        return 'Belum ada periode pembanding'
+    }
+
+    return `${formatPeriodDate(comparisonPeriod.value.start)} — ${formatPeriodDate(comparisonPeriod.value.end)}`
+})
+
+/*
+|--------------------------------------------------------------------------
+| Preset Selection
+|--------------------------------------------------------------------------
+*/
+
+const selectPreset = (
+    preset: '7days' | '30days' | 'today'
+) => {
+    periodPreset.value = preset
+
+    if (preset === 'today') {
+        startDate.value = getToday()
+        endDate.value = getToday()
+    }
+
+    if (preset === '7days') {
+        startDate.value = getDaysAgo(6)
+        endDate.value = getToday()
+    }
+
+    if (preset === '30days') {
+        startDate.value = getDaysAgo(29)
+        endDate.value = getToday()
+    }
+
+    applyFilters()
 }
 
-const formatNumber = (value: string | number) => {
-    return Number(value ?? 0).toLocaleString('id-ID')
+/*
+|--------------------------------------------------------------------------
+| Custom Date
+|--------------------------------------------------------------------------
+*/
+
+const selectCustom = () => {
+    periodPreset.value = 'custom'
 }
 
-const formatPercent = (value: string | number) => {
-    return `${Number(value ?? 0).toFixed(2)}%`
+const applyCustomPeriod = () => {
+    if (!startDate.value || !endDate.value) {
+        return
+    }
+
+    if (startDate.value > endDate.value) {
+        const temp = startDate.value
+
+        startDate.value = endDate.value
+        endDate.value = temp
+    }
+
+    periodPreset.value = 'custom'
+
+    applyFilters()
 }
+
+/*
+|--------------------------------------------------------------------------
+| Apply Filters
+|--------------------------------------------------------------------------
+*/
 
 const applyFilters = () => {
+    showPeriodDropdown.value = false
+
     router.get(
         '/affiliates',
         {
-            batch_id: selectedBatchId.value || undefined,
+            start_date: startDate.value || undefined,
+            end_date: endDate.value || undefined,
+
             search: search.value || undefined,
+
             sort: sort.value,
+
             direction: direction.value,
+
             action: action.value || undefined,
         },
         {
@@ -192,22 +313,104 @@ const applyFilters = () => {
     )
 }
 
-const selectBatch = (batchId: number) => {
-    selectedBatchId.value = batchId
-    showBatchDropdown.value = false
-
-    showSortDropdown.value = false
-    showActionDropdown.value = false
-
-    applyFilters()
-}
-
 const submitSearch = () => {
     applyFilters()
 }
 
+/*
+|--------------------------------------------------------------------------
+| Sort
+|--------------------------------------------------------------------------
+*/
 
-const pageNumbers = (current: number, last: number) => {
+const selectSort = (value: string) => {
+    sort.value = value
+
+    direction.value =
+        value === 'name' || value === 'decline'
+            ? 'asc'
+            : 'desc'
+
+    showSortDropdown.value = false
+
+    applyFilters()
+}
+
+/*
+|--------------------------------------------------------------------------
+| Click Outside
+|--------------------------------------------------------------------------
+*/
+
+const handleClickOutside = (event: MouseEvent) => {
+    const target = event.target as HTMLElement
+
+    if (!target.closest('[data-period-dropdown]')) {
+        showPeriodDropdown.value = false
+    }
+
+    if (!target.closest('[data-sort-dropdown]')) {
+        showSortDropdown.value = false
+    }
+
+    if (!target.closest('[data-action-dropdown]')) {
+        showActionDropdown.value = false
+    }
+}
+
+onMounted(() => {
+    document.addEventListener(
+        'click',
+        handleClickOutside
+    )
+})
+
+onBeforeUnmount(() => {
+    document.removeEventListener(
+        'click',
+        handleClickOutside
+    )
+})
+
+/*
+|--------------------------------------------------------------------------
+| Formatting
+|--------------------------------------------------------------------------
+*/
+
+const formatCurrency = (
+    value: string | number
+) => {
+    return new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(Number(value ?? 0))
+}
+
+const formatNumber = (
+    value: string | number
+) => {
+    return Number(value ?? 0)
+        .toLocaleString('id-ID')
+}
+
+const formatPercent = (
+    value: string | number
+) => {
+    return `${Number(value ?? 0).toFixed(2)}%`
+}
+
+/*
+|--------------------------------------------------------------------------
+| Pagination
+|--------------------------------------------------------------------------
+*/
+
+const pageNumbers = (
+    current: number,
+    last: number
+) => {
     const pages: (number | string)[] = []
 
     if (last <= 7) {
@@ -240,35 +443,76 @@ const pageNumbers = (current: number, last: number) => {
     return pages
 }
 
-const affiliatePageUrl = (page: number) => {
+/*
+|--------------------------------------------------------------------------
+| Pagination URL
+|--------------------------------------------------------------------------
+*/
+
+const affiliatePageUrl = (
+    page: number
+) => {
     const params = new URLSearchParams()
 
-    if (selectedBatchId.value) {
-        params.set('batch_id', String(selectedBatchId.value))
+    if (startDate.value) {
+        params.set(
+            'start_date',
+            startDate.value
+        )
+    }
+
+    if (endDate.value) {
+        params.set(
+            'end_date',
+            endDate.value
+        )
     }
 
     if (search.value) {
-        params.set('search', search.value)
+        params.set(
+            'search',
+            search.value
+        )
     }
 
     if (sort.value) {
-        params.set('sort', sort.value)
+        params.set(
+            'sort',
+            sort.value
+        )
     }
 
     if (direction.value) {
-        params.set('direction', direction.value)
+        params.set(
+            'direction',
+            direction.value
+        )
     }
 
     if (action.value) {
-        params.set('action', action.value)
+        params.set(
+            'action',
+            action.value
+        )
     }
 
-    params.set('page', String(page))
+    params.set(
+        'page',
+        String(page)
+    )
 
     return `/affiliates?${params.toString()}`
 }
 
-const actionClass = (action: string) => {
+/*
+|--------------------------------------------------------------------------
+| Action Class
+|--------------------------------------------------------------------------
+*/
+
+const actionClass = (
+    action: string
+) => {
     switch (action) {
         case 'CHASE':
             return 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
@@ -286,7 +530,6 @@ const actionClass = (action: string) => {
             return 'bg-muted text-muted-foreground'
     }
 }
-
 </script>
 
 <template>
@@ -319,18 +562,18 @@ const actionClass = (action: string) => {
                     
                     
                     <!-- Periode Data -->
-                    <div 
+                    <div
                         class="relative ml-auto shrink-0"
-                        data-batch-dropdown
+                        data-period-dropdown
                     >
                         <button
                             type="button"
                             @click="
-                                showBatchDropdown = !showBatchDropdown;
+                                showPeriodDropdown = !showPeriodDropdown;
                                 showSortDropdown = false;
                                 showActionDropdown = false
                             "
-                            class="flex h-10 min-w-[245px] items-center justify-between gap-3 rounded-lg border border-border bg-background px-3.5 text-sm text-foreground shadow-sm transition-all hover:border-sky-300 hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                            class="flex h-10 min-w-[285px] items-center justify-between gap-3 rounded-lg border border-border bg-background px-3.5 text-sm text-foreground shadow-sm transition-all hover:border-sky-300 hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
                         >
                             <span class="flex min-w-0 items-center gap-2">
                                 <svg
@@ -347,9 +590,27 @@ const actionClass = (action: string) => {
                                         height="18"
                                         rx="2"
                                     />
-                                    <line x1="16" y1="2" x2="16" y2="6" />
-                                    <line x1="8" y1="2" x2="8" y2="6" />
-                                    <line x1="3" y1="10" x2="21" y2="10" />
+
+                                    <line
+                                        x1="16"
+                                        y1="2"
+                                        x2="16"
+                                        y2="6"
+                                    />
+
+                                    <line
+                                        x1="8"
+                                        y1="2"
+                                        x2="8"
+                                        y2="6"
+                                    />
+
+                                    <line
+                                        x1="3"
+                                        y1="10"
+                                        x2="21"
+                                        y2="10"
+                                    />
                                 </svg>
 
                                 <span class="truncate">
@@ -359,7 +620,9 @@ const actionClass = (action: string) => {
 
                             <svg
                                 class="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200"
-                                :class="{ 'rotate-180': showBatchDropdown }"
+                                :class="{
+                                    'rotate-180': showPeriodDropdown
+                                }"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
@@ -378,47 +641,173 @@ const actionClass = (action: string) => {
                             leave-to-class="translate-y-1 opacity-0"
                         >
                             <div
-                                v-if="showBatchDropdown"
-                                class="absolute right-0 z-50 mt-2 w-[285px] overflow-hidden rounded-xl border border-border bg-popover p-1.5 shadow-xl shadow-black/10"
+                                v-if="showPeriodDropdown"
+                                class="absolute right-0 z-50 mt-2 w-[420px] overflow-hidden rounded-xl border border-border bg-popover shadow-xl shadow-black/10"
                             >
-                                <div class="px-3 py-2 text-xs font-medium text-muted-foreground">
-                                    Pilih periode data
-                                </div>
+                                <div class="grid grid-cols-[150px_1fr]">
 
-                                <button
-                                    v-for="batch in props.import_batches"
-                                    :key="batch.id"
-                                    type="button"
-                                    @click="selectBatch(batch.id)"
-                                    class="flex w-full items-center rounded-lg px-3 py-2.5 text-left transition hover:bg-muted"
-                                    :class="{
-                                        'bg-sky-500/10 text-sky-700 dark:text-sky-400':
-                                            selectedBatchId === batch.id,
-                                    }"
-                                >
-                                    <div class="min-w-0">
-                                        <div class="text-sm font-medium">
-                                            {{ formatPeriodDate(batch.period_start) }}
-                                            —
-                                            {{ formatPeriodDate(batch.period_end) }}
+                                    <!-- Preset -->
+                                    <div class="border-r border-border p-2">
+                                        <div class="px-3 py-2 text-xs font-medium text-muted-foreground">
+                                            Periode
                                         </div>
 
-                                        <div class="mt-0.5 truncate text-xs text-muted-foreground">
-                                            {{ batch.file_name }}
-                                        </div>
+                                        <button
+                                            type="button"
+                                            @click="selectPreset('7days')"
+                                            class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
+                                            :class="{
+                                                'bg-muted font-medium':
+                                                    periodPreset === '7days'
+                                            }"
+                                        >
+                                            7 hari terakhir
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            @click="selectPreset('30days')"
+                                            class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
+                                            :class="{
+                                                'bg-muted font-medium':
+                                                    periodPreset === '30days'
+                                            }"
+                                        >
+                                            30 hari terakhir
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            @click="selectPreset('today')"
+                                            class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
+                                            :class="{
+                                                'bg-muted font-medium':
+                                                    periodPreset === 'today'
+                                            }"
+                                        >
+                                            Hari ini
+                                        </button>
+
+                                        <button
+                                            type="button"
+                                            @click="selectCustom"
+                                            class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
+                                            :class="{
+                                                'bg-muted font-medium':
+                                                    periodPreset === 'custom'
+                                            }"
+                                        >
+                                            <span>Kustom</span>
+
+                                            <span class="text-muted-foreground">
+                                                ›
+                                            </span>
+                                        </button>
                                     </div>
 
-                                    <svg
-                                        v-if="selectedBatchId === batch.id"
-                                        class="ml-auto h-4 w-4 shrink-0 text-sky-500"
-                                        viewBox="0 0 24 24"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        stroke-width="2.5"
-                                    >
-                                        <path d="m5 12 4 4L19 8" />
-                                    </svg>
-                                </button>
+                                    <!-- Custom Range -->
+                                    <div class="p-4">
+
+                                        <div class="mb-4">
+                                            <p class="text-sm font-medium">
+                                                Pilih rentang tanggal
+                                            </p>
+
+                                            <p class="mt-1 text-xs text-muted-foreground">
+                                                Data akan dibandingkan dengan periode sebelumnya
+                                                dengan jumlah hari yang sama.
+                                            </p>
+                                        </div>
+
+                                        <!-- Start -->
+                                        <div>
+                                            <label
+                                                class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                            >
+                                                Tanggal mulai
+                                            </label>
+
+                                            <input
+                                                v-model="startDate"
+                                                type="date"
+                                                @focus="selectCustom"
+                                                class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
+                                            />
+                                        </div>
+
+                                        <!-- End -->
+                                        <div class="mt-3">
+                                            <label
+                                                class="mb-1.5 block text-xs font-medium text-muted-foreground"
+                                            >
+                                                Tanggal akhir
+                                            </label>
+
+                                            <input
+                                                v-model="endDate"
+                                                type="date"
+                                                :min="startDate"
+                                                @focus="selectCustom"
+                                                class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
+                                            />
+                                        </div>
+
+                                        <!-- Preview -->
+                                        <div
+                                            class="rounded-xl border border-border bg-card p-5 shadow-sm"
+                                        >
+                                            <div class="flex items-start justify-between gap-4">
+                                                <div>
+                                                    <p class="text-sm text-muted-foreground">
+                                                        Periode Terpilih
+                                                    </p>
+
+                                                    <p
+                                                        v-if="selectedPeriod"
+                                                        class="mt-2 font-semibold"
+                                                    >
+                                                        {{ formatPeriodDate(selectedPeriod.start) }}
+                                                        —
+                                                        {{ formatPeriodDate(selectedPeriod.end) }}
+                                                    </p>
+
+                                                    <p
+                                                        v-else
+                                                        class="mt-2 text-sm text-muted-foreground"
+                                                    >
+                                                        Belum ada performance
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div
+                                                v-if="comparisonPeriod"
+                                                class="mt-3 border-t border-border pt-3"
+                                            >
+                                                <p class="text-xs text-muted-foreground">
+                                                    Dibandingkan dengan
+                                                </p>
+
+                                                <p class="mt-1 text-sm font-medium">
+                                                    {{ comparisonPeriodLabel }}
+                                                </p>
+                                            </div>
+                                        </div>
+
+                                        <!-- Apply -->
+                                        <button
+                                            type="button"
+                                            :disabled="
+                                                !startDate ||
+                                                !endDate
+                                            "
+                                            @click="applyCustomPeriod"
+                                            class="mt-4 flex h-10 w-full items-center justify-center rounded-lg bg-sky-600 px-4 text-sm font-medium text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                            Terapkan Periode
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </Transition>
                     </div>
@@ -536,6 +925,8 @@ const actionClass = (action: string) => {
                                             aov: 'AOV',
                                             ctr: 'CTR',
                                             ctor: 'CTOR',
+                                            growth: 'Performa Naik',
+                                            decline: 'Performa Turun',
                                             name: 'Nama',
                                         }[sort] || 'Opportunity'
                                     }}
@@ -575,11 +966,21 @@ const actionClass = (action: string) => {
                                         { value: 'aov', label: 'AOV' },
                                         { value: 'ctr', label: 'CTR' },
                                         { value: 'ctor', label: 'CTOR' },
+                                        { value: 'growth', label: 'Performa Naik' },
+                                        { value: 'decline', label: 'Performa Turun' },
                                         { value: 'name', label: 'Nama' },
                                     ]"
                                     :key="item.value"
                                     type="button"
-                                    @click="sort = item.value; direction = item.value === 'name' ? 'asc' : 'desc'; showSortDropdown = false; applyFilters()"
+                                    @click="
+                                        sort = item.value;
+                                        direction =
+                                            item.value === 'name' || item.value === 'decline'
+                                                ? 'asc'
+                                                : 'desc';
+                                        showSortDropdown = false;
+                                        applyFilters()
+                                    "
                                     class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
                                     :class="{
                                         'bg-muted font-medium': sort === item.value,
@@ -779,6 +1180,10 @@ const actionClass = (action: string) => {
                             </th>
 
                             <th class="px-6 py-3 text-right font-medium">
+                                Movement
+                            </th>
+
+                            <th class="px-6 py-3 text-right font-medium">
                                 Orders
                             </th>
 
@@ -800,6 +1205,10 @@ const actionClass = (action: string) => {
 
                             <th class="px-6 py-3 text-center font-medium">
                                 Action
+                            </th>
+                            
+                            <th class="px-6 py-3 text-right font-medium">
+                                Detail
                             </th>
                         </tr>
                     </thead>
@@ -859,6 +1268,53 @@ const actionClass = (action: string) => {
                                     class="text-muted-foreground"
                                 >
                                     —
+                                </span>
+                            </td>
+                            
+                            <!-- MOVEMENT -->
+                            <td class="px-0 py-4 text-right">
+                                <div
+                                    v-if="affiliate.movement.gmv_change_percent !== null"
+                                    class="flex flex-col items-end"
+                                >
+                                    <span
+                                        class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
+                                        :class="{
+                                            'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400':
+                                                affiliate.movement.status === 'UP',
+
+                                            'bg-red-500/10 text-red-600 dark:text-red-400':
+                                                affiliate.movement.status === 'DOWN',
+
+                                            'bg-muted text-muted-foreground':
+                                                affiliate.movement.status === 'STABLE',
+                                        }"
+                                    >
+                                        <span v-if="affiliate.movement.status === 'UP'">
+                                            ↑
+                                        </span>
+
+                                        <span v-else-if="affiliate.movement.status === 'DOWN'">
+                                            ↓
+                                        </span>
+
+                                        <span v-else>
+                                            →
+                                        </span>
+
+                                        {{
+                                            Math.abs(
+                                                affiliate.movement.gmv_change_percent
+                                            ).toFixed(2)
+                                        }}%
+                                    </span>
+                                </div>
+
+                                <span
+                                    v-else
+                                    class="text-xs text-muted-foreground"
+                                >
+                                    Belum ada data pembanding
                                 </span>
                             </td>
 
@@ -934,8 +1390,8 @@ const actionClass = (action: string) => {
                                     class="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                                 >
                                     <Link
-                                        :href="selectedBatchId
-                                            ? `/affiliates/${affiliate.id}?batch_id=${selectedBatchId}`
+                                        :href="selectedPeriod
+                                            ? `/affiliates/${affiliate.id}?start_date=${selectedPeriod.start}&end_date=${selectedPeriod.end}`
                                             : `/affiliates/${affiliate.id}`"
                                         class="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
                                     >

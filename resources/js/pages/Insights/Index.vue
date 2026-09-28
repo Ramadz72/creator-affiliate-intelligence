@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { Head, Link } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import {
@@ -63,16 +63,36 @@ interface TopGmvItem {
     action: string | null
 }
 
+interface ComparisonMetric {
+    current: number;
+    previous: number;
+    difference: number;
+    percentage: number | null;
+    direction: 'up' | 'down' | 'flat';
+}
+
 interface InsightData {
     period: {
         start: string | null;
         end: string | null;
     };
     summary: {
-        total_gmv: number;
-        total_orders: number;
-        total_products_sold: number;
-        affiliate_count: number;
+    total_gmv: number;
+    total_orders: number;
+    total_products_sold: number;
+    affiliate_count: number;
+
+    comparison: {
+        gmv: ComparisonMetric | null;
+        orders: ComparisonMetric | null;
+        products_sold: ComparisonMetric | null;
+        affiliate_count: ComparisonMetric | null;
+    };
+
+    previous_period: {
+        start: string | null;
+        end: string | null;
+    } | null;
     };
     top_gmv: TopGmvItem[]
     actions: {
@@ -100,6 +120,13 @@ const props = defineProps<{
     batch: Batch | null;
 }>();
 
+const expandedInsight = ref<string | null>(null);
+
+const toggleInsight = (type: string) => {
+    expandedInsight.value =
+        expandedInsight.value === type ? null : type;
+};
+
 const topPerformer = computed(() => {
     return props.insight?.attention.top_performers?.[0] ?? null;
 });
@@ -113,6 +140,12 @@ const monitoringInsight = computed(() => {
 const potentialInsight = computed(() => {
     return props.insight?.insights.find(
         (item) => item.type === 'potential',
+    );
+});
+
+const performanceMovementInsight = computed(() => {
+    return props.insight?.insights.find(
+        (item) => item.type === 'performance_movement',
     );
 });
 
@@ -142,6 +175,36 @@ const formatShortRupiah = (value: number) => {
 
 const formatNumber = (value: number) => {
     return new Intl.NumberFormat('id-ID').format(value);
+};
+
+const formatPercentage = (value: number | null) => {
+    if (value === null) return '-';
+
+    return `${Math.abs(value).toFixed(1).replace('.', ',')}%`;
+};
+
+const getComparisonClass = (
+    comparison: ComparisonMetric | null,
+) => {
+    if (!comparison || comparison.direction === 'flat') {
+        return 'text-muted-foreground';
+    }
+
+    return comparison.direction === 'up'
+        ? 'text-emerald-500'
+        : 'text-rose-500';
+};
+
+const getComparisonArrow = (
+    comparison: ComparisonMetric | null,
+) => {
+    if (!comparison || comparison.direction === 'flat') {
+        return '→';
+    }
+
+    return comparison.direction === 'up'
+        ? '↑'
+        : '↓';
 };
 
 const formatDate = (value: string | null) => {
@@ -260,43 +323,167 @@ const getActionClass = (action: string | null) => {
         <template v-else>
             <!-- Summary -->
             <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <!-- Total GMV -->
                 <div class="rounded-xl border border-border bg-card p-5">
                     <div class="flex items-center justify-between">
-                        <p class="text-sm text-muted-foreground">Total GMV</p>
+                        <p class="text-sm text-muted-foreground">
+                            Total GMV
+                        </p>
+
                         <TrendingUp class="h-4 w-4 text-sky-500" />
                     </div>
+
                     <p class="mt-3 text-2xl font-bold tracking-tight">
-                        {{ formatRupiah(insight.summary.total_gmv) }}
+                        {{ formatShortRupiah(insight.summary.total_gmv) }}
+                    </p>
+
+                    <div
+                        v-if="insight.summary.comparison?.gmv"
+                        class="mt-2 flex items-center gap-1 text-xs font-semibold"
+                        :class="getComparisonClass(insight.summary.comparison.gmv)"
+                    >
+                        <span>
+                            {{ getComparisonArrow(insight.summary.comparison.gmv) }}
+                        </span>
+
+                        <span>
+                            {{ formatPercentage(insight.summary.comparison.gmv.percentage) }}
+                        </span>
+
+                        <span class="font-normal text-muted-foreground">
+                            vs periode sebelumnya
+                        </span>
+                    </div>
+
+                    <p
+                        v-if="insight.summary.comparison?.gmv"
+                        class="mt-1 text-xs text-muted-foreground"
+                    >
+                        Sebelumnya:
+                        {{ formatShortRupiah(insight.summary.comparison.gmv.previous) }}
                     </p>
                 </div>
 
+                <!-- Orders -->
                 <div class="rounded-xl border border-border bg-card p-5">
                     <div class="flex items-center justify-between">
-                        <p class="text-sm text-muted-foreground">Orders</p>
+                        <p class="text-sm text-muted-foreground">
+                            Orders
+                        </p>
+
                         <Target class="h-4 w-4 text-sky-500" />
                     </div>
+
                     <p class="mt-3 text-2xl font-bold tracking-tight">
                         {{ formatNumber(insight.summary.total_orders) }}
                     </p>
-                </div>
 
-                <div class="rounded-xl border border-border bg-card p-5">
-                    <div class="flex items-center justify-between">
-                        <p class="text-sm text-muted-foreground">Produk Terjual</p>
-                        <TrendingUp class="h-4 w-4 text-sky-500" />
+                    <div
+                        v-if="insight.summary.comparison?.orders"
+                        class="mt-2 flex items-center gap-1 text-xs font-semibold"
+                        :class="getComparisonClass(insight.summary.comparison.orders)"
+                    >
+                        <span>
+                            {{ getComparisonArrow(insight.summary.comparison.orders) }}
+                        </span>
+
+                        <span>
+                            {{ formatPercentage(insight.summary.comparison.orders.percentage) }}
+                        </span>
+
+                        <span class="font-normal text-muted-foreground">
+                            vs periode sebelumnya
+                        </span>
                     </div>
-                    <p class="mt-3 text-2xl font-bold tracking-tight">
-                        {{ formatNumber(insight.summary.total_products_sold) }}
+
+                    <p
+                        v-if="insight.summary.comparison?.orders"
+                        class="mt-1 text-xs text-muted-foreground"
+                    >
+                        Sebelumnya:
+                        {{ formatNumber(insight.summary.comparison.orders.previous) }}
                     </p>
                 </div>
 
+                <!-- Produk Terjual -->
                 <div class="rounded-xl border border-border bg-card p-5">
                     <div class="flex items-center justify-between">
-                        <p class="text-sm text-muted-foreground">Affiliate</p>
+                        <p class="text-sm text-muted-foreground">
+                            Produk Terjual
+                        </p>
+
+                        <Package class="h-4 w-4 text-sky-500" />
+                    </div>
+
+                    <p class="mt-3 text-2xl font-bold tracking-tight">
+                        {{ formatNumber(insight.summary.total_products_sold) }}
+                    </p>
+
+                    <div
+                        v-if="insight.summary.comparison?.products_sold"
+                        class="mt-2 flex items-center gap-1 text-xs font-semibold"
+                        :class="getComparisonClass(insight.summary.comparison.products_sold)"
+                    >
+                        <span>
+                            {{ getComparisonArrow(insight.summary.comparison.products_sold) }}
+                        </span>
+
+                        <span>
+                            {{ formatPercentage(insight.summary.comparison.products_sold.percentage) }}
+                        </span>
+
+                        <span class="font-normal text-muted-foreground">
+                            vs periode sebelumnya
+                        </span>
+                    </div>
+
+                    <p
+                        v-if="insight.summary.comparison?.products_sold"
+                        class="mt-1 text-xs text-muted-foreground"
+                    >
+                        Sebelumnya:
+                        {{ formatNumber(insight.summary.comparison.products_sold.previous) }}
+                    </p>
+                </div>
+
+                <!-- Affiliate -->
+                <div class=" rounded-xl border border-border bg-card p-5">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm text-muted-foreground">
+                            Affiliate
+                        </p>
+
                         <Users class="h-4 w-4 text-sky-500" />
                     </div>
+
                     <p class="mt-3 text-2xl font-bold tracking-tight">
                         {{ formatNumber(insight.summary.affiliate_count) }}
+                    </p>
+
+                    <div
+                        v-if="insight.summary.comparison?.affiliate_count"
+                        class="mt-2 flex items-center gap-1 text-xs font-semibold"
+                        :class="getComparisonClass(insight.summary.comparison.affiliate_count)"
+                    >
+                        <span>
+                            {{ getComparisonArrow(insight.summary.comparison.affiliate_count) }}
+                        </span>
+
+                        <span>
+                            {{ formatPercentage(insight.summary.comparison.affiliate_count.percentage) }}
+                        </span>
+
+                        <span class="font-normal text-muted-foreground">
+                            vs periode sebelumnya
+                        </span>
+                    </div>
+
+                    <p
+                        v-if="insight.summary.comparison?.affiliate_count"
+                        class="mt-1 text-xs text-muted-foreground"
+                    >
+                        Sebelumnya:
+                        {{ formatNumber(insight.summary.comparison.affiliate_count.previous) }}
                     </p>
                 </div>
             </div>
@@ -484,62 +671,458 @@ const getActionClass = (action: string | null) => {
                 </div>
 
             <!-- Insight Details -->
-            <div class="rounded-xl border border-border bg-card">
-                <div class="border-b border-border px-5 py-4">
+<section class="overflow-hidden rounded-xl border border-border bg-card">
+    <!-- Header -->
+    <div class="border-b border-border px-5 py-4">
+        <div class="flex items-center justify-between gap-4">
+            <div>
+                <div class="flex items-center gap-2">
+                    <Sparkles class="h-4 w-4 text-sky-500" />
+
                     <h2 class="font-semibold">
                         Insight Summary
                     </h2>
-                    <p class="mt-1 text-sm text-muted-foreground">
-                        Ringkasan otomatis berdasarkan pola performa periode ini.
-                    </p>
                 </div>
 
-                <div class="divide-y divide-border">
-                    <div
-                        v-for="item in insight.insights"
-                        :key="item.type"
-                        class="p-5"
-                    >
-                        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                            <div>
-                                <div class="flex items-center gap-2">
-                                    <span
-                                        class="h-2 w-2 rounded-full bg-sky-500"
-                                    />
-                                    <h3 class="font-semibold">
-                                        {{ item.title }}
-                                    </h3>
-                                </div>
+                <p class="mt-1 text-sm text-muted-foreground">
+                    Ringkasan otomatis berdasarkan pola performa periode ini.
+                </p>
+            </div>
 
-                                <p class="mt-2 text-sm font-medium">
-                                    {{ item.headline }}
-                                </p>
+            <div class="hidden shrink-0 items-center gap-2 rounded-full bg-muted px-3 py-1.5 sm:flex">
+                <span class="h-1.5 w-1.5 rounded-full bg-emerald-500" />
 
-                                <p class="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
-                                    {{ item.description }}
-                                </p>
-                            </div>
+                <span class="text-xs font-medium text-muted-foreground">
+                    {{ insight.insights.length }} insight
+                </span>
+            </div>
+        </div>
+    </div>
 
+    <!-- Insights -->
+    <div class="divide-y divide-border">
+        <div
+            v-for="item in insight.insights"
+            :key="item.type"
+        >
+            <!-- Insight Row -->
+            <div
+                role="button"
+                tabindex="0"
+                class="group relative cursor-pointer p-5 transition-colors hover:bg-muted/20 focus:outline-none focus-visible:bg-muted/20 sm:p-6"
+                @click="toggleInsight(item.type)"
+                @keydown.enter.prevent="toggleInsight(item.type)"
+                @keydown.space.prevent="toggleInsight(item.type)"
+            >
+                <!-- Accent -->
+                <div
+                    class="absolute inset-y-0 left-0 w-0.5 bg-sky-500 transition-all"
+                    :class="
+                        expandedInsight === item.type
+                            ? 'opacity-100'
+                            : 'opacity-50 group-hover:opacity-100'
+                    "
+                />
+
+                <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                    <!-- Main -->
+                    <div class="min-w-0 flex-1">
+                        <div class="flex items-start gap-3">
+                            <!-- Icon -->
                             <div
-                                v-if="item.count"
-                                class="shrink-0 rounded-lg bg-muted px-3 py-2 text-sm font-semibold"
+                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                                :class="
+                                    item.type === 'monitoring'
+                                        ? 'bg-amber-500/10'
+                                        : item.type === 'potential'
+                                          ? 'bg-emerald-500/10'
+                                          : item.type === 'performance_movement'
+                                            ? 'bg-sky-500/10'
+                                            : 'bg-muted'
+                                "
                             >
-                                {{ item.count }} affiliate
+                                <ShieldAlert
+                                    v-if="item.type === 'monitoring'"
+                                    class="h-5 w-5 text-amber-500"
+                                />
+
+                                <Sparkles
+                                    v-else-if="item.type === 'potential'"
+                                    class="h-5 w-5 text-emerald-500"
+                                />
+
+                                <TrendingUp
+                                    v-else-if="item.type === 'performance_movement'"
+                                    class="h-5 w-5 text-sky-500"
+                                />
+
+                                <Zap
+                                    v-else
+                                    class="h-5 w-5 text-sky-500"
+                                />
+                            </div>
+
+                            <div class="min-w-0 flex-1">
+                                <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_280px]">
+                                    <!-- Insight -->
+                                    <div class="min-w-0">
+                                        <div class="flex flex-wrap items-center gap-2">
+                                            <h3 class="font-semibold">
+                                                {{ item.title }}
+                                            </h3>
+
+                                            <span
+                                                class="rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
+                                                :class="
+                                                    item.type === 'monitoring'
+                                                        ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+                                                        : item.type === 'potential'
+                                                          ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+                                                          : item.type === 'performance_movement'
+                                                            ? 'bg-sky-500/10 text-sky-600 dark:text-sky-400'
+                                                            : 'bg-muted text-muted-foreground'
+                                                "
+                                            >
+                                                {{
+                                                    item.type === 'monitoring'
+                                                        ? 'Attention'
+                                                        : item.type === 'potential'
+                                                          ? 'Opportunity'
+                                                          : item.type === 'performance_movement'
+                                                            ? 'Performance'
+                                                            : 'Insight'
+                                                }}
+                                            </span>
+                                        </div>
+
+                                        <p class="mt-2 text-sm font-semibold leading-6">
+                                            {{ item.headline }}
+                                        </p>
+
+                                        <p class="mt-1.5 max-w-4xl text-sm leading-6 text-muted-foreground">
+                                            {{ item.description }}
+                                        </p>
+                                    </div>
+
+                                    <!-- Recommended Action -->
+                                    <div class="border-l border-border/70 pl-5">
+                                        <div class="flex items-start gap-2">
+                                            <ArrowUpRight class="mt-0.5 h-4 w-4 shrink-0 text-sky-500" />
+
+                                            <div class="min-w-0">
+                                                <p class="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+                                                    Recommended Action
+                                                </p>
+
+                                                <p class="mt-1 text-xs font-medium leading-5 text-muted-foreground">
+                                                    {{ item.recommended_action }}
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
+                    </div>
 
-                        <div class="mt-4 rounded-lg border border-border/60 bg-muted/30 p-3">
-                            <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                                Recommended Action
-                            </p>
+                    <!-- Count + Arrow -->
+                    <div class="flex shrink-0 items-center gap-3 self-start">
+                        <div
+                            v-if="item.count"
+                            class="flex items-center gap-2 rounded-lg border border-border bg-muted/30 px-3 py-2"
+                        >
+                            <span class="text-lg font-bold tracking-tight">
+                                {{ item.count }}
+                            </span>
 
-                            <p class="mt-1 text-sm">
-                                {{ item.recommended_action }}
-                            </p>
+                            <span class="text-xs text-muted-foreground">
+                                affiliate
+                            </span>
                         </div>
+
+                        <ChevronRight
+                            class="h-4 w-4 text-muted-foreground transition-transform duration-200"
+                            :class="
+                                expandedInsight === item.type
+                                    ? 'rotate-90 text-sky-500'
+                                    : 'group-hover:translate-x-1'
+                            "
+                        />
                     </div>
                 </div>
             </div>
+
+            <!-- Expanded Detail -->
+            <div
+                v-if="expandedInsight === item.type"
+                class="border-t border-border bg-muted/10 px-5 pb-5 pt-4 sm:px-6"
+            >
+                <!-- Top Performer -->
+                <template v-if="item.type === 'top_performer' && topPerformer">
+                    <div class="rounded-xl border border-border bg-card p-4">
+                        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Top Performer Detail
+                                </p>
+
+                                <p class="mt-1 text-lg font-semibold">
+                                    {{ topPerformer.name ?? '-' }}
+                                </p>
+
+                                <p class="text-xs text-muted-foreground">
+                                    @{{ topPerformer.username ?? '-' }}
+                                </p>
+                            </div>
+
+                            <span
+                                class="inline-flex w-fit rounded-full border px-2.5 py-1 text-[10px] font-semibold"
+                                :class="getActionClass(topPerformer.action)"
+                            >
+                                {{ topPerformer.action ?? '—' }}
+                            </span>
+                        </div>
+
+                        <div class="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                            <div class="rounded-lg bg-muted/40 p-3">
+                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    GMV
+                                </p>
+                                <p class="mt-1 text-sm font-semibold">
+                                    {{ formatRupiah(topPerformer.gmv) }}
+                                </p>
+                            </div>
+
+                            <div class="rounded-lg bg-muted/40 p-3">
+                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    Orders
+                                </p>
+                                <p class="mt-1 text-sm font-semibold">
+                                    {{ formatNumber(topPerformer.orders) }}
+                                </p>
+                            </div>
+
+                            <div class="rounded-lg bg-muted/40 p-3">
+                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    Produk
+                                </p>
+                                <p class="mt-1 text-sm font-semibold">
+                                    {{ formatNumber(topPerformer.products_sold) }}
+                                </p>
+                            </div>
+
+                            <div class="rounded-lg bg-muted/40 p-3">
+                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    Performance
+                                </p>
+                                <p
+                                    class="mt-1 text-sm font-semibold"
+                                    :class="getScoreClass(topPerformer.performance_score)"
+                                >
+                                    {{ topPerformer.performance_score ?? '-' }}
+                                </p>
+                            </div>
+
+                            <div class="rounded-lg bg-muted/40 p-3">
+                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    Opportunity
+                                </p>
+                                <p
+                                    class="mt-1 text-sm font-semibold"
+                                    :class="getScoreClass(topPerformer.opportunity_score)"
+                                >
+                                    {{ topPerformer.opportunity_score ?? '-' }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Monitoring -->
+                <template v-else-if="item.type === 'monitoring'">
+                    <div>
+                        <div class="mb-3 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Affiliate yang perlu diperhatikan
+                                </p>
+
+                                <p class="mt-1 text-xs text-muted-foreground">
+                                    Kontribusi GMV tinggi dengan consistency score relatif rendah.
+                                </p>
+                            </div>
+
+                            <span class="text-xs font-medium text-muted-foreground">
+                                {{ insight.attention.monitoring.length }} affiliate
+                            </span>
+                        </div>
+
+                        <div class="overflow-hidden rounded-xl border border-border bg-card">
+                            <div
+                                v-for="affiliate in insight.attention.monitoring.slice(0, 8)"
+                                :key="affiliate.affiliate_id"
+                                class="flex flex-col gap-3 border-b border-border p-4 last:border-0 sm:flex-row sm:items-center"
+                            >
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-semibold">
+                                        {{ affiliate.name ?? '-' }}
+                                    </p>
+
+                                    <p class="truncate text-xs text-muted-foreground">
+                                        @{{ affiliate.username ?? '-' }}
+                                    </p>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-4 sm:w-[420px]">
+                                    <div>
+                                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                            GMV
+                                        </p>
+                                        <p class="mt-1 text-xs font-semibold">
+                                            {{ formatShortRupiah(affiliate.gmv) }}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                            Consistency
+                                        </p>
+                                        <p
+                                            class="mt-1 text-xs font-semibold"
+                                            :class="getScoreClass(affiliate.consistency_score)"
+                                        >
+                                            {{ affiliate.consistency_score ?? '-' }}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                            Action
+                                        </p>
+                                        <span
+                                            class="mt-1 inline-flex rounded-md border px-2 py-1 text-[9px] font-semibold"
+                                            :class="getActionClass(affiliate.action)"
+                                        >
+                                            {{ affiliate.action ?? '—' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Potential -->
+                <template v-else-if="item.type === 'potential'">
+                    <div>
+                        <div class="mb-3 flex items-center justify-between">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                    Potential Opportunity
+                                </p>
+
+                                <p class="mt-1 text-xs text-muted-foreground">
+                                    Affiliate dengan opportunity score tinggi dan kontribusi GMV yang masih kecil.
+                                </p>
+                            </div>
+
+                            <span class="text-xs font-medium text-muted-foreground">
+                                {{ insight.attention.potential.length }} affiliate
+                            </span>
+                        </div>
+
+                        <div class="overflow-hidden rounded-xl border border-border bg-card">
+                            <div
+                                v-for="affiliate in insight.attention.potential.slice(0, 8)"
+                                :key="affiliate.affiliate_id"
+                                class="flex flex-col gap-3 border-b border-border p-4 last:border-0 sm:flex-row sm:items-center"
+                            >
+                                <div class="min-w-0 flex-1">
+                                    <p class="truncate text-sm font-semibold">
+                                        {{ affiliate.name ?? '-' }}
+                                    </p>
+
+                                    <p class="truncate text-xs text-muted-foreground">
+                                        @{{ affiliate.username ?? '-' }}
+                                    </p>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-4 sm:w-[420px]">
+                                    <div>
+                                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                            GMV
+                                        </p>
+                                        <p class="mt-1 text-xs font-semibold">
+                                            {{ formatShortRupiah(affiliate.gmv) }}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                            Opportunity
+                                        </p>
+                                        <p
+                                            class="mt-1 text-xs font-semibold"
+                                            :class="getScoreClass(affiliate.opportunity_score)"
+                                        >
+                                            {{ affiliate.opportunity_score ?? '-' }}
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                            Action
+                                        </p>
+                                        <span
+                                            class="mt-1 inline-flex rounded-md border px-2 py-1 text-[9px] font-semibold"
+                                            :class="getActionClass(affiliate.action)"
+                                        >
+                                            {{ affiliate.action ?? '—' }}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Performance Movement -->
+                <template v-else-if="item.type === 'performance_movement'">
+                    <div class="rounded-xl border border-border bg-card p-4">
+                        <div class="flex items-center gap-2">
+                            <TrendingUp class="h-4 w-4 text-sky-500" />
+
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-wide">
+                                    Performance Movement
+                                </p>
+
+                                <p class="mt-0.5 text-xs text-muted-foreground">
+                                    Perbandingan performa dengan periode sebelumnya.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 rounded-lg bg-muted/40 p-4">
+                            <p class="text-sm leading-6 text-muted-foreground">
+                                {{ item.description }}
+                            </p>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Generic -->
+                <template v-else>
+                    <div class="rounded-xl border border-border bg-card p-4">
+                        <p class="text-sm leading-6 text-muted-foreground">
+                            {{ item.description }}
+                        </p>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+</section>
 
             <!-- Top Performers -->
             <section class="rounded-2xl border border-border bg-card overflow-hidden">

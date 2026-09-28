@@ -28,7 +28,7 @@ class AffiliateImportController extends Controller
             'period_end' => [
                 'required',
                 'date',
-                'after_or_equal:period_start',
+                'same:period_start',
             ],
         ]);
 
@@ -36,8 +36,12 @@ class AffiliateImportController extends Controller
 
         $batch = ImportBatch::create([
             'file_name' => $file->getClientOriginalName(),
+
+            // Daily snapshot:
+            // period_start dan period_end harus sama.
             'period_start' => $validated['period_start'],
-            'period_end' => $validated['period_end'],
+            'period_end' => $validated['period_start'],
+
             'uploaded_by' => Auth::id(),
             'status' => 'queued',
             'total_rows' => 0,

@@ -35,10 +35,22 @@ const page = usePage<{
     }
 }>()
 
+const getYesterday = () => {
+    const date = new Date()
+
+    date.setDate(date.getDate() - 1)
+
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+}
+
 const form = useForm({
     file: null as File | null,
-    period_start: '',
-    period_end: '',
+    period_start: getYesterday(),
+    period_end: getYesterday(),
 })
 
 const showProgress = ref(false)
@@ -333,68 +345,75 @@ onBeforeUnmount(() => {
                     </p>
                 </div>
 
-                <!-- Period -->
-                <div class="grid gap-5 md:grid-cols-2">
-                    <!-- Start -->
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium">
-                            Periode Mulai
-                        </label>
+                <!-- Data Date -->
+                <div class="space-y-2">
+                    <label
+                        for="period_start"
+                        class="text-sm font-medium text-gray-900 dark:text-white"
+                    >
+                        Tanggal Data
+                    </label>
 
-                        <div class="relative">
-                            <CalendarDays
-                                class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                            />
+                    <div class="relative">
+                        <CalendarDays
+                            class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                        />
 
-                            <input
-                                v-model="form.period_start"
-                                type="date"
-                                class="w-full rounded-lg border border-input bg-background px-10 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                            />
-                        </div>
-
-                        <p
-                            v-if="form.errors.period_start"
-                            class="text-sm text-destructive"
-                        >
-                            {{ form.errors.period_start }}
-                        </p>
+                        <input
+                            id="period_start"
+                            v-model="form.period_start"
+                            type="date"
+                            class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                            :disabled="form.processing"
+                            @change="form.period_end = form.period_start"
+                        />
                     </div>
 
-                    <!-- End -->
-                    <div class="space-y-2">
-                        <label class="text-sm font-medium">
-                            Periode Selesai
-                        </label>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        Menunjukkan tanggal performa data Seller Center.
+                        Default menggunakan H-1.
+                    </p>
 
-                        <div class="relative">
-                            <CalendarDays
-                                class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
-                            />
+                    <p
+                        v-if="form.errors.period_start"
+                        class="text-xs text-red-500"
+                    >
+                        {{ form.errors.period_start }}
+                    </p>
 
-                            <input
-                                v-model="form.period_end"
-                                type="date"
-                                class="w-full rounded-lg border border-input bg-background px-10 py-2.5 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/20"
-                            />
-                        </div>
-
-                        <p
-                            v-if="form.errors.period_end"
-                            class="text-sm text-destructive"
-                        >
-                            {{ form.errors.period_end }}
-                        </p>
-                    </div>
+                    <p
+                        v-if="form.errors.period_end"
+                        class="text-xs text-red-500"
+                    >
+                        {{ form.errors.period_end }}
+                    </p>
                 </div>
 
                 <!-- Info -->
-                <div class="rounded-lg border border-border bg-muted/30 p-4">
-                    <p class="text-sm text-muted-foreground">
-                        Data setiap periode akan disimpan sebagai snapshot
-                        terpisah sehingga performa affiliate antarperiode
-                        dapat dibandingkan.
-                    </p>
+                <div
+                    class="rounded-xl border border-blue-200 bg-blue-50 p-4 dark:border-blue-900/50 dark:bg-blue-950/30"
+                >
+                    <div class="flex gap-3">
+                        <CalendarDays
+                            class="mt-0.5 h-5 w-5 shrink-0 text-blue-600 dark:text-blue-400"
+                        />
+
+                        <div>
+                            <p class="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                                Daily Performance Snapshot
+                            </p>
+
+                            <p class="mt-1 text-sm leading-6 text-blue-700 dark:text-blue-300">
+                                Setiap import disimpan sebagai snapshot performa untuk satu
+                                tanggal. Tanggal data tidak mengikuti waktu upload file.
+                            </p>
+
+                            <p class="mt-2 text-xs leading-5 text-blue-600 dark:text-blue-400">
+                                Jika file tanggal sebelumnya baru tersedia kemudian, pilih
+                                tanggal performa yang sesuai saat melakukan import.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Submit -->

@@ -20,9 +20,33 @@ class InsightEngine
             ->get()
             ->keyBy('affiliate_id');
 
+        $previousBatch = ImportBatch::query()
+            ->where('uploaded_by', $batch->uploaded_by)
+            ->where('status', 'completed')
+            ->whereNotNull('period_start')
+            ->whereNotNull('period_end')
+            ->whereDate('period_end', '<', $batch->period_start)
+            ->orderByDesc('period_end')
+            ->first();
+
         $totalGmv = $performances->sum('gmv');
         $totalOrders = $performances->sum('attributed_orders');
         $totalProductsSold = $performances->sum('products_sold');
+
+        $previousSummary = null;
+
+        if ($previousBatch) {
+            $previousPerformances = AffiliatePerformance::query()
+                ->where('import_batch_id', $previousBatch->id)
+                ->get();
+
+            $previousSummary = [
+                'total_gmv' => (float) $previousPerformances->sum('gmv'),
+                'total_orders' => (int) $previousPerformances->sum('attributed_orders'),
+                'total_products_sold' => (int) $previousPerformances->sum('products_sold'),
+                'affiliate_count' => $previousPerformances->count(),
+            ];
+        }
 
         $affiliateData = $performances->map(function ($performance) use ($scores) {
             $score = $scores->get($performance->affiliate_id);
@@ -143,6 +167,57 @@ class InsightEngine
                 ];
             }
 
+            if ($previousSummary) {
+                $gmvComparison = $this->compareMetric(
+                    $totalGmv,
+                    $previousSummary['total_gmv']
+                );
+
+                $ordersComparison = $this->compareMetric(
+                    $totalOrders,
+                    $previousSummary['total_orders']
+                );
+
+                $productsComparison = $this->compareMetric(
+                    $totalProductsSold,
+                    $previousSummary['total_products_sold']
+                );
+
+                $affiliateComparison = $this->compareMetric(
+                    $affiliateData->count(),
+                    $previousSummary['affiliate_count']
+                );
+
+                $insightSummary[] = [
+                    'type' => 'performance_movement',
+                    'title' => 'Performance Movement',
+                    'headline' => sprintf(
+                        'GMV %s %.1f%% dibanding periode sebelumnya.',
+                        $gmvComparison['direction'] === 'up'
+                            ? 'meningkat'
+                            : ($gmvComparison['direction'] === 'down' ? 'menurun' : 'tetap'),
+                        abs($gmvComparison['percentage'] ?? 0)
+                    ),
+                    'description' => sprintf(
+                        'Orders %s %.1f%%, produk terjual %s %.1f%%, dan jumlah affiliate %s %.1f%%.',
+                        $ordersComparison['direction'] === 'up'
+                            ? 'meningkat'
+                            : ($ordersComparison['direction'] === 'down' ? 'menurun' : 'tetap'),
+                        abs($ordersComparison['percentage'] ?? 0),
+                        $productsComparison['direction'] === 'up'
+                            ? 'meningkat'
+                            : ($productsComparison['direction'] === 'down' ? 'menurun' : 'tetap'),
+                        abs($productsComparison['percentage'] ?? 0),
+                        $affiliateComparison['direction'] === 'up'
+                            ? 'meningkat'
+                            : ($affiliateComparison['direction'] === 'down' ? 'menurun' : 'tetap'),
+                        abs($affiliateComparison['percentage'] ?? 0),
+                    ),
+                    'recommended_action' => 'Gunakan perubahan antarperiode sebagai dasar evaluasi strategi affiliate.',
+                ];
+            }
+            
+
         return [
             'period' => [
                 'start' => $batch->period_start?->format('Y-m-d'),
@@ -154,6 +229,43 @@ class InsightEngine
                 'total_orders' => (int) $totalOrders,
                 'total_products_sold' => (int) $totalProductsSold,
                 'affiliate_count' => $affiliateData->count(),
+
+                'comparison' => [
+                    'gmv' => $previousSummary
+                        ? $this->compareMetric(
+                            $totalGmv,
+                            $previousSummary['total_gmv']
+                        )
+                        : null,
+
+                    'orders' => $previousSummary
+                        ? $this->compareMetric(
+                            $totalOrders,
+                            $previousSummary['total_orders']
+                        )
+                        : null,
+
+                    'products_sold' => $previousSummary
+                        ? $this->compareMetric(
+                            $totalProductsSold,
+                            $previousSummary['total_products_sold']
+                        )
+                        : null,
+
+                    'affiliate_count' => $previousSummary
+                        ? $this->compareMetric(
+                            $affiliateData->count(),
+                            $previousSummary['affiliate_count']
+                        )
+                        : null,
+                ],
+
+                'previous_period' => $previousBatch
+                    ? [
+                        'start' => $previousBatch->period_start?->format('Y-m-d'),
+                        'end' => $previousBatch->period_end?->format('Y-m-d'),
+                    ]
+                    : null,
             ],
 
             'top_gmv' => $topGmv,
@@ -171,6 +283,25 @@ class InsightEngine
             ],
 
             'insights' => $insightSummary,
+        ];
+    }
+
+    private function compareMetric(
+        float|int $current,
+        float|int $previous
+    ): array {
+        $difference = $current - $previous;
+
+        return [
+            'current' => $current,
+            'previous' => $previous,
+            'difference' => $difference,
+            'percentage' => $previous != 0
+                ? round(($difference / $previous) * 100, 1)
+                : null,
+            'direction' => $difference > 0
+                ? 'up'
+                : ($difference < 0 ? 'down' : 'flat'),
         ];
     }
 }
