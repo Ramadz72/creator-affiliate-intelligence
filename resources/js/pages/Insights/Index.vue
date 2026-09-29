@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Head, Link } from '@inertiajs/vue3';
+import { Head, Link, router } from '@inertiajs/vue3';
 import AppLayout from '@/layouts/AppLayout.vue';
 import {
     ArrowLeft,
@@ -115,10 +115,35 @@ interface Batch {
     period_end: string | null;
 }
 
+
 const props = defineProps<{
     insight: InsightData | null;
     batch: Batch | null;
+    selected_period: {
+    start: string
+    end: string
+    } | null
+
+    comparison_period: {
+        start: string
+        end: string
+    } | null
 }>();
+
+const startDate = ref(props.selected_period?.start ?? '')
+const endDate = ref(props.selected_period?.end ?? '')
+
+const showPeriodDropdown = ref(false)
+
+const periodPreset = ref<
+    '7days' | '30days' | 'today' | 'custom'
+>('custom')
+
+const selectedPeriod = computed(() => props.selected_period)
+
+const comparisonPeriod = computed(
+    () => props.comparison_period
+)
 
 const expandedInsight = ref<string | null>(null);
 
@@ -217,6 +242,72 @@ const formatDate = (value: string | null) => {
     }).format(new Date(`${value}T00:00:00`));
 };
 
+const formatDateInput = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+
+    return `${year}-${month}-${day}`
+}
+
+const getToday = () => {
+    return formatDateInput(new Date())
+}
+
+const getDaysAgo = (days: number) => {
+    const date = new Date()
+
+    date.setDate(
+        date.getDate() - days
+    )
+
+    return formatDateInput(date)
+}
+
+const formatPeriodDate = (
+    date: string | null | undefined
+) => {
+    if (!date) return '-'
+
+    const parsed =
+        new Date(`${date}T00:00:00`)
+
+    if (
+        Number.isNaN(
+            parsed.getTime()
+        )
+    ) {
+        return date
+    }
+
+    return new Intl.DateTimeFormat(
+        'id-ID',
+        {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        }
+    ).format(parsed)
+}
+
+const applyFilters = () => {
+    showPeriodDropdown.value = false
+
+    router.get(
+        '/insights',
+        {
+            start_date:
+                startDate.value || undefined,
+
+            end_date:
+                endDate.value || undefined,
+        },
+        {
+            preserveState: true,
+            preserveScroll: true,
+        }
+    )
+}
 const topThree = computed(() => {
     return props.insight?.top_gmv?.slice(0, 3) ?? []
 })
@@ -249,6 +340,60 @@ const getActionClass = (action: string | null) => {
             return 'bg-muted text-muted-foreground border-border'
     }
 }
+
+const selectPreset = (
+    preset: '7days' | '30days' | 'today'
+) => {
+    periodPreset.value = preset
+
+    if (preset === 'today') {
+        startDate.value = getToday()
+        endDate.value = getToday()
+    }
+
+    if (preset === '7days') {
+        startDate.value = getDaysAgo(6)
+        endDate.value = getToday()
+    }
+
+    if (preset === '30days') {
+        startDate.value = getDaysAgo(29)
+        endDate.value = getToday()
+    }
+
+    applyFilters()
+}
+
+const selectCustom = () => {
+    periodPreset.value = 'custom'
+}
+
+const applyCustomPeriod = () => {
+    if (
+        !startDate.value ||
+        !endDate.value
+    ) {
+        return
+    }
+
+    if (
+        startDate.value >
+        endDate.value
+    ) {
+        const temp = startDate.value
+
+        startDate.value =
+            endDate.value
+
+        endDate.value =
+            temp
+    }
+
+    periodPreset.value = 'custom'
+
+    applyFilters()
+}
+
 </script>
 
 <template>
@@ -279,19 +424,210 @@ const getActionClass = (action: string | null) => {
                 </div>
             </div>
 
-            <div
-                v-if="batch"
-                class="rounded-lg border border-border bg-card px-4 py-2.5 text-right"
+            <div class="relative">
+            <button
+                type="button"
+                class="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
+                @click.stop="
+                    showPeriodDropdown =
+                        !showPeriodDropdown
+                "
             >
-                <p class="text-xs font-medium text-muted-foreground">
-                    Periode Analisis
-                </p>
-                <p class="mt-0.5 text-sm font-semibold">
-                    {{ formatDate(batch.period_start) }}
-                    —
-                    {{ formatDate(batch.period_end) }}
-                </p>
+                <Calendar class="h-4 w-4" />
+
+                <span>
+                    {{
+                        selectedPeriod
+                            ? `${formatPeriodDate(selectedPeriod.start)} – ${formatPeriodDate(selectedPeriod.end)}`
+                            : 'Pilih periode'
+                    }}
+                </span>
+
+                <ChevronDown class="h-4 w-4" />
+            </button>
+
+            <div
+                v-if="showPeriodDropdown"
+                class="absolute right-0 z-50 mt-2 w-[420px] max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-card p-4 shadow-xl"
+                @click.stop
+            >
+                <div class="grid grid-cols-[130px_1fr] gap-4">
+
+                    <!-- PRESET -->
+
+                    <div class="space-y-1">
+                        <p class="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Periode
+                        </p>
+
+                        <button
+                            type="button"
+                            class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
+                            :class="
+                                periodPreset === '7days'
+                                    ? 'bg-muted font-medium'
+                                    : ''
+                            "
+                            @click="
+                                selectPreset('7days')
+                            "
+                        >
+                            7 Hari
+                        </button>
+
+                        <button
+                            type="button"
+                            class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
+                            :class="
+                                periodPreset === '30days'
+                                    ? 'bg-muted font-medium'
+                                    : ''
+                            "
+                            @click="
+                                selectPreset('30days')
+                            "
+                        >
+                            30 Hari
+                        </button>
+
+                        <button
+                            type="button"
+                            class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
+                            :class="
+                                periodPreset === 'today'
+                                    ? 'bg-muted font-medium'
+                                    : ''
+                            "
+                            @click="
+                                selectPreset('today')
+                            "
+                        >
+                            Hari Ini
+                        </button>
+
+                        <button
+                            type="button"
+                            class="w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-muted"
+                            :class="
+                                periodPreset === 'custom'
+                                    ? 'bg-muted font-medium'
+                                    : ''
+                            "
+                            @click="
+                                selectCustom()
+                            "
+                        >
+                            Custom
+                        </button>
+                    </div>
+
+                    <!-- CUSTOM RANGE -->
+
+                    <div>
+                        <p class="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                            Custom Range
+                        </p>
+
+                        <div class="grid gap-3">
+                            <div>
+                                <label class="mb-1 block text-xs text-muted-foreground">
+                                    Dari
+                                </label>
+
+                                <input
+                                    v-model="startDate"
+                                    type="date"
+                                    class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                                    @focus="
+                                        periodPreset =
+                                            'custom'
+                                    "
+                                />
+                            </div>
+
+                            <div>
+                                <label class="mb-1 block text-xs text-muted-foreground">
+                                    Sampai
+                                </label>
+
+                                <input
+                                    v-model="endDate"
+                                    type="date"
+                                    class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm"
+                                    @focus="
+                                        periodPreset =
+                                            'custom'
+                                    "
+                                />
+                            </div>
+                        </div>
+
+                        <!-- PREVIEW -->
+
+                        <div
+                            v-if="
+                                startDate &&
+                                endDate
+                            "
+                            class="mt-4 rounded-lg bg-muted/40 p-3"
+                        >
+                            <p class="text-xs text-muted-foreground">
+                                Periode terpilih
+                            </p>
+
+                            <p class="mt-1 text-sm font-medium">
+                                {{
+                                    formatPeriodDate(
+                                        startDate
+                                    )
+                                }}
+                                –
+                                {{
+                                    formatPeriodDate(
+                                        endDate
+                                    )
+                                }}
+                            </p>
+
+                            <div
+                                v-if="
+                                    comparisonPeriod
+                                "
+                                class="mt-3 border-t border-border pt-3"
+                            >
+                                <p class="text-xs text-muted-foreground">
+                                    Perbandingan otomatis
+                                </p>
+
+                                <p class="mt-1 text-sm font-medium">
+                                    {{
+                                        formatPeriodDate(
+                                            comparisonPeriod.start
+                                        )
+                                    }}
+                                    –
+                                    {{
+                                        formatPeriodDate(
+                                            comparisonPeriod.end
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <button
+                            type="button"
+                            class="mt-4 w-full rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:opacity-90"
+                            @click="
+                                applyCustomPeriod()
+                            "
+                        >
+                            Terapkan Periode
+                        </button>
+                    </div>
+                </div>
             </div>
+        </div>
         </div>
 
         <!-- Empty State -->

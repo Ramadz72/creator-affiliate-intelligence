@@ -9,6 +9,8 @@ use App\Services\AffiliateScoreService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -16,6 +18,14 @@ class AffiliateController extends Controller
 {
     public function index(Request $request): Response
     {
+        /*
+        |--------------------------------------------------------------------------
+        | Benchmark Start
+        |--------------------------------------------------------------------------
+        */
+
+        $debugStart = microtime(true);
+
         /*
         |--------------------------------------------------------------------------
         | Latest Snapshot
@@ -36,20 +46,30 @@ class AffiliateController extends Controller
         */
 
         $search = trim((string) $request->input('search', ''));
-        $sort = (string) $request->input('sort', 'opportunity');
-        $direction = strtolower((string) $request->input('direction', 'desc'));
-        $action = trim((string) $request->input('action', ''));
+
+        $sort = (string) $request->input(
+            'sort',
+            'opportunity'
+        );
+
+        $direction = strtolower(
+            (string) $request->input(
+                'direction',
+                'desc'
+            )
+        );
+
+        $action = trim(
+            (string) $request->input(
+                'action',
+                ''
+            )
+        );
 
         /*
         |--------------------------------------------------------------------------
         | Date Range
         |--------------------------------------------------------------------------
-        |
-        | Prioritas:
-        | 1. start_date + end_date
-        | 2. batch_id lama
-        | 3. latest snapshot
-        |
         */
 
         $startDate = null;
@@ -125,8 +145,15 @@ class AffiliateController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if ($startDate && $endDate && $startDate->gt($endDate)) {
-            [$startDate, $endDate] = [$endDate, $startDate];
+        if (
+            $startDate &&
+            $endDate &&
+            $startDate->gt($endDate)
+        ) {
+            [$startDate, $endDate] = [
+                $endDate,
+                $startDate,
+            ];
         }
 
         /*
@@ -230,41 +257,56 @@ class AffiliateController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (
-            !$startDate ||
-            !$endDate
-        ) {
-            return Inertia::render('affiliates/Index', [
-                'affiliates' => [
-                    'data' => [],
-                    'total' => 0,
-                    'per_page' => 20,
-                    'current_page' => 1,
-                    'last_page' => 1,
-                ],
+        if (!$startDate || !$endDate) {
+            return Inertia::render(
+                'affiliates/Index',
+                [
+                    'affiliates' => [
+                        'data' => [],
+                        'total' => 0,
+                        'per_page' => 20,
+                        'current_page' => 1,
+                        'last_page' => 1,
+                    ],
 
-                'latest_period' => $latestBatch
-                    ? [
-                        'start' => $latestBatch->period_start?->format('Y-m-d'),
-                        'end' => $latestBatch->period_end?->format('Y-m-d'),
-                    ]
-                    : null,
+                    'latest_period' => $latestBatch
+                        ? [
+                            'start' =>
+                                $latestBatch
+                                    ->period_start
+                                    ?->format('Y-m-d'),
 
-                'selected_period' => null,
-                'comparison_period' => null,
+                            'end' =>
+                                $latestBatch
+                                    ->period_end
+                                    ?->format('Y-m-d'),
+                        ]
+                        : null,
 
-                'latest_batch_id' => $latestBatch?->id,
-                'selected_batch_id' => null,
-                'previous_batch_id' => null,
-                'previous_period' => null,
+                    'selected_period' => null,
 
-                'import_batches' => $importBatches,
+                    'comparison_period' => null,
 
-                'search' => $search,
-                'sort' => $sort,
-                'direction' => $direction,
-                'action' => $action,
-            ]);
+                    'latest_batch_id' =>
+                        $latestBatch?->id,
+
+                    'selected_batch_id' => null,
+
+                    'previous_batch_id' => null,
+
+                    'previous_period' => null,
+
+                    'import_batches' => $importBatches,
+
+                    'search' => $search,
+
+                    'sort' => $sort,
+
+                    'direction' => $direction,
+
+                    'action' => $action,
+                ]
+            );
         }
 
         /*
@@ -308,97 +350,359 @@ class AffiliateController extends Controller
         */
 
         if ($currentBatches->isEmpty()) {
-            return Inertia::render('affiliates/Index', [
-                'affiliates' => [
-                    'data' => [],
-                    'total' => 0,
-                    'per_page' => 20,
-                    'current_page' => 1,
-                    'last_page' => 1,
-                ],
+            return Inertia::render(
+                'affiliates/Index',
+                [
+                    'affiliates' => [
+                        'data' => [],
+                        'total' => 0,
+                        'per_page' => 20,
+                        'current_page' => 1,
+                        'last_page' => 1,
+                    ],
 
-                'latest_period' => $latestBatch
-                    ? [
-                        'start' => $latestBatch->period_start?->format('Y-m-d'),
-                        'end' => $latestBatch->period_end?->format('Y-m-d'),
-                    ]
-                    : null,
+                    'latest_period' => $latestBatch
+                        ? [
+                            'start' =>
+                                $latestBatch
+                                    ->period_start
+                                    ?->format('Y-m-d'),
 
-                'selected_period' => [
-                    'start' => $startDate->format('Y-m-d'),
-                    'end' => $endDate->format('Y-m-d'),
-                ],
+                            'end' =>
+                                $latestBatch
+                                    ->period_end
+                                    ?->format('Y-m-d'),
+                        ]
+                        : null,
 
-                'comparison_period' => [
-                    'start' => $comparisonStart->format('Y-m-d'),
-                    'end' => $comparisonEnd->format('Y-m-d'),
-                ],
+                    'selected_period' => [
+                        'start' =>
+                            $startDate->format('Y-m-d'),
 
-                'latest_batch_id' => $latestBatch?->id,
-                'selected_batch_id' => null,
-                'previous_batch_id' => null,
+                        'end' =>
+                            $endDate->format('Y-m-d'),
+                    ],
 
-                'previous_period' => [
-                    'start' => $comparisonStart->format('Y-m-d'),
-                    'end' => $comparisonEnd->format('Y-m-d'),
-                ],
+                    'comparison_period' => [
+                        'start' =>
+                            $comparisonStart->format('Y-m-d'),
 
-                'import_batches' => $importBatches,
+                        'end' =>
+                            $comparisonEnd->format('Y-m-d'),
+                    ],
 
-                'search' => $search,
-                'sort' => $sort,
-                'direction' => $direction,
-                'action' => $action,
-            ]);
+                    'latest_batch_id' =>
+                        $latestBatch?->id,
+
+                    'selected_batch_id' => null,
+
+                    'previous_batch_id' => null,
+
+                    'previous_period' => [
+                        'start' =>
+                            $comparisonStart->format('Y-m-d'),
+
+                        'end' =>
+                            $comparisonEnd->format('Y-m-d'),
+                    ],
+
+                    'import_batches' => $importBatches,
+
+                    'search' => $search,
+
+                    'sort' => $sort,
+
+                    'direction' => $direction,
+
+                    'action' => $action,
+                ]
+            );
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Current Performance
+        | Current Performance Query
         |--------------------------------------------------------------------------
         */
 
-        $currentPerformanceRows = AffiliatePerformance::query()
-            ->with(['affiliate:id,name,username,platform,status'])
-            ->whereIn('import_batch_id', $currentBatches->pluck('id'))
-            ->whereHas('affiliate', function ($query) {
-                $query->where('user_id', Auth::id());
-            })
+        $currentPerformanceRows = DB::table('affiliate_performances')
+            ->join(
+                'affiliates',
+                'affiliates.id',
+                '=',
+                'affiliate_performances.affiliate_id'
+            )
+            ->whereIn(
+                'affiliate_performances.import_batch_id',
+                $currentBatches->pluck('id')
+            )
+            ->where(
+                'affiliates.user_id',
+                Auth::id()
+            )
+            ->select([
+                'affiliate_performances.affiliate_id',
+
+                'affiliates.name',
+                'affiliates.username',
+                'affiliates.platform',
+                'affiliates.status',
+
+                DB::raw('SUM(affiliate_performances.gmv) as gmv'),
+
+                DB::raw(
+                    'SUM(affiliate_performances.attributed_orders) as orders'
+                ),
+
+                DB::raw(
+                    'SUM(affiliate_performances.products_sold) as products_sold'
+                ),
+
+                DB::raw(
+                    'SUM(affiliate_performances.impressions) as impressions'
+                ),
+
+                DB::raw(
+                    'SUM(affiliate_performances.video_views) as video_views'
+                ),
+
+                DB::raw(
+                    'SUM(
+                        affiliate_performances.ctr *
+                        affiliate_performances.impressions
+                    ) as ctr_weighted'
+                ),
+
+                DB::raw(
+                    'SUM(
+                        affiliate_performances.ctor *
+                        affiliate_performances.video_views
+                    ) as ctor_weighted'
+                ),
+
+                DB::raw(
+                    'COUNT(*) as period_count'
+                ),
+            ])
+            ->groupBy([
+                'affiliate_performances.affiliate_id',
+                'affiliates.name',
+                'affiliates.username',
+                'affiliates.platform',
+                'affiliates.status',
+            ])
             ->get();
 
-        $currentPerformances = $currentPerformanceRows->groupBy('affiliate_id');
+        $debugAfterCurrentQuery = microtime(true);
 
         /*
         |--------------------------------------------------------------------------
-        | Comparison Performance
+        | Aggregate Current Performance
         |--------------------------------------------------------------------------
         */
 
-        $comparisonPerformanceRows = AffiliatePerformance::query()
-            ->whereIn('import_batch_id', $comparisonBatches->pluck('id'))
-            ->whereHas('affiliate', function ($query) {
-                $query->where('user_id', Auth::id());
-            })
-            ->get();
+        $currentAggregates = [];
 
-        $comparisonPerformances = $comparisonPerformanceRows->groupBy('affiliate_id');
-        
+        foreach ($currentPerformanceRows as $row) {
+            $affiliateId = (int) $row->affiliate_id;
+
+            $impressions = (float) ($row->impressions ?? 0);
+            $videoViews = (float) ($row->video_views ?? 0);
+
+            $ctr = $impressions > 0
+                ? (float) ($row->ctr_weighted ?? 0) / $impressions
+                : 0;
+
+            $ctor = $videoViews > 0
+                ? (float) ($row->ctor_weighted ?? 0) / $videoViews
+                : 0;
+
+            $currentAggregates[$affiliateId] = [
+                'affiliate' => [
+                    'id' => $affiliateId,
+                    'name' => $row->name,
+                    'username' => $row->username,
+                    'platform' => $row->platform,
+                    'status' => $row->status,
+                ],
+
+                'affiliate_id' => $affiliateId,
+
+                'gmv' => (float) ($row->gmv ?? 0),
+
+                'orders' => (int) ($row->orders ?? 0),
+
+                'products_sold' =>
+                    (int) ($row->products_sold ?? 0),
+
+                'impressions' => $impressions,
+
+                'video_views' => $videoViews,
+
+                'ctr' => $ctr,
+
+                'ctor' => $ctor,
+
+                'period_count' =>
+                    (int) ($row->period_count ?? 0),
+            ];
+        }
+
+        $debugAfterCurrentAggregate = microtime(true);
+
         /*
         |--------------------------------------------------------------------------
-        | Range Score
+        | Comparison Performance Query
+        |--------------------------------------------------------------------------
+        */
+
+        $comparisonPerformanceRows = DB::table(
+            'affiliate_performances'
+        )
+            ->whereIn(
+                'import_batch_id',
+                $comparisonBatches->pluck('id')
+            )
+            ->select([
+                'affiliate_id',
+                DB::raw('SUM(gmv) as gmv'),
+            ])
+            ->groupBy('affiliate_id')
+            ->get();
+
+        $debugAfterComparisonQuery = microtime(true);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Aggregate Comparison Performance
+        |--------------------------------------------------------------------------
+        */
+
+        $comparisonAggregates = [];
+
+        foreach ($comparisonPerformanceRows as $row) {
+            $affiliateId = $row->affiliate_id;
+
+            $comparisonAggregates[$affiliateId] = [
+                'gmv' =>
+                    (float) (
+                        $row->gmv ?? 0
+                    ),
+            ];
+        }
+
+        $debugAfterComparisonAggregate = microtime(true);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Range Scoring Data
         |--------------------------------------------------------------------------
         |
-        | Score dihitung ulang berdasarkan seluruh data dalam
-        | selected range, bukan mengambil score snapshot terakhir.
+        | Query ini khusus untuk AffiliateScoreService.
+        | Tidak menggunakan Eloquent model agar tetap ringan.
         |
         */
 
-        $scoreService = app(AffiliateScoreService::class);
+        $scoreService =
+            app(AffiliateScoreService::class);
 
-        $rangeScores = $scoreService->scoreRange(
-            $currentPerformanceRows,
-            $comparisonPerformanceRows
-        );
+        $scoreCurrentStart =
+            microtime(true);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Current Period - Scoring Rows
+        |--------------------------------------------------------------------------
+        */
+
+        $scoreCurrentPerformances = DB::table(
+            'affiliate_performances'
+        )
+            ->join(
+                'affiliates',
+                'affiliates.id',
+                '=',
+                'affiliate_performances.affiliate_id'
+            )
+            ->whereIn(
+                'affiliate_performances.import_batch_id',
+                $currentBatches->pluck('id')
+            )
+            ->where(
+                'affiliates.user_id',
+                Auth::id()
+            )
+            ->select([
+                'affiliate_performances.affiliate_id',
+                'affiliate_performances.gmv',
+                'affiliate_performances.attributed_orders',
+                'affiliate_performances.buyers',
+                'affiliate_performances.impressions',
+                'affiliate_performances.video_views',
+                'affiliate_performances.ctr',
+                'affiliate_performances.ctor',
+                'affiliate_performances.video_count',
+                'affiliate_performances.live_count',
+            ])
+            ->get();
+
+        $scoreCurrentQueryEnd =
+            microtime(true);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Comparison Period - Scoring Rows
+        |--------------------------------------------------------------------------
+        */
+
+        $scoreComparisonPerformances = DB::table(
+            'affiliate_performances'
+        )
+            ->join(
+                'affiliates',
+                'affiliates.id',
+                '=',
+                'affiliate_performances.affiliate_id'
+            )
+            ->whereIn(
+                'affiliate_performances.import_batch_id',
+                $comparisonBatches->pluck('id')
+            )
+            ->where(
+                'affiliates.user_id',
+                Auth::id()
+            )
+            ->select([
+                'affiliate_performances.affiliate_id',
+                'affiliate_performances.gmv',
+                'affiliate_performances.attributed_orders',
+                'affiliate_performances.buyers',
+                'affiliate_performances.impressions',
+                'affiliate_performances.video_views',
+                'affiliate_performances.ctr',
+                'affiliate_performances.ctor',
+                'affiliate_performances.video_count',
+                'affiliate_performances.live_count',
+            ])
+            ->get();
+
+        $scoreComparisonQueryEnd =
+            microtime(true);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Calculate Range Scores
+        |--------------------------------------------------------------------------
+        */
+
+        $rangeScores =
+            $scoreService->scoreRange(
+                $scoreCurrentPerformances,
+                $scoreComparisonPerformances
+            );
+
+        $scoreRangeEnd =
+            microtime(true);
 
         /*
         |--------------------------------------------------------------------------
@@ -406,49 +710,59 @@ class AffiliateController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $affiliateRows = $currentPerformances
-            ->map(function ($rows, $affiliateId) use (
-                $comparisonPerformances,
+        $affiliateRows = collect($currentAggregates)
+        ->map(
+            function (
+                $aggregate,
+                $affiliateId
+            ) use (
+                $comparisonAggregates,
                 $rangeScores,
                 $startDate,
-                $endDate
+                $endDate,
             ) {
-                $first = $rows->first();
+                $affiliate = $aggregate['affiliate'];
 
                 /*
+                |--------------------------------------------------------------------------
                 | Current Period
+                |--------------------------------------------------------------------------
                 */
 
-                $currentGmv = (float) $rows->sum('gmv');
+                $currentGmv =
+                    (float) ($aggregate['gmv'] ?? 0);
 
-                $currentOrders = (int) $rows->sum(
-                    'attributed_orders'
-                );
+                $currentOrders =
+                    (int) ($aggregate['orders'] ?? 0);
 
-                $currentProductsSold = (int) $rows->sum(
-                    'products_sold'
-                );
+                $currentProductsSold =
+                    (int) ($aggregate['products_sold'] ?? 0);
 
-                $currentAov = $currentOrders > 0
-                    ? $currentGmv / $currentOrders
-                    : 0;
+                $currentAov =
+                    $currentOrders > 0
+                        ? $currentGmv / $currentOrders
+                        : 0;
 
-                $currentCtr = (float) $rows->avg('ctr');
-                $currentCtor = (float) $rows->avg('ctor');
+                $currentCtr =
+                    (float) ($aggregate['ctr'] ?? 0);
+
+                $currentCtor =
+                    (float) ($aggregate['ctor'] ?? 0);
 
                 /*
+                |--------------------------------------------------------------------------
                 | Previous Period
+                |--------------------------------------------------------------------------
                 */
 
-                $previousRows = $comparisonPerformances
-                    ->get($affiliateId);
-
-                $previousGmv = $previousRows
-                    ? (float) $previousRows->sum('gmv')
-                    : null;
+                $previousGmv =
+                    $comparisonAggregates[$affiliateId]['gmv']
+                    ?? null;
 
                 /*
+                |--------------------------------------------------------------------------
                 | Movement
+                |--------------------------------------------------------------------------
                 */
 
                 $changePercent = null;
@@ -459,8 +773,11 @@ class AffiliateController extends Controller
                 ) {
                     $changePercent =
                         (
-                            ($currentGmv - $previousGmv)
-                            / $previousGmv
+                            (
+                                $currentGmv -
+                                $previousGmv
+                            ) /
+                            $previousGmv
                         ) * 100;
                 }
 
@@ -479,72 +796,131 @@ class AffiliateController extends Controller
                 };
 
                 /*
+                |--------------------------------------------------------------------------
                 | Score
+                |--------------------------------------------------------------------------
                 */
 
-                $score = $rangeScores->get($affiliateId);
+                $score =
+                    $rangeScores->get($affiliateId);
+
+                /*
+                |--------------------------------------------------------------------------
+                | Return
+                |--------------------------------------------------------------------------
+                */
 
                 return [
-                    'id' => $first->affiliate?->id,
+                    'id' =>
+                        $affiliate['id']
+                        ?? $affiliateId,
 
-                    'name' => $first->affiliate?->name ?? '-',
+                    'name' =>
+                        $affiliate['name']
+                        ?? '-',
 
-                    'username' => $first->affiliate?->username ?? '-',
+                    'username' =>
+                        $affiliate['username']
+                        ?? '-',
 
-                    'platform' => $first->affiliate?->platform ?? 'TikTok',
+                    'platform' =>
+                        $affiliate['platform']
+                        ?? 'TikTok',
 
-                    'status' => $first->affiliate?->status ?? 'active',
+                    'status' =>
+                        $affiliate['status']
+                        ?? 'active',
 
                     'score' => [
-                        'performance' => $score['performance_score'] ?? null,
+                        'performance' =>
+                            $score[
+                                'performance_score'
+                            ] ?? null,
 
-                        'growth' => $score['growth_score'] ?? null,
+                        'growth' =>
+                            $score[
+                                'growth_score'
+                            ] ?? null,
 
-                        'consistency' => $score['consistency_score'] ?? null,
+                        'consistency' =>
+                            $score[
+                                'consistency_score'
+                            ] ?? null,
 
-                        'opportunity' => $score['opportunity_score'] ?? null,
+                        'opportunity' =>
+                            $score[
+                                'opportunity_score'
+                            ] ?? null,
 
-                        'action' => $score['action'] ?? 'MONITOR',
+                        'action' =>
+                            $score[
+                                'action'
+                            ] ?? 'MONITOR',
 
-                        'growth_percent' => $score['growth_percent'] ?? null,
+                        'growth_percent' =>
+                            $score[
+                                'growth_percent'
+                            ] ?? null,
 
-                        'period_count' => $score['period_count'] ?? 0,
+                        'period_count' =>
+                            $score[
+                                'period_count'
+                            ] ?? 0,
 
-                        'insights' => $score['insights'] ?? [],
+                        'insights' =>
+                            $score[
+                                'insights'
+                            ] ?? [],
                     ],
 
                     'latest_performance' => [
-                        'gmv' => $currentGmv,
+                        'gmv' =>
+                            $currentGmv,
 
-                        'attributed_orders' => $currentOrders,
+                        'attributed_orders' =>
+                            $currentOrders,
 
-                        'products_sold' => $currentProductsSold,
+                        'products_sold' =>
+                            $currentProductsSold,
 
-                        'aov' => $currentAov,
+                        'aov' =>
+                            $currentAov,
 
-                        'ctr' => $currentCtr,
+                        'ctr' =>
+                            $currentCtr,
 
-                        'ctor' => $currentCtor,
+                        'ctor' =>
+                            $currentCtor,
 
-                        'period_start' => $startDate->format('Y-m-d'),
+                        'period_start' =>
+                            $startDate->format('Y-m-d'),
 
-                        'period_end' => $endDate->format('Y-m-d'),
+                        'period_end' =>
+                            $endDate->format('Y-m-d'),
                     ],
 
                     'movement' => [
-                        'previous_gmv' => $previousGmv,
+                        'previous_gmv' =>
+                            $previousGmv,
 
-                        'gmv_change' => $previousGmv !== null
-                            ? $currentGmv - $previousGmv
-                            : null,
+                        'gmv_change' =>
+                            $previousGmv !== null
+                                ? $currentGmv -
+                                    $previousGmv
+                                : null,
 
-                        'gmv_change_percent' => $changePercent,
+                        'gmv_change_percent' =>
+                            $changePercent,
 
-                        'status' => $movement,
+                        'status' =>
+                            $movement,
                     ],
                 ];
-            })
-            ->values();
+            }
+        )
+        ->values();
+
+        $debugAfterBuild = microtime(true);
 
         /*
         |--------------------------------------------------------------------------
@@ -553,21 +929,34 @@ class AffiliateController extends Controller
         */
 
         if ($search !== '') {
-            $searchLower = strtolower($search);
+            $searchLower =
+                strtolower($search);
 
-            $affiliateRows = $affiliateRows
-                ->filter(function ($affiliate) use ($searchLower) {
-                    return str_contains(
-                        strtolower($affiliate['name']),
-                        $searchLower
-                    ) ||
-                    str_contains(
-                        strtolower($affiliate['username']),
-                        $searchLower
-                    );
-                })
-                ->values();
+            $affiliateRows =
+                $affiliateRows
+                    ->filter(
+                        function ($affiliate) use (
+                            $searchLower
+                        ) {
+                            return
+                                str_contains(
+                                    strtolower(
+                                        $affiliate['name']
+                                    ),
+                                    $searchLower
+                                ) ||
+                                str_contains(
+                                    strtolower(
+                                        $affiliate['username']
+                                    ),
+                                    $searchLower
+                                );
+                        }
+                    )
+                    ->values();
         }
+
+        $debugAfterSearch = microtime(true);
 
         /*
         |--------------------------------------------------------------------------
@@ -576,12 +965,21 @@ class AffiliateController extends Controller
         */
 
         if ($action !== '') {
-            $affiliateRows = $affiliateRows
-                ->filter(function ($affiliate) use ($action) {
-                    return $affiliate['score']['action'] === $action;
-                })
-                ->values();
+            $affiliateRows =
+                $affiliateRows
+                    ->filter(
+                        function ($affiliate) use (
+                            $action
+                        ) {
+                            return
+                                $affiliate['score']['action']
+                                === $action;
+                        }
+                    )
+                    ->values();
         }
+
+        $debugAfterAction = microtime(true);
 
         /*
         |--------------------------------------------------------------------------
@@ -592,135 +990,177 @@ class AffiliateController extends Controller
         switch ($sort) {
             case 'growth':
 
-                $affiliateRows = $affiliateRows
-                    ->sortByDesc(function ($affiliate) {
-                        return $affiliate['movement']['gmv_change_percent']
-                            ?? -INF;
-                    })
-                    ->values();
+                $affiliateRows =
+                    $affiliateRows
+                        ->sortByDesc(
+                            function ($affiliate) {
+                                return
+                                    $affiliate[
+                                        'movement'
+                                    ][
+                                        'gmv_change_percent'
+                                    ] ?? -INF;
+                            }
+                        )
+                        ->values();
 
                 break;
 
             case 'decline':
 
-                $affiliateRows = $affiliateRows
-                    ->sortBy(function ($affiliate) {
-                        return $affiliate['movement']['gmv_change_percent']
-                            ?? INF;
-                    })
-                    ->values();
+                $affiliateRows =
+                    $affiliateRows
+                        ->sortBy(
+                            function ($affiliate) {
+                                return
+                                    $affiliate[
+                                        'movement'
+                                    ][
+                                        'gmv_change_percent'
+                                    ] ?? INF;
+                            }
+                        )
+                        ->values();
 
                 break;
 
             case 'gmv':
 
-                $affiliateRows = $affiliateRows
-                    ->sortBy(
-                        fn ($affiliate) =>
-                            $affiliate['latest_performance']['gmv'],
-                        SORT_NUMERIC,
-                        $direction === 'desc'
-                    )
-                    ->values();
+                $affiliateRows =
+                    $affiliateRows
+                        ->sortBy(
+                            fn ($affiliate) =>
+                                $affiliate[
+                                    'latest_performance'
+                                ]['gmv'],
+                            SORT_NUMERIC,
+                            $direction === 'desc'
+                        )
+                        ->values();
 
                 break;
 
             case 'orders':
 
-                $affiliateRows = $affiliateRows
-                    ->sortBy(
-                        fn ($affiliate) =>
-                            $affiliate['latest_performance']['attributed_orders'],
-                        SORT_NUMERIC,
-                        $direction === 'desc'
-                    )
-                    ->values();
+                $affiliateRows =
+                    $affiliateRows
+                        ->sortBy(
+                            fn ($affiliate) =>
+                                $affiliate[
+                                    'latest_performance'
+                                ][
+                                    'attributed_orders'
+                                ],
+                            SORT_NUMERIC,
+                            $direction === 'desc'
+                        )
+                        ->values();
 
                 break;
 
             case 'aov':
 
-                $affiliateRows = $affiliateRows
-                    ->sortBy(
-                        fn ($affiliate) =>
-                            $affiliate['latest_performance']['aov'],
-                        SORT_NUMERIC,
-                        $direction === 'desc'
-                    )
-                    ->values();
+                $affiliateRows =
+                    $affiliateRows
+                        ->sortBy(
+                            fn ($affiliate) =>
+                                $affiliate[
+                                    'latest_performance'
+                                ]['aov'],
+                            SORT_NUMERIC,
+                            $direction === 'desc'
+                        )
+                        ->values();
 
                 break;
 
             case 'ctr':
 
-                $affiliateRows = $affiliateRows
-                    ->sortBy(
-                        fn ($affiliate) =>
-                            $affiliate['latest_performance']['ctr'],
-                        SORT_NUMERIC,
-                        $direction === 'desc'
-                    )
-                    ->values();
+                $affiliateRows =
+                    $affiliateRows
+                        ->sortBy(
+                            fn ($affiliate) =>
+                                $affiliate[
+                                    'latest_performance'
+                                ]['ctr'],
+                            SORT_NUMERIC,
+                            $direction === 'desc'
+                        )
+                        ->values();
 
                 break;
 
             case 'ctor':
 
-                $affiliateRows = $affiliateRows
-                    ->sortBy(
-                        fn ($affiliate) =>
-                            $affiliate['latest_performance']['ctor'],
-                        SORT_NUMERIC,
-                        $direction === 'desc'
-                    )
-                    ->values();
+                $affiliateRows =
+                    $affiliateRows
+                        ->sortBy(
+                            fn ($affiliate) =>
+                                $affiliate[
+                                    'latest_performance'
+                                ]['ctor'],
+                            SORT_NUMERIC,
+                            $direction === 'desc'
+                        )
+                        ->values();
 
                 break;
 
             case 'performance':
 
-                $affiliateRows = $affiliateRows
-                    ->sortBy(
-                        fn ($affiliate) =>
-                            $affiliate['score']['performance']
+                $affiliateRows =
+                    $affiliateRows
+                        ->sortBy(
+                            fn ($affiliate) =>
+                                $affiliate[
+                                    'score'
+                                ]['performance']
                                 ?? -INF,
-                        SORT_NUMERIC,
-                        $direction === 'desc'
-                    )
-                    ->values();
+                            SORT_NUMERIC,
+                            $direction === 'desc'
+                        )
+                        ->values();
 
                 break;
 
             case 'opportunity':
 
-                $affiliateRows = $affiliateRows
-                    ->sortBy(
-                        fn ($affiliate) =>
-                            $affiliate['score']['opportunity']
+                $affiliateRows =
+                    $affiliateRows
+                        ->sortBy(
+                            fn ($affiliate) =>
+                                $affiliate[
+                                    'score'
+                                ]['opportunity']
                                 ?? -INF,
-                        SORT_NUMERIC,
-                        $direction === 'desc'
-                    )
-                    ->values();
+                            SORT_NUMERIC,
+                            $direction === 'desc'
+                        )
+                        ->values();
 
                 break;
 
             case 'name':
 
-                $affiliateRows = $affiliateRows
-                    ->sortBy(
-                        fn ($affiliate) =>
-                            strtolower($affiliate['name']),
-                        SORT_NATURAL,
-                        $direction === 'desc'
-                    )
-                    ->values();
+                $affiliateRows =
+                    $affiliateRows
+                        ->sortBy(
+                            fn ($affiliate) =>
+                                strtolower(
+                                    $affiliate['name']
+                                ),
+                            SORT_NATURAL,
+                            $direction === 'desc'
+                        )
+                        ->values();
 
                 break;
 
             default:
                 break;
         }
+
+        $debugAfterSort = microtime(true);
 
         /*
         |--------------------------------------------------------------------------
@@ -730,27 +1170,38 @@ class AffiliateController extends Controller
 
         $perPage = 20;
 
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
+        $currentPage =
+            LengthAwarePaginator::resolveCurrentPage();
 
-        $total = $affiliateRows->count();
+        $total =
+            $affiliateRows->count();
 
-        $paginatedItems = $affiliateRows
-            ->slice(
-                ($currentPage - 1) * $perPage,
-                $perPage
-            )
-            ->values();
+        $paginatedItems =
+            $affiliateRows
+                ->slice(
+                    ($currentPage - 1) *
+                        $perPage,
+                    $perPage
+                )
+                ->values();
 
-        $performances = new LengthAwarePaginator(
-            $paginatedItems,
-            $total,
-            $perPage,
-            $currentPage,
-            [
-                'path' => request()->url(),
-                'query' => request()->query(),
-            ]
-        );
+        $performances =
+            new LengthAwarePaginator(
+                $paginatedItems,
+                $total,
+                $perPage,
+                $currentPage,
+                [
+                    'path' =>
+                        request()->url(),
+
+                    'query' =>
+                        request()->query(),
+                ]
+            );
+
+        $debugAfterPagination =
+            microtime(true);
 
         /*
         |--------------------------------------------------------------------------
@@ -758,9 +1209,13 @@ class AffiliateController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $selectedBatch = $currentBatches->last();
+        $selectedBatch =
+            $currentBatches->last();
 
-        $previousBatch = $comparisonBatches->last();
+        $previousBatch =
+            $comparisonBatches->last();
+
+     
 
         /*
         |--------------------------------------------------------------------------
@@ -768,46 +1223,91 @@ class AffiliateController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        return Inertia::render('affiliates/Index', [
-            'affiliates' => $performances,
+        return Inertia::render(
+            'affiliates/Index',
+            [
+                'affiliates' =>
+                    $performances,
 
-            'latest_period' => $latestBatch
-                ? [
-                    'start' => $latestBatch->period_start?->format('Y-m-d'),
-                    'end' => $latestBatch->period_end?->format('Y-m-d'),
-                ]
-                : null,
+                'latest_period' =>
+                    $latestBatch
+                        ? [
+                            'start' =>
+                                $latestBatch
+                                    ->period_start
+                                    ?->format(
+                                        'Y-m-d'
+                                    ),
 
-            'selected_period' => [
-                'start' => $startDate->format('Y-m-d'),
-                'end' => $endDate->format('Y-m-d'),
-            ],
+                            'end' =>
+                                $latestBatch
+                                    ->period_end
+                                    ?->format(
+                                        'Y-m-d'
+                                    ),
+                        ]
+                        : null,
 
-            'comparison_period' => [
-                'start' => $comparisonStart->format('Y-m-d'),
-                'end' => $comparisonEnd->format('Y-m-d'),
-            ],
+                'selected_period' => [
+                    'start' =>
+                        $startDate->format(
+                            'Y-m-d'
+                        ),
 
-            'latest_batch_id' => $latestBatch?->id,
+                    'end' =>
+                        $endDate->format(
+                            'Y-m-d'
+                        ),
+                ],
 
-            'selected_batch_id' => $selectedBatch?->id,
+                'comparison_period' => [
+                    'start' =>
+                        $comparisonStart->format(
+                            'Y-m-d'
+                        ),
 
-            'previous_batch_id' => $previousBatch?->id,
+                    'end' =>
+                        $comparisonEnd->format(
+                            'Y-m-d'
+                        ),
+                ],
 
-            'previous_period' => [
-                'start' => $comparisonStart->format('Y-m-d'),
-                'end' => $comparisonEnd->format('Y-m-d'),
-            ],
+                'latest_batch_id' =>
+                    $latestBatch?->id,
 
-            'import_batches' => $importBatches,
+                'selected_batch_id' =>
+                    $selectedBatch?->id,
 
-            'search' => $search,
+                'previous_batch_id' =>
+                    $previousBatch?->id,
 
-            'sort' => $sort,
+                'previous_period' => [
+                    'start' =>
+                        $comparisonStart->format(
+                            'Y-m-d'
+                        ),
 
-            'direction' => $direction,
+                    'end' =>
+                        $comparisonEnd->format(
+                            'Y-m-d'
+                        ),
+                ],
 
-            'action' => $action,
-        ]);
+                'import_batches' =>
+                    $importBatches,
+
+                'search' =>
+                    $search,
+
+                'sort' =>
+                    $sort,
+
+                'direction' =>
+                    $direction,
+
+                'action' =>
+                    $action,
+            ]
+        );
     }
 }

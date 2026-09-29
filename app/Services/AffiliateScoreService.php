@@ -147,12 +147,12 @@ class AffiliateScoreService
             $growthScore = 0;
             $growthPercent = null;
 
-            $previous = $previousByAffiliate->get($affiliateId);
+            $previous = $previousPerformances->get($affiliateId);
 
-            if ($previous && $previous['gmv'] > 0) {
+            if ($previous && $previous->gmv > 0) {
                 $growthPercent = (
-                    ($target['gmv'] - $previous['gmv'])
-                    / $previous['gmv']
+                    ($performance->gmv - $previous->gmv)
+                    / $previous->gmv
                 ) * 100;
 
                 $growthScore = round(
@@ -297,14 +297,7 @@ class AffiliateScoreService
         * - Collection yang sudah groupBy affiliate_id
         */
 
-        $currentPerformances = $this->flattenPerformanceRows(
-            $currentPerformances
-        );
-
-        $previousPerformances = $this->flattenPerformanceRows(
-            $previousPerformances
-        );
-
+       
         if ($currentPerformances->isEmpty()) {
             return collect();
         }

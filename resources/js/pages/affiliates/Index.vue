@@ -1314,7 +1314,7 @@ const actionClass = (
                                     v-else
                                     class="text-xs text-muted-foreground"
                                 >
-                                    Belum ada data pembanding
+                                    Perlu Data Pembanding
                                 </span>
                             </td>
 
