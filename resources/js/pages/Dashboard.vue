@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
-import { ref } from 'vue'
+import { computed,ref } from 'vue'
 import {
     UserSearch,
     Headphones,
@@ -57,10 +57,15 @@ const props = defineProps<{
         gmv_growth: number | null
         orders_growth: number | null
     }
-    selected_period: string
+    selected_period: {
+        start: string
+        end: string
+    }
 
-    custom_start_date: string | null
-    custom_end_date: string | null
+    comparison_period: {
+        start: string
+        end: string
+    }
 
     affiliate_performance: AffiliatePerformance[]
 
@@ -107,42 +112,22 @@ const props = defineProps<{
     }
 }>()
 
-const showPeriodDropdown = ref(false)
+const showPeriodPicker = ref(false)
 
-const selectedPeriod = ref(props.selected_period ?? 'this_week')
-
-const periodOptions = [
-    { value: 'this_week', label: 'This Week' },
-    { value: 'last_week', label: 'Last Week' },
-    { value: 'this_month', label: 'This Month' },
-    { value: 'last_month', label: 'Last Month' },
-    { value: 'last_year', label: 'Last Year' },
-    { value: 'custom', label: 'Pilih Periode' },
-]
-
-const currentYear = new Date().getFullYear()
-
-const yearOptions = Array.from(
-    { length: 10 },
-    (_, index) => String(currentYear - index),
+const startDate = ref(
+    props.selected_period?.start ?? ''
 )
 
-const showCustomPeriod = ref(false)
-const customMode = ref<'date' | 'year'>('date')
-const customStartDate = ref(props.custom_start_date ?? '')
-const customEndDate = ref(props.custom_end_date ?? '')
-const customYear = ref(
-    props.custom_start_date
-        ? props.custom_start_date.substring(0, 4)
-        : String(new Date().getFullYear()),
+const endDate = ref(
+    props.selected_period?.end ?? ''
 )
 
-const formatCustomDate = (date: string | null) => {
-    if (!date) return ''
+const formatDate = (date: string | null) => {
+    if (!date) return '-'
 
-    const parsedDate = new Date(`${date}T00:00:00`)
+    const parsed = new Date(`${date}T00:00:00`)
 
-    if (Number.isNaN(parsedDate.getTime())) {
+    if (Number.isNaN(parsed.getTime())) {
         return date
     }
 
@@ -150,103 +135,41 @@ const formatCustomDate = (date: string | null) => {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
-    }).format(parsedDate)
+    }).format(parsed)
 }
 
+const selectedPeriodQuery = computed(() => {
+    if (!props.selected_period) {
+        return ''
+    }
+
+    return `?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}`
+})
+
 const selectedPeriodLabel = () => {
-    if (selectedPeriod.value === 'custom') {
-        if (customStartDate.value && customEndDate.value) {
-            const startYear = customStartDate.value.substring(0, 4)
-            const endYear = customEndDate.value.substring(0, 4)
-
-            if (
-                customStartDate.value === `${startYear}-01-01` &&
-                customEndDate.value === `${endYear}-12-31` &&
-                startYear === endYear
-            ) {
-                return startYear
-            }
-
-            return `${formatCustomDate(customStartDate.value)} — ${formatCustomDate(customEndDate.value)}`
-        }
-
+    if (!startDate.value || !endDate.value) {
         return 'Pilih Periode'
     }
 
-    return (
-        periodOptions.find(
-            (option) => option.value === selectedPeriod.value
-        )?.label ?? 'This Week'
-    )
+    return `${formatDate(startDate.value)} — ${formatDate(endDate.value)}`
 }
 
-const selectPeriod = (value: string) => {
-    selectedPeriod.value = value
-    showPeriodDropdown.value = false
-
-    if (value === 'custom') {
-        showCustomPeriod.value = true
+const applyPeriod = () => {
+    if (!startDate.value || !endDate.value) {
         return
     }
 
-    showCustomPeriod.value = false
-    customStartDate.value = ''
-    customEndDate.value = ''
+    if (startDate.value > endDate.value) {
+        return
+    }
+
+    showPeriodPicker.value = false
 
     router.get(
         '/dashboard',
         {
-            period: value,
-        },
-        {
-            preserveScroll: true,
-            preserveState: false,
-        },
-    )
-}
-
-const applyCustomPeriod = () => {
-    if (customMode.value === 'year') {
-        const year = Number(customYear.value)
-
-        if (!year) {
-            return
-        }
-
-        showCustomPeriod.value = false
-
-        router.get(
-            '/dashboard',
-            {
-                period: 'custom',
-                start_date: `${year}-01-01`,
-                end_date: `${year}-12-31`,
-            },
-            {
-                preserveScroll: true,
-                preserveState: false,
-            },
-        )
-
-        return
-    }
-
-    if (!customStartDate.value || !customEndDate.value) {
-        return
-    }
-
-    if (customStartDate.value > customEndDate.value) {
-        return
-    }
-
-    showCustomPeriod.value = false
-
-    router.get(
-        '/dashboard',
-        {
-            period: 'custom',
-            start_date: customStartDate.value,
-            end_date: customEndDate.value,
+            start_date: startDate.value,
+            end_date: endDate.value,
         },
         {
             preserveScroll: true,
@@ -368,137 +291,92 @@ const insightPeriodLabel = () => {
                 <div class="relative">
                     <button
                         type="button"
-                        @click="showPeriodDropdown = !showPeriodDropdown"
-                        class="rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium transition hover:bg-muted"
+                        @click="showPeriodPicker = !showPeriodPicker"
+                        class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium transition hover:bg-muted"
                     >
-                        {{ selectedPeriodLabel() }}
+                        <span>
+                            {{ selectedPeriodLabel() }}
+                        </span>
 
                         <span
-                            class="ml-2 text-muted-foreground transition-transform"
-                            :class="{ 'rotate-180': showPeriodDropdown }"
+                            class="text-muted-foreground transition-transform"
+                            :class="{ 'rotate-180': showPeriodPicker }"
                         >
                             ⌄
                         </span>
                     </button>
 
                     <div
-                        v-if="showPeriodDropdown"
-                        class="absolute right-0 z-50 mt-2 w-44 overflow-hidden rounded-xl border border-border bg-card p-1 shadow-lg"
+                        v-if="showPeriodPicker"
+                        class="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border bg-card p-4 shadow-lg"
                     >
-                        <button
-                            v-for="option in periodOptions"
-                            :key="option.value"
-                            type="button"
-                            @click="selectPeriod(option.value)"
-                            class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
-                            :class="{
-                                'bg-muted font-medium':
-                                    selectedPeriod === option.value,
-                            }"
-                        >
-                            <span>{{ option.label }}</span>
+                        <div class="mb-4">
+                            <h3 class="text-sm font-semibold">
+                                Pilih Periode
+                            </h3>
 
-                            <span
-                                v-if="selectedPeriod === option.value"
-                                class="text-sky-600"
-                            >
-                                ✓
-                            </span>
-                        </button>
-                    </div>
-                </div>
-
-                <div
-                    v-if="showCustomPeriod"
-                    class="absolute right-0 z-50 mt-2 w-80 rounded-xl border border-border bg-card p-4 shadow-lg"
-                >
-                    <div class="mb-4">
-                        <h3 class="text-sm font-semibold">Pilih Periode</h3>
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            Tentukan periode yang ingin ditampilkan.
-                        </p>
-                    </div>
-
-                    <div class="mb-4 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1">
-                        <button
-                            type="button"
-                            @click="customMode = 'date'"
-                            class="rounded-md px-3 py-2 text-xs font-medium transition"
-                            :class="
-                                customMode === 'date'
-                                    ? 'bg-card text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            "
-                        >
-                            Rentang Tanggal
-                        </button>
-
-                        <button
-                            type="button"
-                            @click="customMode = 'year'"
-                            class="rounded-md px-3 py-2 text-xs font-medium transition"
-                            :class="
-                                customMode === 'year'
-                                    ? 'bg-card text-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:text-foreground'
-                            "
-                        >
-                            Berdasarkan Tahun
-                        </button>
-                    </div>
-
-                    <div v-if="customMode === 'date'" class="space-y-3">
-                        <div>
-                            <label class="mb-1.5 block text-xs font-medium">
-                                Tanggal Mulai
-                            </label>
-
-                            <input
-                                v-model="customStartDate"
-                                type="date"
-                                class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
-                            />
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                Tentukan rentang tanggal dashboard.
+                            </p>
                         </div>
 
-                        <div>
-                            <label class="mb-1.5 block text-xs font-medium">
-                                Tanggal Akhir
-                            </label>
+                        <div class="space-y-3">
+                            <!-- Tanggal Mulai -->
+                            <div>
+                                <label class="mb-1.5 block text-xs font-medium">
+                                    Tanggal Mulai
+                                </label>
 
-                            <input
-                                v-model="customEndDate"
-                                type="date"
-                                class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
-                            />
+                                <input
+                                    v-model="startDate"
+                                    type="date"
+                                    class="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
+                                />
+                            </div>
+
+                            <!-- Tanggal Akhir -->
+                            <div>
+                                <label class="mb-1.5 block text-xs font-medium">
+                                    Tanggal Akhir
+                                </label>
+
+                                <input
+                                    v-model="endDate"
+                                    type="date"
+                                    class="w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
+                                />
+                            </div>
                         </div>
-                    </div>
 
-                    <div v-else>
-                        <label class="mb-1.5 block text-xs font-medium">
-                            Tahun
-                        </label>
-
-                        <select
-                            v-model="customYear"
-                            class="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
+                        <!-- Comparison -->
+                        <div
+                            v-if="props.comparison_period"
+                            class="mt-4 rounded-lg bg-muted/50 p-3"
                         >
-                            <option
-                                v-for="year in yearOptions"
-                                :key="year"
-                                :value="year"
-                            >
-                                {{ year }}
-                            </option>
-                        </select>
-                    </div>
+                            <p class="text-[11px] font-medium text-muted-foreground">
+                                Periode sebelumnya
+                            </p>
 
-                    <button
-                        type="button"
-                        @click="applyCustomPeriod"
-                        class="mt-4 w-full rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
-                    >
-                        Terapkan Periode
-                    </button>
+                            <p class="mt-1 text-xs font-medium">
+                                {{ formatDate(props.comparison_period.start) }}
+                                —
+                                {{ formatDate(props.comparison_period.end) }}
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            @click="applyPeriod"
+                            :disabled="
+                                !startDate ||
+                                !endDate ||
+                                startDate > endDate
+                            "
+                            class="mt-4 w-full rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Terapkan Periode
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -846,8 +724,8 @@ const insightPeriodLabel = () => {
 
                     <!-- Creators -->
                     <Link
-                        href="/creators"
-                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/40 hover:bg-orange-500/[0.04] hover:shadow-[0_6px_18px_rgba(249,115,22,0.08)]"
+                        :href="`/creators${selectedPeriodQuery}`"
+                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/40 hover:bg-orange-500/[0.04]"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -872,8 +750,8 @@ const insightPeriodLabel = () => {
 
                     <!-- Affiliates -->
                     <Link
-                        href="/affiliates"
-                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:bg-emerald-500/[0.04] hover:shadow-[0_6px_18px_rgba(16,185,129,0.08)]"
+                        :href="`/affiliates${selectedPeriodQuery}`"
+                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -1317,7 +1195,7 @@ const insightPeriodLabel = () => {
                 </div>
 
             </div>
-        </div>  
+        </div>
 
             <!-- Affiliate Overview -->
             <div
@@ -1402,7 +1280,6 @@ const insightPeriodLabel = () => {
 
                 </div>
             </div>
-
         </div>
     </div>
 </template>

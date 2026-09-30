@@ -5,257 +5,361 @@ namespace App\Http\Controllers;
 use App\Models\Affiliate;
 use App\Models\Campaign;
 use App\Models\Creator;
-use App\Models\AffiliatePerformance;
-use App\Models\AffiliateScore;
 use App\Models\CreatorScore;
 use App\Models\ImportBatch;
-use App\Services\InsightEngine;
-use Illuminate\Http\Request;
+use App\Services\AffiliateScoreService;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
-use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request, InsightEngine $insightEngine)
+    public function index(Request $request)
     {
         $user = Auth::user();
 
-        $period = $request->string('period')->toString();
+        /*
+        |--------------------------------------------------------------------------
+        | Latest Completed Batch
+        |--------------------------------------------------------------------------
+        */
 
-        if ($period === '') {
-            $period = session('dashboard_period', 'this_week');
-        }
+        $latestBatch = ImportBatch::query()
+            ->where('status', 'completed')
+            ->where('uploaded_by', $user->id)
+            ->whereNotNull('period_start')
+            ->whereNotNull('period_end')
+            ->orderByDesc('period_start')
+            ->orderByDesc('id')
+            ->first();
 
-        if (! in_array($period, [
-            'this_week',
-            'last_week',
-            'this_month',
-            'last_month',
-            'last_year',
-            'custom',
-        ], true)) {
-            $period = 'this_week';
-        }
-
-        session()->put('dashboard_period', $period);
+        /*
+        |--------------------------------------------------------------------------
+        | Selected Date Range
+        |--------------------------------------------------------------------------
+        */
 
         $startDate = null;
         $endDate = null;
 
-        switch ($period) {
-            case 'this_week':
-                $startDate = Carbon::now()->startOfWeek();
-                $endDate = Carbon::now()->endOfWeek();
-                break;
-
-            case 'last_week':
-                $lastWeekBatch = ImportBatch::query()
-                    ->where('uploaded_by', $user->id)
-                    ->where('status', 'completed')
-                    ->whereNotNull('period_start')
-                    ->whereNotNull('period_end')
-                    ->whereDate('period_end', '<=', Carbon::now()->startOfWeek())
-                    ->orderByDesc('period_end')
-                    ->first();
-
-                if ($lastWeekBatch) {
-                    $startDate = $lastWeekBatch->period_start->copy();
-                    $endDate = $lastWeekBatch->period_end->copy();
-                } else {
-                    // Fallback jika belum ada import mingguan
-                    $startDate = Carbon::now()->subWeek()->startOfWeek();
-                    $endDate = Carbon::now()->subWeek()->endOfWeek();
-                }
-
-                break;
-
-            case 'this_month':
-                $startDate = Carbon::now()->startOfMonth();
-                $endDate = Carbon::now()->endOfMonth();
-                break;
-
-            case 'last_month':
-                $startDate = Carbon::now()->subMonth()->startOfMonth();
-                $endDate = Carbon::now()->subMonth()->endOfMonth();
-                break;
-
-            case 'last_year':
-                $startDate = Carbon::now()->subYear()->startOfYear();
-                $endDate = Carbon::now()->subYear()->endOfYear();
-                break;
-
-            case 'custom':
-                $customStartDate = $request->filled('start_date')
-                    ? Carbon::parse($request->input('start_date'))
-                    : (session('dashboard_custom_start_date')
-                        ? Carbon::parse(session('dashboard_custom_start_date'))
-                        : null);
-
-                $customEndDate = $request->filled('end_date')
-                    ? Carbon::parse($request->input('end_date'))
-                    : (session('dashboard_custom_end_date')
-                        ? Carbon::parse(session('dashboard_custom_end_date'))
-                        : null);
-
-                if ($customStartDate && $customEndDate && $customStartDate <= $customEndDate) {
-                    $startDate = $customStartDate;
-                    $endDate = $customEndDate;
-
-                    session()->put('dashboard_custom_start_date', $customStartDate->format('Y-m-d'));
-                    session()->put('dashboard_custom_end_date', $customEndDate->format('Y-m-d'));
-                } else {
-                    $period = 'this_week';
-
-                    session()->put('dashboard_period', $period);
-
-                    $startDate = Carbon::now()->startOfWeek();
-                    $endDate = Carbon::now()->endOfWeek();
-                }
-
-                break;
-        }
-
-        $totalCreators = Creator::where('user_id', $user->id)->count();
-
-        $totalAffiliates = Affiliate::where('user_id', $user->id)->count();
-
-        $activeCampaigns = Campaign::query()
-        ->whereHas('creator', function ($query) use ($user) {
-            $query->where('user_id', $user->id);
-        })
-        ->where('status', 'Running')
-        ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-            $query
-                ->whereDate('start_date', '<=', $endDate)
-                ->whereDate('end_date', '>=', $startDate);
-        })
-        ->count();
-
         /*
         |--------------------------------------------------------------------------
-        | Advanced Dashboard Metrics
+        | 1. Prioritas utama → tanggal dari request
         |--------------------------------------------------------------------------
         */
 
-        $totalGmv = AffiliatePerformance::query()
-            ->whereHas('affiliate', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $query->whereHas('importBatch', function ($batchQuery) use ($startDate, $endDate) {
-                    $batchQuery
-                        ->whereDate('period_start', '>=', $startDate)
-                        ->whereDate('period_end', '<=', $endDate);
-                });
-            })
-            ->sum('gmv');
+        if (
+            $request->filled('start_date') &&
+            $request->filled('end_date')
+        ) {
+            try {
+                $startDate = Carbon::parse(
+                    $request->input('start_date')
+                )->startOfDay();
 
-        $totalOrders = AffiliatePerformance::query()
-            ->whereHas('affiliate', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $query->whereHas('importBatch', function ($batchQuery) use ($startDate, $endDate) {
-                    $batchQuery
-                        ->whereDate('period_start', '>=', $startDate)
-                        ->whereDate('period_end', '<=', $endDate);
-                });
-            })
-            ->sum('attributed_orders');
+                $endDate = Carbon::parse(
+                    $request->input('end_date')
+                )->startOfDay();
+            } catch (\Throwable $e) {
+                $startDate = null;
+                $endDate = null;
+            }
+        }
 
-        $avgCreatorScore = CreatorScore::query()
+        /*
+        |--------------------------------------------------------------------------
+        | 2. Kalau tidak ada request → ambil dari session
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$startDate || !$endDate) {
+            $savedStartDate = $request->session()->get('dashboard_start_date');
+            $savedEndDate = $request->session()->get('dashboard_end_date');
+
+            if ($savedStartDate && $savedEndDate) {
+                try {
+                    $startDate = Carbon::parse($savedStartDate)->startOfDay();
+                    $endDate = Carbon::parse($savedEndDate)->startOfDay();
+                } catch (\Throwable $e) {
+                    $startDate = null;
+                    $endDate = null;
+                }
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Default → Latest Batch
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$startDate || !$endDate) {
+            if ($latestBatch) {
+                $startDate = Carbon::parse(
+                    $latestBatch->period_start
+                )->startOfDay();
+
+                $endDate = Carbon::parse(
+                    $latestBatch->period_end
+                )->startOfDay();
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Fallback
+        |--------------------------------------------------------------------------
+        */
+
+        if (!$startDate || !$endDate) {
+            $startDate = Carbon::now()->startOfWeek();
+            $endDate = Carbon::now()->endOfWeek();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Normalize
+        |--------------------------------------------------------------------------
+        */
+
+        if ($startDate->gt($endDate)) {
+            [$startDate, $endDate] = [$endDate, $startDate];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Save Dashboard Period
+        |--------------------------------------------------------------------------
+        |
+        | Agar ketika user pindah menu lalu kembali ke Dashboard,
+        | periode terakhir yang dipilih tetap digunakan.
+        |
+        */
+
+        $request->session()->put([
+            'dashboard_start_date' => $startDate->format('Y-m-d'),
+            'dashboard_end_date' => $endDate->format('Y-m-d'),
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Comparison Period
+        |--------------------------------------------------------------------------
+        |
+        | 01 Sep - 27 Sep
+        |       ↓
+        | 05 Aug - 31 Aug
+        |
+        */
+
+        $periodDays = $startDate->diffInDays($endDate) + 1;
+
+        $previousEndDate = $startDate
+            ->copy()
+            ->subDay();
+
+        $previousStartDate = $previousEndDate
+            ->copy()
+            ->subDays($periodDays - 1);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Current Batches
+        |--------------------------------------------------------------------------
+        */
+
+        $currentBatches = ImportBatch::query()
+            ->where('status', 'completed')
+            ->where('uploaded_by', $user->id)
+            ->whereNotNull('period_start')
+            ->whereNotNull('period_end')
+            ->whereDate('period_start', '>=', $startDate)
+            ->whereDate('period_end', '<=', $endDate)
+            ->orderBy('period_start')
+            ->orderBy('id')
+            ->get([
+                'id',
+                'file_name',
+                'period_start',
+                'period_end',
+            ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Comparison Batches
+        |--------------------------------------------------------------------------
+        |
+        | Comparison boleh kosong.
+        | Jangan membuat request gagal hanya karena tidak ada data sebelumnya.
+        |
+        */
+
+        $comparisonBatches = ImportBatch::query()
+            ->where('status', 'completed')
+            ->where('uploaded_by', $user->id)
+            ->whereNotNull('period_start')
+            ->whereNotNull('period_end')
+            ->whereDate('period_start', '>=', $previousStartDate)
+            ->whereDate('period_end', '<=', $previousEndDate)
+            ->orderBy('period_start')
+            ->orderBy('id')
+            ->get([
+                'id',
+                'file_name',
+                'period_start',
+                'period_end',
+            ]);
+
+        $currentBatchIds = $currentBatches
+            ->pluck('id')
+            ->values();
+
+        $comparisonBatchIds = $comparisonBatches
+            ->pluck('id')
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Basic Counts
+        |--------------------------------------------------------------------------
+        */
+
+        $totalCreators = Creator::query()
+            ->where('user_id', $user->id)
+            ->count();
+
+        $totalAffiliates = Affiliate::query()
+            ->where('user_id', $user->id)
+            ->count();
+
+        $activeCampaigns = Campaign::query()
             ->whereHas('creator', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $query
-                    ->whereDate('period_start', '>=', $startDate)
-                    ->whereDate('period_end', '<=', $endDate);
-            })
-            ->whereIn('id', function ($query) use ($startDate, $endDate) {
-                $query
-                    ->selectRaw('MAX(id)')
-                    ->from('creator_scores')
-                    ->when($startDate && $endDate, function ($subQuery) use ($startDate, $endDate) {
-                        $subQuery
-                            ->whereDate('period_start', '>=', $startDate)
-                            ->whereDate('period_end', '<=', $endDate);
-                    })
-                    ->groupBy('creator_id');
-            })
-            ->avg('overall_score');
+            ->where('status', 'Running')
+            ->whereDate('start_date', '<=', $endDate)
+            ->whereDate('end_date', '>=', $startDate)
+            ->count();
 
-        $avgAffiliateOpportunity = AffiliateScore::query()
-            ->whereHas('affiliate', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $query->whereHas('importBatch', function ($batchQuery) use ($startDate, $endDate) {
-                    $batchQuery
-                        ->whereDate('period_start', '>=', $startDate)
-                        ->whereDate('period_end', '<=', $endDate);
-                });
-            })
-            ->whereIn('id', function ($query) use ($startDate, $endDate) {
-                $query
-                    ->selectRaw('MAX(id)')
-                    ->from('affiliate_scores')
-                    ->when($startDate && $endDate, function ($subQuery) use ($startDate, $endDate) {
-                        $subQuery->whereIn('import_batch_id', function ($batchQuery) use ($startDate, $endDate) {
-                            $batchQuery
-                                ->select('id')
-                                ->from('import_batches')
-                                ->whereDate('period_start', '>=', $startDate)
-                                ->whereDate('period_end', '<=', $endDate);
-                        });
-                    })
-                    ->groupBy('affiliate_id');
-            })
-            ->avg('opportunity_score');
-        
         /*
         |--------------------------------------------------------------------------
-        | Previous Period Comparison
+        | Current Affiliate Performance
+        |--------------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        | Jangan hydrate Eloquent AffiliatePerformance.
+        | Gunakan DB::table() supaya memory tetap kecil.
+        |
+        */
+
+        $currentPerformances = collect();
+
+        if ($currentBatchIds->isNotEmpty()) {
+            $currentPerformances = DB::table('affiliate_performances')
+                ->join(
+                    'affiliates',
+                    'affiliates.id',
+                    '=',
+                    'affiliate_performances.affiliate_id'
+                )
+                ->whereIn(
+                    'affiliate_performances.import_batch_id',
+                    $currentBatchIds
+                )
+                ->where('affiliates.user_id', $user->id)
+                ->select([
+                    'affiliate_performances.affiliate_id',
+                    'affiliate_performances.import_batch_id',
+                    'affiliate_performances.gmv',
+                    'affiliate_performances.attributed_orders',
+                    'affiliate_performances.buyers',
+                    'affiliate_performances.products_sold',
+                    'affiliate_performances.impressions',
+                    'affiliate_performances.video_views',
+                    'affiliate_performances.ctr',
+                    'affiliate_performances.ctor',
+                    'affiliate_performances.video_count',
+                    'affiliate_performances.live_count',
+                ])
+                ->get();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Comparison Affiliate Performance
         |--------------------------------------------------------------------------
         */
 
-        $previousStartDate = null;
-        $previousEndDate = null;
+        $comparisonPerformances = collect();
 
-        if ($startDate && $endDate) {
-            $periodDays = $startDate->diffInDays($endDate) + 1;
-
-            $previousEndDate = $startDate->copy()->subDay();
-            $previousStartDate = $previousEndDate->copy()->subDays($periodDays - 1);
+        if ($comparisonBatchIds->isNotEmpty()) {
+            $comparisonPerformances = DB::table('affiliate_performances')
+                ->join(
+                    'affiliates',
+                    'affiliates.id',
+                    '=',
+                    'affiliate_performances.affiliate_id'
+                )
+                ->whereIn(
+                    'affiliate_performances.import_batch_id',
+                    $comparisonBatchIds
+                )
+                ->where('affiliates.user_id', $user->id)
+                ->select([
+                    'affiliate_performances.affiliate_id',
+                    'affiliate_performances.import_batch_id',
+                    'affiliate_performances.gmv',
+                    'affiliate_performances.attributed_orders',
+                    'affiliate_performances.buyers',
+                    'affiliate_performances.products_sold',
+                    'affiliate_performances.impressions',
+                    'affiliate_performances.video_views',
+                    'affiliate_performances.ctr',
+                    'affiliate_performances.ctor',
+                    'affiliate_performances.video_count',
+                    'affiliate_performances.live_count',
+                ])
+                ->get();
         }
 
-        $previousGmv = AffiliatePerformance::query()
-            ->whereHas('affiliate', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->when($previousStartDate && $previousEndDate, function ($query) use ($previousStartDate, $previousEndDate) {
-                $query->whereHas('importBatch', function ($batchQuery) use ($previousStartDate, $previousEndDate) {
-                    $batchQuery
-                        ->whereDate('period_start', '>=', $previousStartDate)
-                        ->whereDate('period_end', '<=', $previousEndDate);
-                });
-            })
-            ->sum('gmv');
+        /*
+        |--------------------------------------------------------------------------
+        | Aggregate Current Metrics
+        |--------------------------------------------------------------------------
+        */
 
-        $previousOrders = AffiliatePerformance::query()
-            ->whereHas('affiliate', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->when($previousStartDate && $previousEndDate, function ($query) use ($previousStartDate, $previousEndDate) {
-                $query->whereHas('importBatch', function ($batchQuery) use ($previousStartDate, $previousEndDate) {
-                    $batchQuery
-                        ->whereDate('period_start', '>=', $previousStartDate)
-                        ->whereDate('period_end', '<=', $previousEndDate);
-                });
-            })
-            ->sum('attributed_orders');
+        $totalGmv = (float) $currentPerformances->sum(
+            fn ($row) => (float) $row->gmv
+        );
+
+        $totalOrders = (int) $currentPerformances->sum(
+            fn ($row) => (int) $row->attributed_orders
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Previous Metrics
+        |--------------------------------------------------------------------------
+        */
+
+        $previousGmv = (float) $comparisonPerformances->sum(
+            fn ($row) => (float) $row->gmv
+        );
+
+        $previousOrders = (int) $comparisonPerformances->sum(
+            fn ($row) => (int) $row->attributed_orders
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Growth
+        |--------------------------------------------------------------------------
+        |
+        | Jika comparison kosong → null.
+        |
+        */
 
         $gmvGrowth = $previousGmv > 0
             ? (($totalGmv - $previousGmv) / $previousGmv) * 100
@@ -265,235 +369,578 @@ class DashboardController extends Controller
             ? (($totalOrders - $previousOrders) / $previousOrders) * 100
             : null;
 
-       $affiliatePerformance = AffiliatePerformance::query()
-        ->whereHas('affiliate', function ($query) use ($user) {
-            $query->where('user_id', $user->id);
-        })
-        ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-            $query->whereHas('importBatch', function ($batchQuery) use ($startDate, $endDate) {
-                $batchQuery
-                    ->whereDate('period_start', '>=', $startDate)
-                    ->whereDate('period_end', '<=', $endDate);
-            });
-        })
-        ->selectRaw('import_batch_id, SUM(gmv) as total_gmv')
-        ->groupBy('import_batch_id')
-        ->with('importBatch:id,period_start,period_end')
-        ->orderByDesc('import_batch_id')
-        ->limit(7)
-        ->get()
-        ->sortBy('import_batch_id')
-        ->values()
-        ->map(function ($performance) {
-            return [
-                'batch_id' => $performance->import_batch_id,
-                'period_start' => $performance->importBatch?->period_start?->format('Y-m-d'),
-                'period_end' => $performance->importBatch?->period_end?->format('Y-m-d'),
-                'gmv' => (float) $performance->total_gmv,
-                'orders' => (int) $performance->importBatch->performances()->sum('attributed_orders'),
-            ];
-        });
+        /*
+        |--------------------------------------------------------------------------
+        | Affiliate Range Score
+        |--------------------------------------------------------------------------
+        |
+        | Ini sekarang menjadi sumber utama:
+        |
+        | - Performance
+        | - Growth
+        | - Consistency
+        | - Opportunity
+        | - Action
+        |
+        | Bukan lagi AffiliateScore harian terakhir.
+        |
+        */
 
-        $creatorReviewCount = CreatorScore::query()
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $query
-                    ->whereDate('period_start', '>=', $startDate)
-                    ->whereDate('period_end', '<=', $endDate);
-            })
-            ->whereIn('id', function ($query) use ($startDate, $endDate) {
-                $query
-                    ->selectRaw('MAX(id)')
-                    ->from('creator_scores')
-                    ->when($startDate && $endDate, function ($subQuery) use ($startDate, $endDate) {
-                        $subQuery
-                            ->whereDate('period_start', '>=', $startDate)
-                            ->whereDate('period_end', '<=', $endDate);
-                    })
-                    ->groupBy('creator_id');
-            })
+        $scoreService = app(AffiliateScoreService::class);
+
+        $rangeScores = $scoreService->scoreRange(
+            $currentPerformances,
+            $comparisonPerformances
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Average Creator Score
+        |--------------------------------------------------------------------------
+        |
+        | Creator masih menggunakan score terakhir dalam selected period.
+        |
+        */
+
+        $creatorLatestIds = CreatorScore::query()
             ->whereHas('creator', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
-            ->whereIn('recommendation', [
-                'negotiate',
-                'not_recommended',
-            ])
-            ->count();
+            ->whereDate('period_start', '>=', $startDate)
+            ->whereDate('period_end', '<=', $endDate)
+            ->selectRaw('MAX(id) as id')
+            ->groupBy('creator_id')
+            ->pluck('id');
 
-        $affiliateActionCounts = AffiliateScore::query()
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $query->whereHas('importBatch', function ($batchQuery) use ($startDate, $endDate) {
-                    $batchQuery
-                        ->whereDate('period_start', '>=', $startDate)
-                        ->whereDate('period_end', '<=', $endDate);
-                });
-            })
-            ->whereIn('id', function ($query) use ($startDate, $endDate) {
-                $query
-                    ->selectRaw('MAX(id)')
-                    ->from('affiliate_scores')
-                    ->when($startDate && $endDate, function ($subQuery) use ($startDate, $endDate) {
-                        $subQuery->whereIn('import_batch_id', function ($batchQuery) use ($startDate, $endDate) {
-                            $batchQuery
-                                ->select('id')
-                                ->from('import_batches')
-                                ->whereDate('period_start', '>=', $startDate)
-                                ->whereDate('period_end', '<=', $endDate);
-                        });
-                    })
-                    ->groupBy('affiliate_id');
-            })
-            ->whereHas('affiliate', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->selectRaw('action, COUNT(*) as total')
-            ->groupBy('action')
-            ->pluck('total', 'action');
+        $avgCreatorScore = null;
+
+        if ($creatorLatestIds->isNotEmpty()) {
+            $avgCreatorScore = CreatorScore::query()
+                ->whereIn('id', $creatorLatestIds)
+                ->avg('overall_score');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Average Affiliate Opportunity
+        |--------------------------------------------------------------------------
+        */
+
+        $avgAffiliateOpportunity = $rangeScores->isNotEmpty()
+            ? $rangeScores->avg('opportunity_score')
+            : null;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Affiliate Action Center
+        |--------------------------------------------------------------------------
+        */
+
+        $affiliateActionCounts = [
+            'CHASE' => 0,
+            'SUPPORT' => 0,
+            'MONITOR' => 0,
+            'DEPRIORITIZE' => 0,
+        ];
+
+        foreach ($rangeScores as $score) {
+            $action = $score['action'] ?? null;
+
+            if ($action && array_key_exists($action, $affiliateActionCounts)) {
+                $affiliateActionCounts[$action]++;
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Creator Action Center
+        |--------------------------------------------------------------------------
+        */
+
+        $creatorReviewCount = 0;
+
+        if ($creatorLatestIds->isNotEmpty()) {
+            $creatorReviewCount = CreatorScore::query()
+                ->whereIn('id', $creatorLatestIds)
+                ->whereIn('recommendation', [
+                    'negotiate',
+                    'not_recommended',
+                ])
+                ->count();
+        }
 
         $actionRequired = [
             'creators_to_review' => $creatorReviewCount,
-            'affiliates_to_support' => (int) ($affiliateActionCounts['SUPPORT'] ?? 0),
-            'need_monitoring' => (int) ($affiliateActionCounts['MONITOR'] ?? 0),
-            'deprioritize' => (int) ($affiliateActionCounts['DEPRIORITIZE'] ?? 0),
+            'affiliates_to_support' => $affiliateActionCounts['SUPPORT'],
+            'need_monitoring' => $affiliateActionCounts['MONITOR'],
+            'deprioritize' => $affiliateActionCounts['DEPRIORITIZE'],
         ];
 
-        $creatorOverview = CreatorScore::query()
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $query
-                    ->whereDate('period_start', '>=', $startDate)
-                    ->whereDate('period_end', '<=', $endDate);
-            })
-            ->whereIn('id', function ($query) use ($startDate, $endDate) {
-                $query
-                    ->selectRaw('MAX(id)')
-                    ->from('creator_scores')
-                    ->when($startDate && $endDate, function ($subQuery) use ($startDate, $endDate) {
-                        $subQuery
-                            ->whereDate('period_start', '>=', $startDate)
-                            ->whereDate('period_end', '<=', $endDate);
-                    })
-                    ->groupBy('creator_id');
-            })
-            ->whereHas('creator', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->with('creator:id,name,platform,category')
-            ->orderByDesc('overall_score')
-            ->limit(2)
-            ->get()
-            ->map(function ($score) {
+        /*
+        |--------------------------------------------------------------------------
+        | Affiliate GMV By Affiliate
+        |--------------------------------------------------------------------------
+        |
+        | Digunakan untuk Overview + Insight.
+        |
+        */
+
+        $affiliateGmv = $currentPerformances
+            ->groupBy('affiliate_id')
+            ->map(function ($rows) {
                 return [
-                    'id' => $score->creator_id,
-                    'name' => $score->creator?->name,
-                    'platform' => $score->creator?->platform,
-                    'category' => $score->creator?->category,
-                    'score' => (float) $score->overall_score,
+                    'gmv' => (float) $rows->sum(
+                        fn ($row) => (float) $row->gmv
+                    ),
+                    'orders' => (int) $rows->sum(
+                        fn ($row) => (int) $row->attributed_orders
+                    ),
+                    'products_sold' => (int) $rows->sum(
+                        fn ($row) => (int) $row->products_sold
+                    ),
+                    'video_views' => (int) $rows->sum(
+                        fn ($row) => (int) $row->video_views
+                    ),
+                ];
+            });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Affiliate IDs Needed For UI
+        |--------------------------------------------------------------------------
+        */
+
+        $overviewAffiliateIds = $rangeScores
+            ->sortByDesc('opportunity_score')
+            ->take(2)
+            ->keys();
+
+        $topGmvAffiliateIds = $affiliateGmv
+            ->sortByDesc('gmv')
+            ->take(3)
+            ->keys();
+
+        $neededAffiliateIds = $overviewAffiliateIds
+            ->merge($topGmvAffiliateIds)
+            ->unique()
+            ->values();
+
+        $affiliateMeta = collect();
+
+        if ($neededAffiliateIds->isNotEmpty()) {
+            $affiliateMeta = Affiliate::query()
+                ->where('user_id', $user->id)
+                ->whereIn('id', $neededAffiliateIds)
+                ->get([
+                    'id',
+                    'name',
+                    'username',
+                    'platform',
+                ])
+                ->keyBy('id');
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Affiliate Overview
+        |--------------------------------------------------------------------------
+        */
+
+        $affiliateOverview = $rangeScores
+            ->sortByDesc('opportunity_score')
+            ->take(2)
+            ->map(function ($score, $affiliateId) use (
+                $affiliateMeta,
+                $affiliateGmv
+            ) {
+                $affiliate = $affiliateMeta->get($affiliateId);
+                $performance = $affiliateGmv->get($affiliateId);
+
+                return [
+                    'id' => (int) $affiliateId,
+                    'name' => $affiliate?->name,
+                    'username' => $affiliate?->username,
+                    'platform' => $affiliate?->platform,
+                    'score' => (float) ($score['opportunity_score'] ?? 0),
+                    'action' => $score['action'] ?? null,
+                    'gmv' => (float) ($performance['gmv'] ?? 0),
                 ];
             })
             ->values();
-        
-        $affiliateOverview = AffiliateScore::query()
-            ->when($startDate && $endDate, function ($query) use ($startDate, $endDate) {
-                $query->whereHas('importBatch', function ($batchQuery) use ($startDate, $endDate) {
-                    $batchQuery
-                        ->whereDate('period_start', '>=', $startDate)
-                        ->whereDate('period_end', '<=', $endDate);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Creator Overview
+        |--------------------------------------------------------------------------
+        */
+
+        $creatorOverview = collect();
+
+        if ($creatorLatestIds->isNotEmpty()) {
+            $creatorOverview = CreatorScore::query()
+                ->whereIn('id', $creatorLatestIds)
+                ->whereHas('creator', function ($query) use ($user) {
+                    $query->where('user_id', $user->id);
+                })
+                ->with('creator:id,name,platform,category')
+                ->orderByDesc('overall_score')
+                ->limit(2)
+                ->get()
+                ->map(function ($score) {
+                    return [
+                        'id' => $score->creator_id,
+                        'name' => $score->creator?->name,
+                        'platform' => $score->creator?->platform,
+                        'category' => $score->creator?->category,
+                        'score' => (float) $score->overall_score,
+                    ];
+                })
+                ->values();
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Affiliate Performance Chart
+        |--------------------------------------------------------------------------
+        |
+        | Maksimal 7 batch/snapshot terakhir dalam selected range.
+        |
+        */
+
+        $affiliatePerformance = collect();
+
+        if ($currentBatchIds->isNotEmpty()) {
+            $affiliatePerformance = DB::table('affiliate_performances')
+                ->join(
+                    'import_batches',
+                    'import_batches.id',
+                    '=',
+                    'affiliate_performances.import_batch_id'
+                )
+                ->join(
+                    'affiliates',
+                    'affiliates.id',
+                    '=',
+                    'affiliate_performances.affiliate_id'
+                )
+                ->whereIn(
+                    'affiliate_performances.import_batch_id',
+                    $currentBatchIds
+                )
+                ->where('affiliates.user_id', $user->id)
+                ->select([
+                    'affiliate_performances.import_batch_id as batch_id',
+                    'import_batches.period_start',
+                    'import_batches.period_end',
+                ])
+                ->selectRaw('SUM(affiliate_performances.gmv) as gmv')
+                ->selectRaw('SUM(affiliate_performances.attributed_orders) as orders')
+                ->groupBy(
+                    'affiliate_performances.import_batch_id',
+                    'import_batches.period_start',
+                    'import_batches.period_end'
+                )
+                ->orderByDesc('affiliate_performances.import_batch_id')
+                ->limit(7)
+                ->get()
+                ->sortBy('batch_id')
+                ->values()
+                ->map(function ($row) {
+                    return [
+                        'batch_id' => (int) $row->batch_id,
+                        'period_start' => $row->period_start
+                            ? Carbon::parse($row->period_start)->format('Y-m-d')
+                            : null,
+                        'period_end' => $row->period_end
+                            ? Carbon::parse($row->period_end)->format('Y-m-d')
+                            : null,
+                        'gmv' => (float) $row->gmv,
+                        'orders' => (int) $row->orders,
+                    ];
                 });
-            })
-            ->whereIn('id', function ($query) use ($startDate, $endDate) {
-                $query
-                    ->selectRaw('MAX(id)')
-                    ->from('affiliate_scores')
-                    ->when($startDate && $endDate, function ($subQuery) use ($startDate, $endDate) {
-                        $subQuery->whereIn('import_batch_id', function ($batchQuery) use ($startDate, $endDate) {
-                            $batchQuery
-                                ->select('id')
-                                ->from('import_batches')
-                                ->whereDate('period_start', '>=', $startDate)
-                                ->whereDate('period_end', '<=', $endDate);
-                        });
-                    })
-                    ->groupBy('affiliate_id');
-            })
-            ->whereHas('affiliate', function ($query) use ($user) {
-                $query->where('user_id', $user->id);
-            })
-            ->with([
-                'affiliate:id,name,username,platform',
-                'importBatch:id,period_start,period_end',
-            ])
-            ->orderByDesc('overall_score')
-            ->limit(2)
-            ->get()
-            ->map(function ($score) {
-                $performance = AffiliatePerformance::query()
-                    ->where('affiliate_id', $score->affiliate_id)
-                    ->where('import_batch_id', $score->import_batch_id)
-                    ->first();
+        }
 
-                return [
-                    'id' => $score->affiliate_id,
-                    'name' => $score->affiliate?->name,
-                    'username' => $score->affiliate?->username,
-                    'platform' => $score->affiliate?->platform,
-                    'score' => (float) $score->overall_score,
-                    'action' => $score->action,
-                    'gmv' => $performance ? (float) $performance->gmv : 0,
+        /*
+        |--------------------------------------------------------------------------
+        | Dashboard Insight Preview
+        |--------------------------------------------------------------------------
+        |
+        | Dibuat dari data range yang sama.
+        | Tidak lagi mengambil latest batch.
+        |
+        */
+
+        $dashboardInsight = null;
+
+        if ($currentPerformances->isNotEmpty()) {
+            $topGmv = $affiliateGmv
+                ->sortByDesc('gmv')
+                ->take(3)
+                ->map(function ($performance, $affiliateId) use (
+                    $affiliateMeta,
+                    $rangeScores
+                ) {
+                    $affiliate = $affiliateMeta->get($affiliateId);
+                    $score = $rangeScores->get($affiliateId);
+
+                    return [
+                        'affiliate_id' => (int) $affiliateId,
+                        'name' => $affiliate?->name,
+                        'username' => $affiliate?->username,
+                        'gmv' => (float) $performance['gmv'],
+                        'orders' => (int) $performance['orders'],
+                        'products_sold' => (int) $performance['products_sold'],
+                        'video_views' => (int) $performance['video_views'],
+                        'performance_score' => $score
+                            ? (float) ($score['performance_score'] ?? 0)
+                            : null,
+                        'growth_score' => $score
+                            ? (float) ($score['growth_score'] ?? 0)
+                            : null,
+                        'consistency_score' => $score
+                            ? (float) ($score['consistency_score'] ?? 0)
+                            : null,
+                        'opportunity_score' => $score
+                            ? (float) ($score['opportunity_score'] ?? 0)
+                            : null,
+                        'overall_score' => $score
+                            ? (float) ($score['overall_score'] ?? 0)
+                            : null,
+                        'action' => $score['action'] ?? null,
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $insights = [];
+
+            /*
+            |--------------------------------------------------------------
+            | Insight 1 — Performance Movement
+            |--------------------------------------------------------------
+            */
+
+            if ($gmvGrowth !== null) {
+                $movementTitle = $gmvGrowth >= 0
+                    ? 'GMV mengalami pertumbuhan'
+                    : 'GMV mengalami penurunan';
+
+                $movementHeadline = sprintf(
+                    '%s%0.1f%% dibanding periode sebelumnya.',
+                    $gmvGrowth >= 0 ? '+' : '',
+                    $gmvGrowth
+                );
+
+                $movementDescription = sprintf(
+                    'GMV periode %s – %s tercatat Rp%s.',
+                    $startDate->format('d M Y'),
+                    $endDate->format('d M Y'),
+                    number_format($totalGmv, 0, ',', '.')
+                );
+
+                $movementAction = $gmvGrowth >= 0
+                    ? 'Pertahankan pola konten dan affiliate yang memberikan kontribusi GMV.'
+                    : 'Periksa affiliate dan konten dengan penurunan GMV untuk menentukan tindak lanjut.';
+
+                $insights[] = [
+                    'type' => 'movement',
+                    'title' => $movementTitle,
+                    'headline' => $movementHeadline,
+                    'description' => $movementDescription,
+                    'recommended_action' => $movementAction,
                 ];
-            })
-            ->values();
+            } else {
+                $insights[] = [
+                    'type' => 'movement',
+                    'title' => 'Belum ada data pembanding',
+                    'headline' => 'Growth belum dapat dihitung.',
+                    'description' => sprintf(
+                        'Periode %s – %s memiliki data performa, tetapi periode pembanding %s – %s belum memiliki data.',
+                        $startDate->format('d M Y'),
+                        $endDate->format('d M Y'),
+                        $previousStartDate->format('d M Y'),
+                        $previousEndDate->format('d M Y')
+                    ),
+                    'recommended_action' => 'Import snapshot pada periode sebelumnya jika ingin melihat perbandingan growth.',
+                ];
+            }
 
-        $customStartDate = $startDate?->format('Y-m-d');
-        $customEndDate = $endDate?->format('Y-m-d');
+            /*
+            |--------------------------------------------------------------
+            | Insight 2 — Top Performer
+            |--------------------------------------------------------------
+            */
 
-        $latestInsightBatch = ImportBatch::query()
-            ->where('uploaded_by', $user->id)
-            ->where('status', 'completed')
-            ->whereNotNull('period_start')
-            ->whereNotNull('period_end')
-            ->orderByDesc('period_end')
-            ->first();
+            if (!empty($topGmv)) {
+                $top = $topGmv[0];
 
-        $dashboardInsight = $latestInsightBatch
-            ? $insightEngine->generateForBatch($latestInsightBatch)
-            : null;
-                
+                $insights[] = [
+                    'type' => 'top_performer',
+                    'title' => 'Top GMV',
+                    'headline' => $top['name'] ?? $top['username'] ?? 'Affiliate',
+                    'description' => sprintf(
+                        'Menghasilkan GMV Rp%s dengan %s orders pada periode terpilih.',
+                        number_format($top['gmv'], 0, ',', '.'),
+                        number_format($top['orders'], 0, ',', '.')
+                    ),
+                    'recommended_action' => 'Pertahankan dukungan dan evaluasi pola konten yang menghasilkan performa tersebut.',
+                    'affiliate_id' => $top['affiliate_id'],
+                ];
+            }
+
+            /*
+            |--------------------------------------------------------------
+            | Insight 3 — Action Distribution
+            |--------------------------------------------------------------
+            */
+
+            $totalScoredAffiliates = $rangeScores->count();
+
+            if ($totalScoredAffiliates > 0) {
+                $insights[] = [
+                    'type' => 'action',
+                    'title' => 'Affiliate Action Center',
+                    'headline' => sprintf(
+                        '%d affiliate dianalisis',
+                        $totalScoredAffiliates
+                    ),
+                    'description' => sprintf(
+                        'Terdapat %d SUPPORT, %d MONITOR, dan %d DEPRIORITIZE pada periode terpilih.',
+                        $affiliateActionCounts['SUPPORT'],
+                        $affiliateActionCounts['MONITOR'],
+                        $affiliateActionCounts['DEPRIORITIZE']
+                    ),
+                    'recommended_action' => 'Gunakan action category sebagai dasar prioritas follow-up affiliate.',
+                ];
+            }
+
+            /*
+            |--------------------------------------------------------------
+            | Summary
+            |--------------------------------------------------------------
+            */
+
+            $totalProductsSold = (int) $currentPerformances->sum(
+                fn ($row) => (int) $row->products_sold
+            );
+
+            $dashboardInsight = [
+                'period' => [
+                    'start' => $startDate->format('Y-m-d'),
+                    'end' => $endDate->format('Y-m-d'),
+                ],
+
+                'summary' => [
+                    'total_gmv' => $totalGmv,
+                    'total_orders' => $totalOrders,
+                    'total_products_sold' => $totalProductsSold,
+                    'affiliate_count' => $rangeScores->count(),
+                ],
+
+                'insights' => $insights,
+
+                'top_gmv' => $topGmv,
+            ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Response
+        |--------------------------------------------------------------------------
+        */
+
         return Inertia::render('Dashboard', [
             'stats' => [
                 'creators' => $totalCreators,
                 'affiliates' => $totalAffiliates,
                 'campaigns' => $activeCampaigns,
-                'gmv' => (float) $totalGmv,
-                'orders' => (int) $totalOrders,
+
+                'gmv' => $totalGmv,
+                'orders' => $totalOrders,
+
                 'avg_creator_score' => $avgCreatorScore !== null
                     ? round((float) $avgCreatorScore, 1)
                     : null,
+
                 'avg_affiliate_opportunity' => $avgAffiliateOpportunity !== null
                     ? round((float) $avgAffiliateOpportunity, 1)
                     : null,
+
                 'gmv_growth' => $gmvGrowth !== null
                     ? round($gmvGrowth, 1)
                     : null,
+
                 'orders_growth' => $ordersGrowth !== null
                     ? round($ordersGrowth, 1)
                     : null,
             ],
-            
-            'selected_period' => $period,
-            'custom_start_date' => $period === 'custom' ? $customStartDate : null,
-            'custom_end_date' => $period === 'custom' ? $customEndDate : null,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Selected Period
+            |--------------------------------------------------------------------------
+            */
+
+            'selected_period' => [
+                'start' => $startDate->format('Y-m-d'),
+                'end' => $endDate->format('Y-m-d'),
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Comparison Period
+            |--------------------------------------------------------------------------
+            */
+
+            'comparison_period' => [
+                'start' => $previousStartDate->format('Y-m-d'),
+                'end' => $previousEndDate->format('Y-m-d'),
+            ],
+
+            /*
+            |--------------------------------------------------------------------------
+            | Chart
+            |--------------------------------------------------------------------------
+            */
+
             'affiliate_performance' => $affiliatePerformance,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Action Center
+            |--------------------------------------------------------------------------
+            */
+
             'action_required' => $actionRequired,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Overview
+            |--------------------------------------------------------------------------
+            */
+
             'creator_overview' => $creatorOverview,
+
             'affiliate_overview' => $affiliateOverview,
+
+            /*
+            |--------------------------------------------------------------------------
+            | Insight
+            |--------------------------------------------------------------------------
+            */
+
             'insight_preview' => $dashboardInsight
-            ? [
-                'period' => $dashboardInsight['period'],
-                'summary' => $dashboardInsight['summary'],
-                'insights' => $dashboardInsight['insights'],
-                'top_gmv' => array_slice($dashboardInsight['top_gmv'], 0, 3),
-            ]
-            : null,
+                ? [
+                    'period' => $dashboardInsight['period'],
+                    'summary' => $dashboardInsight['summary'],
+                    'insights' => $dashboardInsight['insights'],
+                    'top_gmv' => array_slice(
+                        $dashboardInsight['top_gmv'],
+                        0,
+                        3
+                    ),
+                ]
+                : null,
         ]);
     }
 }

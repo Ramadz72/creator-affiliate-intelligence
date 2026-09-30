@@ -2,9 +2,10 @@
 
 namespace App\Services;
 
-use App\Models\AffiliatePerformance;
 use App\Models\ImportBatch;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class InsightEngine
 {
@@ -20,7 +21,26 @@ class InsightEngine
         Collection $currentBatches,
         Collection $comparisonBatches
     ): ?array {
+
+        $engineStart = microtime(true);
+        
         if ($currentBatches->isEmpty()) {
+            return null;
+        }
+        
+        $currentBatchIds = $currentBatches
+            ->pluck('id')
+            ->filter()
+            ->values()
+            ->all();
+
+        $comparisonBatchIds = $comparisonBatches
+            ->pluck('id')
+            ->filter()
+            ->values()
+            ->all();
+
+        if (empty($currentBatchIds)) {
             return null;
         }
 
@@ -28,16 +48,33 @@ class InsightEngine
         |--------------------------------------------------------------------------
         | Current Performances
         |--------------------------------------------------------------------------
+        |
+        | Ambil hanya kolom yang memang dibutuhkan oleh scoreRange().
+        |
         */
 
-        $currentPerformances = AffiliatePerformance::query()
-            ->whereIn(
+        $currentPerformances = DB::table('affiliate_performances')
+            ->whereIn('import_batch_id', $currentBatchIds)
+            ->select([
+                'affiliate_id',
                 'import_batch_id',
-                $currentBatches->pluck('id')
-            )
-            ->with('affiliate')
+                'gmv',
+                'attributed_orders',
+                'buyers',
+                'products_sold',
+                'video_views',
+                'impressions',
+                'ctr',
+                'ctor',
+                'video_count',
+                'live_count',
+            ])
             ->get();
-
+            Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'generateForPeriod total',
+            'seconds' => round(microtime(true) - $engineStart, 3),
+        ]);
+        
         if ($currentPerformances->isEmpty()) {
             return null;
         }
@@ -48,111 +85,214 @@ class InsightEngine
         |--------------------------------------------------------------------------
         */
 
-        $comparisonPerformances = $comparisonBatches->isNotEmpty()
-            ? AffiliatePerformance::query()
-                ->whereIn(
+        $comparisonPerformances = collect();
+
+        if (!empty($comparisonBatchIds)) {
+            $comparisonPerformances = DB::table('affiliate_performances')
+                ->whereIn('import_batch_id', $comparisonBatchIds)
+                ->select([
+                    'affiliate_id',
                     'import_batch_id',
-                    $comparisonBatches->pluck('id')
-                )
-                ->get()
-            : collect();
+                    'gmv',
+                    'attributed_orders',
+                    'buyers',
+                    'products_sold',
+                    'video_views',
+                    'impressions',
+                    'ctr',
+                    'ctor',
+                    'video_count',
+                    'live_count',
+                ])
+                ->get();
+        }
 
         /*
         |--------------------------------------------------------------------------
         | Dynamic Range Scores
         |--------------------------------------------------------------------------
         |
-        | Sama dengan Affiliate Index:
-        | - Performance
-        | - Growth
-        | - Consistency
-        | - Opportunity
-        | - Action
+        | Ini tetap menggunakan engine scoring yang sama.
         |
         */
 
+        $scoreStartedAt = microtime(true);
+
         $rangeScores = $this->scoreService->scoreRange(
-            $currentPerformances->map(function ($performance) {
-                return $performance;
-            }),
+            $currentPerformances,
             $comparisonPerformances
         );
 
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'scoreRange',
+            'seconds' => round(microtime(true) - $scoreStartedAt, 3),
+            'current_rows' => $currentPerformances->count(),
+            'comparison_rows' => $comparisonPerformances->count(),
+            'scores' => $rangeScores->count(),
+        ]);
+
         /*
         |--------------------------------------------------------------------------
-        | Aggregate Current Period
+        | Current Period Summary
         |--------------------------------------------------------------------------
         */
 
-        $totalGmv = (float) $currentPerformances->sum('gmv');
-        $totalOrders = (int) $currentPerformances->sum('attributed_orders');
-        $totalProductsSold = (int) $currentPerformances->sum('products_sold');
+        $currentSummary = DB::table('affiliate_performances')
+            ->whereIn('import_batch_id', $currentBatchIds)
+            ->selectRaw('
+                COALESCE(SUM(gmv), 0) as total_gmv,
+                COALESCE(SUM(attributed_orders), 0) as total_orders,
+                COALESCE(SUM(products_sold), 0) as total_products_sold,
+                COUNT(DISTINCT affiliate_id) as affiliate_count
+            ')
+            ->first();
+
+        $totalGmv = (float) ($currentSummary->total_gmv ?? 0);
+        $totalOrders = (int) ($currentSummary->total_orders ?? 0);
+        $totalProductsSold = (int) ($currentSummary->total_products_sold ?? 0);
+        $affiliateCount = (int) ($currentSummary->affiliate_count ?? 0);
 
         /*
         |--------------------------------------------------------------------------
-        | Aggregate Previous Period
+        | Previous Period Summary
         |--------------------------------------------------------------------------
         */
 
         $previousSummary = null;
 
-        if ($comparisonPerformances->isNotEmpty()) {
-            $previousSummary = [
-                'total_gmv' => (float) $comparisonPerformances->sum('gmv'),
-                'total_orders' => (int) $comparisonPerformances->sum('attributed_orders'),
-                'total_products_sold' => (int) $comparisonPerformances->sum('products_sold'),
-                'affiliate_count' => $comparisonPerformances
-                    ->pluck('affiliate_id')
-                    ->unique()
-                    ->count(),
-            ];
+        if (!empty($comparisonBatchIds)) {
+            $previousSummary = DB::table('affiliate_performances')
+                ->whereIn('import_batch_id', $comparisonBatchIds)
+                ->selectRaw('
+                    COALESCE(SUM(gmv), 0) as total_gmv,
+                    COALESCE(SUM(attributed_orders), 0) as total_orders,
+                    COALESCE(SUM(products_sold), 0) as total_products_sold,
+                    COUNT(DISTINCT affiliate_id) as affiliate_count
+                ')
+                ->first();
+
+            if ($previousSummary) {
+                $previousSummary = [
+                    'total_gmv' => (float) ($previousSummary->total_gmv ?? 0),
+                    'total_orders' => (int) ($previousSummary->total_orders ?? 0),
+                    'total_products_sold' => (int) ($previousSummary->total_products_sold ?? 0),
+                    'affiliate_count' => (int) ($previousSummary->affiliate_count ?? 0),
+                ];
+            }
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Affiliate Data
+        | Aggregate Affiliate Data
         |--------------------------------------------------------------------------
         |
-        | Karena sekarang bisa ada banyak snapshot harian,
-        | jangan langsung membuat 1 row per performance.
+        | Sebelumnya kita melakukan groupBy + sum() lagi di Collection.
         |
-        | Kita aggregate per affiliate terlebih dahulu.
+        | Sekarang aggregate langsung dilakukan MySQL.
         |
         */
 
-        $affiliateGroups = $currentPerformances
-            ->groupBy('affiliate_id');
+        $affiliateAggregates = DB::table('affiliate_performances as ap')
+        ->join('affiliates as a', 'a.id', '=', 'ap.affiliate_id')
+        ->whereIn('ap.import_batch_id', $currentBatchIds)
+        ->select([
+            'ap.affiliate_id',
+            'a.name',
+            'a.username',
+        ])
+        ->selectRaw('SUM(ap.gmv) as gmv')
+        ->selectRaw('SUM(ap.attributed_orders) as orders')
+        ->selectRaw('SUM(ap.products_sold) as products_sold')
+        ->selectRaw('SUM(ap.video_views) as video_views')
+        ->groupBy(
+            'ap.affiliate_id',
+            'a.name',
+            'a.username'
+        )
+        ->get()
+        ->keyBy('affiliate_id');
 
-        $affiliateData = $affiliateGroups
-            ->map(function (Collection $performances, $affiliateId) use ($rangeScores) {
-                $first = $performances->first();
+        /*
+        |--------------------------------------------------------------------------
+        | Affiliate Metadata
+        |--------------------------------------------------------------------------
+        */
 
-                $score = $rangeScores->get($affiliateId);
+        $metadataStart = microtime(true);
+
+        $affiliateAggregates = DB::table('affiliate_performances as ap')
+            ->join('affiliates as a', 'a.id', '=', 'ap.affiliate_id')
+            ->whereIn('ap.import_batch_id', $currentBatchIds)
+            ->select([
+                'ap.affiliate_id',
+                'a.name',
+                'a.username',
+            ])
+            ->selectRaw('SUM(ap.gmv) as gmv')
+            ->selectRaw('SUM(ap.attributed_orders) as orders')
+            ->selectRaw('SUM(ap.products_sold) as products_sold')
+            ->selectRaw('SUM(ap.video_views) as video_views')
+            ->groupBy(
+                'ap.affiliate_id',
+                'a.name',
+                'a.username'
+            )
+            ->get()
+            ->keyBy('affiliate_id');
+
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'affiliate aggregate + metadata',
+            'seconds' => round(microtime(true) - $metadataStart, 3),
+            'count' => $affiliateAggregates->count(),
+        ]);
+
+        $start = microtime(true);
+
+        $affiliateData = $rangeScores->map(
+            function ($score, $affiliateId) use ($affiliateAggregates) {
+                $aggregate = $affiliateAggregates->get($affiliateId);
+
+                if (!$aggregate) {
+                    return null;
+                }
 
                 return [
                     'affiliate_id' => $affiliateId,
 
-                    'name' => $first?->affiliate?->name,
-                    'username' => $first?->affiliate?->username,
+                    // Metadata
+                    'name' => $aggregate->name,
+                    'username' => $aggregate->username,
 
-                    'gmv' => (float) $performances->sum('gmv'),
-                    'orders' => (int) $performances->sum('attributed_orders'),
-                    'products_sold' => (int) $performances->sum('products_sold'),
-                    'video_views' => (int) $performances->sum('video_views'),
+                    // Performance metrics
+                    'gmv' => (float) $aggregate->gmv,
+                    'orders' => (int) $aggregate->orders,
+                    'products_sold' => (int) $aggregate->products_sold,
+                    'video_views' => (int) $aggregate->video_views,
 
+                    // Scores
                     'performance_score' => $score['performance_score'] ?? null,
                     'growth_score' => $score['growth_score'] ?? null,
                     'consistency_score' => $score['consistency_score'] ?? null,
                     'opportunity_score' => $score['opportunity_score'] ?? null,
                     'overall_score' => $score['overall_score'] ?? null,
 
+                    // Growth
                     'growth_percent' => $score['growth_percent'] ?? null,
+
+                    // Period
                     'period_count' => $score['period_count'] ?? 0,
 
+                    // Action
                     'action' => $score['action'] ?? null,
                 ];
-            })
-            ->values();
+            }
+        )->filter()->values();
+
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'affiliate data mapping',
+            'seconds' => round(microtime(true) - $start, 3),
+            'count' => $affiliateData->count(),
+        ]);
 
         /*
         |--------------------------------------------------------------------------
@@ -160,68 +300,119 @@ class InsightEngine
         |--------------------------------------------------------------------------
         */
 
+        $start = microtime(true);
+
         $topGmv = $affiliateData
             ->sortByDesc('gmv')
             ->take(5)
             ->values()
             ->all();
 
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'top gmv',
+            'seconds' => round(microtime(true) - $start, 3),
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Top Performers
+        |--------------------------------------------------------------------------
+        |
+        | Tetap mempertahankan behavior sebelumnya:
+        | Top Performer = top GMV.
+        |
+        */
+
         $topPerformers = $topGmv;
 
         /*
         |--------------------------------------------------------------------------
-        | Actions
+        | Action Counts
         |--------------------------------------------------------------------------
         */
 
-        $chase = $affiliateData
-            ->where('action', 'CHASE')
-            ->sortByDesc('opportunity_score')
-            ->values()
-            ->all();
-
-        $support = $affiliateData
-            ->where('action', 'SUPPORT')
-            ->sortByDesc('opportunity_score')
-            ->values()
-            ->all();
-
-        $deprioritize = $affiliateData
-            ->where('action', 'DEPRIORITIZE')
-            ->values()
-            ->all();
+        $chaseCount = 0;
+        $supportCount = 0;
+        $deprioritizeCount = 0;
 
         /*
         |--------------------------------------------------------------------------
-        | High GMV, Low Consistency
+        | Attention
         |--------------------------------------------------------------------------
         */
 
-        $monitoring = $affiliateData
-            ->filter(function ($affiliate) {
-                return $affiliate['gmv'] >= 5_000_000
-                    && $affiliate['consistency_score'] !== null
-                    && $affiliate['consistency_score'] < 40;
-            })
+        $start = microtime(true);
+
+        $monitoring = collect();
+        $potential = collect();
+
+        foreach ($affiliateData as $affiliate) {
+            $action = $affiliate['action'];
+
+            if ($action === 'CHASE') {
+                $chaseCount++;
+            }
+
+            if ($action === 'SUPPORT') {
+                $supportCount++;
+            }
+
+            if ($action === 'DEPRIORITIZE') {
+                $deprioritizeCount++;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | High GMV, Low Consistency
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $affiliate['gmv'] >= 5_000_000
+                && $affiliate['consistency_score'] !== null
+                && $affiliate['consistency_score'] < 40
+            ) {
+                $monitoring->push($affiliate);
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Potential Opportunity
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                $affiliate['gmv'] < 5_000_000
+                && $affiliate['opportunity_score'] !== null
+                && $affiliate['opportunity_score'] >= 70
+            ) {
+                $potential->push($affiliate);
+            }
+        }
+
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'attention',
+            'seconds' => round(microtime(true) - $start, 3),
+            'monitoring' => $monitoring->count(),
+            'potential' => $potential->count(),
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sort Attention
+        |--------------------------------------------------------------------------
+        */
+
+        $monitoring = $monitoring
             ->sortByDesc('gmv')
-            ->values()
-            ->all();
+            ->values();
 
-        /*
-        |--------------------------------------------------------------------------
-        | Potential Opportunity
-        |--------------------------------------------------------------------------
-        */
-
-        $potential = $affiliateData
-            ->filter(function ($affiliate) {
-                return $affiliate['gmv'] < 5_000_000
-                    && $affiliate['opportunity_score'] !== null
-                    && $affiliate['opportunity_score'] >= 70;
-            })
+        $potential = $potential
             ->sortByDesc('opportunity_score')
-            ->values()
-            ->all();
+            ->values();
+
+        $monitoringCount = $monitoring->count();
+        $potentialCount = $potential->count();
 
         /*
         |--------------------------------------------------------------------------
@@ -233,7 +424,7 @@ class InsightEngine
 
         /*
         |--------------------------------------------------------------------------
-        | Top Performer
+        | Top Performer Insight
         |--------------------------------------------------------------------------
         */
 
@@ -243,51 +434,68 @@ class InsightEngine
             $insightSummary[] = [
                 'type' => 'top_performer',
                 'title' => 'Top Performer',
-                'headline' => $top['name']
+
+                'headline' => ($top['name'] ?? 'Affiliate')
                     . ' menjadi kontributor GMV terbesar periode ini.',
+
                 'description' => 'Menghasilkan GMV sebesar Rp'
                     . number_format($top['gmv'], 0, ',', '.')
                     . ' dengan '
                     . number_format($top['orders'], 0, ',', '.')
                     . ' orders.',
-                'recommended_action' => 'Pertahankan performa dan evaluasi peluang pengembangan lebih lanjut.',
+
+                'recommended_action' =>
+                    'Pertahankan performa dan evaluasi peluang pengembangan lebih lanjut.',
+
                 'affiliate_id' => $top['affiliate_id'],
             ];
         }
 
         /*
         |--------------------------------------------------------------------------
-        | High GMV, Low Consistency
+        | Monitoring Insight
         |--------------------------------------------------------------------------
         */
 
-        if (!empty($monitoring)) {
+        if ($monitoringCount > 0) {
             $insightSummary[] = [
                 'type' => 'monitoring',
                 'title' => 'High GMV, Low Consistency',
-                'headline' => count($monitoring)
+
+                'headline' => $monitoringCount
                     . ' affiliate memiliki GMV tinggi tetapi consistency rendah.',
-                'description' => 'Kondisi ini menunjukkan performa yang perlu dipantau agar kontribusi GMV tetap berkelanjutan.',
-                'recommended_action' => 'Pantau konsistensi konten dan performa pada periode berikutnya.',
-                'count' => count($monitoring),
+
+                'description' =>
+                    'Kondisi ini menunjukkan performa yang perlu dipantau agar kontribusi GMV tetap berkelanjutan.',
+
+                'recommended_action' =>
+                    'Pantau konsistensi konten dan performa pada periode berikutnya.',
+
+                'count' => $monitoringCount,
             ];
         }
 
         /*
         |--------------------------------------------------------------------------
-        | Potential Opportunity
+        | Potential Insight
         |--------------------------------------------------------------------------
         */
 
-        if (!empty($potential)) {
+        if ($potentialCount > 0) {
             $insightSummary[] = [
                 'type' => 'potential',
                 'title' => 'Potential Opportunity',
-                'headline' => count($potential)
+
+                'headline' => $potentialCount
                     . ' affiliate memiliki opportunity score tinggi dengan GMV di bawah Rp5 juta.',
-                'description' => 'Affiliate dalam kategori ini menunjukkan sinyal yang layak diperhatikan meskipun kontribusi GMV masih relatif kecil.',
-                'recommended_action' => 'Pertimbangkan pengembangan, aktivasi konten, atau dukungan tambahan.',
-                'count' => count($potential),
+
+                'description' =>
+                    'Affiliate dalam kategori ini menunjukkan sinyal yang layak diperhatikan meskipun kontribusi GMV masih relatif kecil.',
+
+                'recommended_action' =>
+                    'Pertimbangkan pengembangan, aktivasi konten, atau dukungan tambahan.',
+
+                'count' => $potentialCount,
             ];
         }
 
@@ -314,7 +522,7 @@ class InsightEngine
             );
 
             $affiliateComparison = $this->compareMetric(
-                $affiliateData->count(),
+                $affiliateCount,
                 $previousSummary['affiliate_count']
             );
 
@@ -339,6 +547,7 @@ class InsightEngine
                         : ($ordersComparison['direction'] === 'down'
                             ? 'menurun'
                             : 'tetap'),
+
                     abs($ordersComparison['percentage'] ?? 0),
 
                     $productsComparison['direction'] === 'up'
@@ -346,6 +555,7 @@ class InsightEngine
                         : ($productsComparison['direction'] === 'down'
                             ? 'menurun'
                             : 'tetap'),
+
                     abs($productsComparison['percentage'] ?? 0),
 
                     $affiliateComparison['direction'] === 'up'
@@ -353,10 +563,12 @@ class InsightEngine
                         : ($affiliateComparison['direction'] === 'down'
                             ? 'menurun'
                             : 'tetap'),
+
                     abs($affiliateComparison['percentage'] ?? 0),
                 ),
 
-                'recommended_action' => 'Gunakan perubahan antarperiode sebagai dasar evaluasi strategi affiliate.',
+                'recommended_action' =>
+                    'Gunakan perubahan antarperiode sebagai dasar evaluasi strategi affiliate.',
             ];
         }
 
@@ -366,11 +578,8 @@ class InsightEngine
         |--------------------------------------------------------------------------
         */
 
-        $currentStart = $currentBatches
-            ->min('period_start');
-
-        $currentEnd = $currentBatches
-            ->max('period_end');
+        $currentStart = $currentBatches->min('period_start');
+        $currentEnd = $currentBatches->max('period_end');
 
         $previousStart = $comparisonBatches->isNotEmpty()
             ? $comparisonBatches->min('period_start')
@@ -396,8 +605,7 @@ class InsightEngine
                 'total_gmv' => $totalGmv,
                 'total_orders' => $totalOrders,
                 'total_products_sold' => $totalProductsSold,
-
-                'affiliate_count' => $affiliateData->count(),
+                'affiliate_count' => $affiliateCount,
 
                 'comparison' => [
                     'gmv' => $previousSummary
@@ -423,7 +631,7 @@ class InsightEngine
 
                     'affiliate_count' => $previousSummary
                         ? $this->compareMetric(
-                            $affiliateData->count(),
+                            $affiliateCount,
                             $previousSummary['affiliate_count']
                         )
                         : null,
@@ -440,14 +648,26 @@ class InsightEngine
             'top_gmv' => $topGmv,
 
             'actions' => [
-                'chase' => $chase,
-                'support' => $support,
-                'deprioritize' => $deprioritize,
+                'chase_count' => $chaseCount,
+                'support_count' => $supportCount,
+                'deprioritize_count' => $deprioritizeCount,
             ],
 
             'attention' => [
-                'monitoring' => $monitoring,
-                'potential' => $potential,
+                'monitoring' => $monitoring
+                    ->take(8)
+                    ->values()
+                    ->all(),
+
+                'monitoring_count' => $monitoringCount,
+
+                'potential' => $potential
+                    ->take(8)
+                    ->values()
+                    ->all(),
+
+                'potential_count' => $potentialCount,
+
                 'top_performers' => $topPerformers,
             ],
 
@@ -460,6 +680,13 @@ class InsightEngine
      */
     public function generateForBatch(ImportBatch $batch): ?array
     {
+        $engineStartedAt = microtime(true);
+
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'engine complete',
+            'seconds' => round(microtime(true) - $engineStartedAt, 3),
+        ]);
+        
         return $this->generateForPeriod(
             collect([$batch]),
             collect()

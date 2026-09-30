@@ -102,7 +102,11 @@ interface InsightData {
     };
     attention: {
         monitoring: Affiliate[];
+        monitoring_count: number;
+
         potential: Affiliate[];
+        potential_count: number;
+
         top_performers: Affiliate[];
     };
     insights: InsightItem[];
@@ -1289,7 +1293,7 @@ const applyCustomPeriod = () => {
                             </div>
 
                             <span class="text-xs font-medium text-muted-foreground">
-                                {{ insight.attention.monitoring.length }} affiliate
+                                {{ insight.attention.monitoring_count }} affiliate
                             </span>
                         </div>
 
@@ -1363,7 +1367,7 @@ const applyCustomPeriod = () => {
                             </div>
 
                             <span class="text-xs font-medium text-muted-foreground">
-                                {{ insight.attention.potential.length }} affiliate
+                                {{ insight.attention.potential_count }} affiliate
                             </span>
                         </div>
 
