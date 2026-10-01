@@ -7,11 +7,13 @@ use App\Services\InsightEngine;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\Log;
 
 class InsightsController extends Controller
 {
     public function index(Request $request, InsightEngine $insightEngine)
     {
+        $requestStart = microtime(true);
         $user = $request->user();
 
         /*
@@ -20,6 +22,8 @@ class InsightsController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        $latestBatchStart = microtime(true);
+
         $latestBatch = ImportBatch::query()
             ->where('uploaded_by', $user->id)
             ->where('status', 'completed')
@@ -27,6 +31,11 @@ class InsightsController extends Controller
             ->whereNotNull('period_end')
             ->orderByDesc('period_end')
             ->first();
+
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'latest batch query',
+            'seconds' => round(microtime(true) - $latestBatchStart, 3),
+        ]);
 
         if (!$latestBatch) {
             return Inertia::render('Insights/Index', [
@@ -43,13 +52,34 @@ class InsightsController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        $startDate = $request->filled('start_date')
-            ? Carbon::parse($request->input('start_date'))
-            : $latestBatch->period_start->copy();
+        $periodStart = microtime(true);
 
-        $endDate = $request->filled('end_date')
-            ? Carbon::parse($request->input('end_date'))
-            : $latestBatch->period_end->copy();
+        $sessionKey = 'insights_period';
+
+        $savedPeriod = $request->session()->get($sessionKey);
+
+        $startInput = $request->input('start_date');
+        $endInput = $request->input('end_date');
+
+        if ($startInput && $endInput) {
+            // Request dari date picker punya prioritas tertinggi
+            $startDate = Carbon::parse($startInput)->startOfDay();
+            $endDate = Carbon::parse($endInput)->startOfDay();
+
+        } elseif (
+            is_array($savedPeriod)
+            && !empty($savedPeriod['start'])
+            && !empty($savedPeriod['end'])
+        ) {
+            // Gunakan periode terakhir yang dipilih
+            $startDate = Carbon::parse($savedPeriod['start'])->startOfDay();
+            $endDate = Carbon::parse($savedPeriod['end'])->startOfDay();
+
+        } else {
+            // Pertama kali membuka Insights
+            $startDate = $latestBatch->period_start->copy()->startOfDay();
+            $endDate = $latestBatch->period_end->copy()->startOfDay();
+        }
 
         if ($startDate->gt($endDate)) {
             [$startDate, $endDate] = [
@@ -57,6 +87,20 @@ class InsightsController extends Controller
                 $startDate,
             ];
         }
+
+        // Simpan periode terakhir ke session
+        $request->session()->put(
+            $sessionKey,
+            [
+                'start' => $startDate->format('Y-m-d'),
+                'end' => $endDate->format('Y-m-d'),
+            ]
+        );
+
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'period calculation',
+            'seconds' => round(microtime(true) - $periodStart, 3),
+        ]);
 
         /*
         |--------------------------------------------------------------------------
@@ -78,6 +122,8 @@ class InsightsController extends Controller
         |--------------------------------------------------------------------------
         */
 
+        $currentBatchStart = microtime(true);
+
         $currentBatches = ImportBatch::query()
             ->where('uploaded_by', $user->id)
             ->where('status', 'completed')
@@ -88,11 +134,19 @@ class InsightsController extends Controller
             ->orderBy('period_start')
             ->get();
 
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'current batches query',
+            'seconds' => round(microtime(true) - $currentBatchStart, 3),
+            'count' => $currentBatches->count(),
+        ]);
+
         /*
         |--------------------------------------------------------------------------
         | Comparison Batches
         |--------------------------------------------------------------------------
         */
+
+        $comparisonBatchStart = microtime(true);
 
         $comparisonBatches = ImportBatch::query()
             ->where('uploaded_by', $user->id)
@@ -104,11 +158,19 @@ class InsightsController extends Controller
             ->orderBy('period_start')
             ->get();
 
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'comparison batches query',
+            'seconds' => round(microtime(true) - $comparisonBatchStart, 3),
+            'count' => $comparisonBatches->count(),
+        ]);
+
         /*
         |--------------------------------------------------------------------------
         | Generate Insight
         |--------------------------------------------------------------------------
         */
+
+        $engineStart = microtime(true);
 
         $insight = $currentBatches->isNotEmpty()
             ? $insightEngine->generateForPeriod(
@@ -116,6 +178,22 @@ class InsightsController extends Controller
                 $comparisonBatches
             )
             : null;
+
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'generate insight',
+            'seconds' => round(microtime(true) - $engineStart, 3),
+        ]);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Controller Total Before Inertia
+        |--------------------------------------------------------------------------
+        */
+
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'controller before inertia',
+            'seconds' => round(microtime(true) - $requestStart, 3),
+        ]);
 
         return Inertia::render('Insights/Index', [
             'insight' => $insight,

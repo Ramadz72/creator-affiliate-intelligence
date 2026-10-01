@@ -345,6 +345,22 @@ const getActionClass = (action: string | null) => {
     }
 }
 
+const affiliateDetailUrl = (affiliateId: number) => {
+    if (!props.insight?.period?.start || !props.insight?.period?.end) {
+        return `/affiliates/${affiliateId}`;
+    }
+
+    return `/affiliates/${affiliateId}?start_date=${props.insight.period.start}&end_date=${props.insight.period.end}`;
+};
+
+const attentionAffiliates = computed(() => {
+    return props.insight?.attention.monitoring ?? [];
+});
+
+const opportunityAffiliates = computed(() => {
+    return props.insight?.attention.potential ?? [];
+});
+
 const selectPreset = (
     preset: '7days' | '30days' | 'today'
 ) => {
@@ -831,81 +847,96 @@ const applyCustomPeriod = () => {
             <!-- Main Insights -->
             <div class="grid gap-5 lg:grid-cols-3">
                  <!-- Top Performer -->
-                    <div class="group rounded-xl border border-border bg-card p-5 transition hover:border-sky-500/30 hover:shadow-sm">
-                        <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-blue-500/10 blur-3xl" />
+                <Link
+                    v-if="topPerformer"
+                    :href="affiliateDetailUrl(topPerformer.affiliate_id)"
+                    class="group relative block rounded-xl border border-border bg-card p-5 transition
+                        hover:border-sky-500/30 hover:shadow-sm
+                        hover:bg-sky-500/[0.02]
+                        focus:outline-none focus:ring-2 focus:ring-sky-500/30"
+                >
+                    <div class="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-blue-500/10 blur-3xl" />
 
-                        <div class="relative">
-                            <div class="flex items-center justify-between">
-                                <div class="flex items-center gap-2">
-                                    <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10">
-                                        <TrendingUp class="h-4 w-4 text-blue-500" />
-                                    </div>
-
-                                    <span class="text-xs font-semibold uppercase tracking-wide text-blue-500">
-                                        Top Performer
-                                    </span>
+                    <div class="relative">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500/10">
+                                    <TrendingUp class="h-4 w-4 text-blue-500" />
                                 </div>
 
-                                <ArrowUpRight class="h-4 w-4 text-blue-500" />
+                                <span class="text-xs font-semibold uppercase tracking-wide text-blue-500">
+                                    Top Performer
+                                </span>
                             </div>
 
-                            <template v-if="topPerformer">
-                                <p class="mt-6 text-xl font-semibold">
-                                    {{ topPerformer.name ?? '-' }}
-                                </p>
+                            <ArrowUpRight
+                                class="h-4 w-4 text-blue-500 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                            />
+                        </div>
 
-                                <p class="mt-1 text-xs text-muted-foreground">
-                                    Kontributor GMV terbesar
-                                </p>
+                        <p class="mt-6 text-xl font-semibold">
+                            {{ topPerformer.name ?? '-' }}
+                        </p>
 
-                                <div class="mt-5">
-                                    <p class="text-3xl font-semibold tracking-tight">
-                                        {{ formatShortRupiah(topPerformer.gmv) }}
-                                    </p>
+                        <p class="mt-1 text-xs text-muted-foreground">
+                            Kontributor GMV terbesar
+                        </p>
 
-                                    <p class="mt-1 text-xs text-muted-foreground">
-                                        {{ formatNumber(topPerformer.orders) }} orders ·
-                                        {{ formatNumber(topPerformer.products_sold) }} produk
-                                    </p>
-                                </div>
+                        <div class="mt-5">
+                            <p class="text-3xl font-semibold tracking-tight">
+                                {{ formatShortRupiah(topPerformer.gmv) }}
+                            </p>
 
-                                <div class="mt-5 grid grid-cols-2 gap-2">
-                                    <div class="rounded-lg bg-background/70 p-3">
-                                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                            Performance
-                                        </p>
-
-                                        <p
-                                            class="mt-1 text-sm font-semibold"
-                                            :class="getScoreClass(topPerformer.performance_score)"
-                                        >
-                                            {{ topPerformer.performance_score ?? '-' }}
-                                        </p>
-                                    </div>
-
-                                    <div class="rounded-lg bg-background/70 p-3">
-                                        <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
-                                            Opportunity
-                                        </p>
-
-                                        <p
-                                            class="mt-1 text-sm font-semibold"
-                                            :class="getScoreClass(topPerformer.opportunity_score)"
-                                        >
-                                            {{ topPerformer.opportunity_score ?? '-' }}
-                                        </p>
-                                    </div>
-                                </div>
-                            </template>
-
-                            <p
-                                v-else
-                                class="mt-5 text-sm text-muted-foreground"
-                            >
-                                Belum ada top performer.
+                            <p class="mt-1 text-xs text-muted-foreground">
+                                {{ formatNumber(topPerformer.orders) }} orders ·
+                                {{ formatNumber(topPerformer.products_sold) }} produk
                             </p>
                         </div>
+
+                        <div class="mt-5 grid grid-cols-2 gap-2">
+                            <div class="rounded-lg bg-background/70 p-3">
+                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    Performance
+                                </p>
+
+                                <p
+                                    class="mt-1 text-sm font-semibold"
+                                    :class="getScoreClass(topPerformer.performance_score)"
+                                >
+                                    {{ topPerformer.performance_score ?? '-' }}
+                                </p>
+                            </div>
+
+                            <div class="rounded-lg bg-background/70 p-3">
+                                <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                    Opportunity
+                                </p>
+
+                                <p
+                                    class="mt-1 text-sm font-semibold"
+                                    :class="getScoreClass(topPerformer.opportunity_score)"
+                                >
+                                    {{ topPerformer.opportunity_score ?? '-' }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <p class="mt-4 text-[10px] font-medium uppercase tracking-wide text-sky-500 opacity-0 transition group-hover:opacity-100">
+                            Buka detail affiliate →
+                        </p>
                     </div>
+                </Link>
+
+                <div
+                    v-else
+                    class="group relative rounded-xl border border-border bg-card p-5"
+                >
+                    <div class="relative">
+                        <p class="text-sm text-muted-foreground">
+                            Belum ada top performer.
+                        </p>
+                    </div>
+                </div>
 
                     <!-- Attention -->
                     <div class="group rounded-xl border border-border bg-card p-5 transition hover:border-amber-500/20 hover:shadow-sm">

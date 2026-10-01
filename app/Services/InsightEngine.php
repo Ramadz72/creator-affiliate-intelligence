@@ -21,8 +21,6 @@ class InsightEngine
         Collection $currentBatches,
         Collection $comparisonBatches
     ): ?array {
-
-        $engineStart = microtime(true);
         
         if ($currentBatches->isEmpty()) {
             return null;
@@ -52,6 +50,7 @@ class InsightEngine
         | Ambil hanya kolom yang memang dibutuhkan oleh scoreRange().
         |
         */
+        $currentQueryStart = microtime(true);
 
         $currentPerformances = DB::table('affiliate_performances')
             ->whereIn('import_batch_id', $currentBatchIds)
@@ -71,10 +70,11 @@ class InsightEngine
             ])
             ->get();
             Log::info('INSIGHTS PERFORMANCE', [
-            'step' => 'generateForPeriod total',
-            'seconds' => round(microtime(true) - $engineStart, 3),
-        ]);
-        
+                'step' => 'current performance query',
+                'seconds' => round(microtime(true) - $currentQueryStart, 3),
+                'rows' => $currentPerformances->count(),
+            ]);
+            
         if ($currentPerformances->isEmpty()) {
             return null;
         }
@@ -84,6 +84,7 @@ class InsightEngine
         | Comparison Performances
         |--------------------------------------------------------------------------
         */
+        $comparisonQueryStart = microtime(true);
 
         $comparisonPerformances = collect();
 
@@ -105,6 +106,11 @@ class InsightEngine
                     'live_count',
                 ])
                 ->get();
+                Log::info('INSIGHTS PERFORMANCE', [
+                'step' => 'comparison performance query',
+                'seconds' => round(microtime(true) - $comparisonQueryStart, 3),
+                'rows' => $comparisonPerformances->count(),
+            ]);
         }
 
         /*
@@ -137,20 +143,16 @@ class InsightEngine
         |--------------------------------------------------------------------------
         */
 
-        $currentSummary = DB::table('affiliate_performances')
-            ->whereIn('import_batch_id', $currentBatchIds)
-            ->selectRaw('
-                COALESCE(SUM(gmv), 0) as total_gmv,
-                COALESCE(SUM(attributed_orders), 0) as total_orders,
-                COALESCE(SUM(products_sold), 0) as total_products_sold,
-                COUNT(DISTINCT affiliate_id) as affiliate_count
-            ')
-            ->first();
+        $totalGmv = (float) $currentPerformances->sum('gmv');
 
-        $totalGmv = (float) ($currentSummary->total_gmv ?? 0);
-        $totalOrders = (int) ($currentSummary->total_orders ?? 0);
-        $totalProductsSold = (int) ($currentSummary->total_products_sold ?? 0);
-        $affiliateCount = (int) ($currentSummary->affiliate_count ?? 0);
+        $totalOrders = (int) $currentPerformances->sum('attributed_orders');
+
+        $totalProductsSold = (int) $currentPerformances->sum('products_sold');
+
+        $affiliateCount = $currentPerformances
+            ->pluck('affiliate_id')
+            ->unique()
+            ->count();
 
         /*
         |--------------------------------------------------------------------------
@@ -160,57 +162,17 @@ class InsightEngine
 
         $previousSummary = null;
 
-        if (!empty($comparisonBatchIds)) {
-            $previousSummary = DB::table('affiliate_performances')
-                ->whereIn('import_batch_id', $comparisonBatchIds)
-                ->selectRaw('
-                    COALESCE(SUM(gmv), 0) as total_gmv,
-                    COALESCE(SUM(attributed_orders), 0) as total_orders,
-                    COALESCE(SUM(products_sold), 0) as total_products_sold,
-                    COUNT(DISTINCT affiliate_id) as affiliate_count
-                ')
-                ->first();
-
-            if ($previousSummary) {
+        if ($comparisonPerformances->isNotEmpty()) {
                 $previousSummary = [
-                    'total_gmv' => (float) ($previousSummary->total_gmv ?? 0),
-                    'total_orders' => (int) ($previousSummary->total_orders ?? 0),
-                    'total_products_sold' => (int) ($previousSummary->total_products_sold ?? 0),
-                    'affiliate_count' => (int) ($previousSummary->affiliate_count ?? 0),
+                    'total_gmv' => (float) $comparisonPerformances->sum('gmv'),
+                    'total_orders' => (int) $comparisonPerformances->sum('attributed_orders'),
+                    'total_products_sold' => (int) $comparisonPerformances->sum('products_sold'),
+                    'affiliate_count' => $comparisonPerformances
+                        ->pluck('affiliate_id')
+                        ->unique()
+                        ->count(),
                 ];
             }
-        }
-
-        /*
-        |--------------------------------------------------------------------------
-        | Aggregate Affiliate Data
-        |--------------------------------------------------------------------------
-        |
-        | Sebelumnya kita melakukan groupBy + sum() lagi di Collection.
-        |
-        | Sekarang aggregate langsung dilakukan MySQL.
-        |
-        */
-
-        $affiliateAggregates = DB::table('affiliate_performances as ap')
-        ->join('affiliates as a', 'a.id', '=', 'ap.affiliate_id')
-        ->whereIn('ap.import_batch_id', $currentBatchIds)
-        ->select([
-            'ap.affiliate_id',
-            'a.name',
-            'a.username',
-        ])
-        ->selectRaw('SUM(ap.gmv) as gmv')
-        ->selectRaw('SUM(ap.attributed_orders) as orders')
-        ->selectRaw('SUM(ap.products_sold) as products_sold')
-        ->selectRaw('SUM(ap.video_views) as video_views')
-        ->groupBy(
-            'ap.affiliate_id',
-            'a.name',
-            'a.username'
-        )
-        ->get()
-        ->keyBy('affiliate_id');
 
         /*
         |--------------------------------------------------------------------------

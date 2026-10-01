@@ -506,6 +506,63 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
+        | Dashboard Attention & Opportunity
+        |--------------------------------------------------------------------------
+        |
+        | Menggunakan rangeScores yang sama dengan Affiliate Index & Insights.
+        | Tidak menjalankan scoreRange() ulang.
+        |
+        */
+
+        $monitoringCount = 0;
+        $potentialCount = 0;
+
+        foreach ($rangeScores as $affiliateId => $score) {
+            $performance = $affiliateGmv->get($affiliateId);
+
+            if (!$performance) {
+                continue;
+            }
+
+            $gmv = (float) ($performance['gmv'] ?? 0);
+
+            $consistencyScore = $score['consistency_score'] ?? null;
+            $opportunityScore = $score['opportunity_score'] ?? null;
+
+            /*
+            | Attention / Monitoring
+            |
+            | Sama dengan Insights:
+            | GMV >= 5 juta
+            | Consistency < 40
+            */
+
+            if (
+                $gmv >= 5_000_000
+                && $consistencyScore !== null
+                && $consistencyScore < 40
+            ) {
+                $monitoringCount++;
+            }
+
+            /*
+            | Potential Opportunity
+            |
+            | Sama dengan Insights:
+            | GMV < 5 juta
+            | Opportunity Score >= 70
+            */
+
+            if (
+                $gmv < 5_000_000
+                && $opportunityScore !== null
+                && $opportunityScore >= 70
+            ) {
+                $potentialCount++;
+            }
+        }
+        /*
+        |--------------------------------------------------------------------------
         | Affiliate IDs Needed For UI
         |--------------------------------------------------------------------------
         */
@@ -813,6 +870,54 @@ class DashboardController extends Controller
                     'recommended_action' => 'Gunakan action category sebagai dasar prioritas follow-up affiliate.',
                 ];
             }
+
+            /*
+            |--------------------------------------------------------------
+            | Insight 4 — Attention / Monitoring
+            |--------------------------------------------------------------
+            */
+
+            $insights[] = [
+                'type' => 'monitoring',
+                'title' => 'High GMV, Low Consistency',
+                'headline' => $monitoringCount > 0
+                    ? sprintf(
+                        '%d affiliate memiliki GMV tinggi tetapi consistency rendah.',
+                        $monitoringCount
+                    )
+                    : 'Tidak ada pola yang perlu diperhatikan.',
+                'description' => $monitoringCount > 0
+                    ? 'Kondisi ini menunjukkan performa yang perlu dipantau agar kontribusi GMV tetap berkelanjutan.'
+                    : 'Tidak ditemukan affiliate dengan GMV tinggi dan consistency score rendah pada periode terpilih.',
+                'recommended_action' => $monitoringCount > 0
+                    ? 'Pantau konsistensi konten dan performa pada periode berikutnya.'
+                    : 'Lanjutkan pemantauan performa pada periode berikutnya.',
+                'count' => $monitoringCount,
+            ];
+
+            /*
+            |--------------------------------------------------------------
+            | Insight 5 — Potential Opportunity
+            |--------------------------------------------------------------
+            */
+
+            $insights[] = [
+                'type' => 'potential',
+                'title' => 'Potential Opportunity',
+                'headline' => $potentialCount > 0
+                    ? sprintf(
+                        '%d affiliate memiliki opportunity score tinggi dengan GMV di bawah Rp5 juta.',
+                        $potentialCount
+                    )
+                    : 'Belum ada potential opportunity.',
+                'description' => $potentialCount > 0
+                    ? 'Affiliate dalam kategori ini menunjukkan sinyal yang layak diperhatikan meskipun kontribusi GMV masih relatif kecil.'
+                    : 'Belum ditemukan affiliate dengan opportunity score tinggi dan GMV di bawah Rp5 juta pada periode terpilih.',
+                'recommended_action' => $potentialCount > 0
+                    ? 'Pertimbangkan pengembangan, aktivasi konten, atau dukungan tambahan.'
+                    : 'Lanjutkan pemantauan dan evaluasi performa affiliate.',
+                'count' => $potentialCount,
+            ];
 
             /*
             |--------------------------------------------------------------
