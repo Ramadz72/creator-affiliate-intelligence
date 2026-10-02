@@ -99,6 +99,8 @@ interface Props {
     } | null
 
     score: AffiliateScore | null
+    back_url: string
+        from: 'dashboard' | 'insights' | 'affiliates'
 }
 
 const props = defineProps<Props>()
@@ -171,6 +173,7 @@ const applyFilters = () => {
         {
             start_date: startDate.value || undefined,
             end_date: endDate.value || undefined,
+            from: props.from,
         },
         {
             preserveState: true,
@@ -424,9 +427,7 @@ const actionInfo = (action: string) => {
             <div class="flex items-center justify-between gap-6">
                 <div class="flex items-center gap-6">
                     <Link
-                        :href="startDate && endDate
-                            ? `/affiliates?start_date=${startDate}&end_date=${endDate}`
-                            : '/affiliates'"
+                        :href="props.back_url"
                         class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card hover:bg-muted"
                     >
                         <ArrowLeft class="h-5 w-5" />

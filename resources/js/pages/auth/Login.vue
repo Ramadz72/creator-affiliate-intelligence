@@ -284,7 +284,7 @@ const progressWidth = computed(() => {
                                     for="email"
                                     class="font-semibold text-slate-700"
                                 >
-                                    Email address
+                                    Alamat Email
                                 </Label>
 
                                 <div class="relative">
@@ -342,7 +342,7 @@ const progressWidth = computed(() => {
                                         :href="request()"
                                         class="text-sm font-medium text-sky-500 transition hover:text-sky-600"
                                     >
-                                        Forgot your password?
+                                        Lupa Password?
                                     </TextLink>
                                 </div>
 
@@ -396,7 +396,7 @@ const progressWidth = computed(() => {
                                         :tabindex="3"
                                     />
 
-                                    <span>Remember me</span>
+                                    <span>Ingat saya</span>
                                 </Label>
 
                                 <div
@@ -446,13 +446,13 @@ const progressWidth = computed(() => {
                         <div
                             class="border-t border-slate-100 pt-5 text-center text-sm text-slate-500"
                         >
-                            Don't have an account?
+                            Belum punya akun?
 
                             <TextLink
                                 :href="register()"
                                 class="ml-1 font-semibold text-sky-500 transition hover:text-sky-600"
                             >
-                                Sign up
+                                Daftar sekarang
                             </TextLink>
                         </div>
                     </Form>

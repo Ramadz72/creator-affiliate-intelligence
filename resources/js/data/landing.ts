@@ -91,8 +91,7 @@ export const REVIEWS: ReviewItem[] = [
     quote:
       "Affiliate Opportunity Analysis menunjukkan siapa yang harus saya kejar, diberi support, atau dilepas. Tim saya berhenti membuang waktu ke affiliate yang tidak berkembang.",
     metric: "GMV dari affiliate naik 58%",
-    image:
-      "https://images.pexels.com/photos/6333689/pexels-photo-6333689.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    image: "/images/reviews/review-1.webp",
   },
   {
     id: "rev-2",
@@ -102,8 +101,7 @@ export const REVIEWS: ReviewItem[] = [
     quote:
       "Dulu saya booking KOL lima juta berdasarkan feeling. Sekarang tiap creator dianalisis dulu: performa, rate card, sampai estimasi value-nya. Yang tidak masuk akal tinggal saya negosiasi atau lewat.",
     metric: "ROI kolaborasi naik 3,4x dalam 3 bulan",
-    image:
-      "https://images.pexels.com/photos/7676404/pexels-photo-7676404.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+    image: "/images/reviews/review-2.webp",
   },
   {
     id: "rev-3",
@@ -113,8 +111,7 @@ export const REVIEWS: ReviewItem[] = [
     quote:
       "Rate card creator skincare besar bisa 9 juta per konten. Aplikasi ini menghitung estimasi value-nya dan memberi verdict Negotiate — jadi saya tahu angka wajar untuk menawar.",
     metric: "Biaya KOL turun 30% dengan hasil setara",
-    image:
-      "https://images.unsplash.com/photo-1623658877772-69ae99a89304?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NDk1ODF8MHwxfHNlYXJjaHw0fHxjcmVhdG9yJTIwd29ya2luZyUyMGxhcHRvcCUyMGluZG9uZXNpYXxlbnwwfHx8fDE3OTAwODY2NDJ8MA&ixlib=rb-4.1.0&q=85",
+    image: "/images/reviews/review-3.webp",
   },
   {
     id: "rev-4",
@@ -124,8 +121,7 @@ export const REVIEWS: ReviewItem[] = [
     quote:
       "Kami mengelola 40+ affiliate. Yang dulu manual 8 jam di spreadsheet, sekarang 10 menit: daftar CHASE, SUPPORT, MONITOR, dan DEPRIORITIZE sudah jadi.",
     metric: "Waktu analisis turun dari 8 jam ke 10 menit",
-    image:
-      "https://images.unsplash.com/photo-1707991396652-cf7827abe722?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NTYxOTF8MHwxfHNlYXJjaHwxfHxjb250ZW50JTIwY3JlYXRvciUyMHN0dWRpbyUyMGFuYWx5dGljc3xlbnwwfHx8fDE3OTAwODY2NDJ8MA&ixlib=rb-4.1.0&q=85",
+    image: "/images/reviews/review-4.webp",
   },
 ];
 

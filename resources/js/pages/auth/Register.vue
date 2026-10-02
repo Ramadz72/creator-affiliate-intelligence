@@ -338,7 +338,7 @@ const canSubmit = computed(() => {
                                     for="name"
                                     class="font-semibold text-slate-700"
                                 >
-                                    Name
+                                    Nama
                                 </Label>
 
                                 <Input
@@ -588,7 +588,7 @@ const canSubmit = computed(() => {
                                     for="password_confirmation"
                                     class="font-semibold text-slate-700"
                                 >
-                                    Confirm password
+                                    Konfirmasi Password
                                 </Label>
 
                                 <div class="relative">
@@ -731,7 +731,7 @@ const canSubmit = computed(() => {
                         <div
                             class="border-t border-slate-100 pt-6 text-center text-sm text-slate-500"
                         >
-                            Already have an account?
+                            Sudah mempunyai akun?
 
                             <TextLink
                                 :href="login()"

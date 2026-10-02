@@ -347,10 +347,10 @@ const getActionClass = (action: string | null) => {
 
 const affiliateDetailUrl = (affiliateId: number) => {
     if (!props.insight?.period?.start || !props.insight?.period?.end) {
-        return `/affiliates/${affiliateId}`;
+        return `/affiliates/${affiliateId}?from=insights`;
     }
 
-    return `/affiliates/${affiliateId}?start_date=${props.insight.period.start}&end_date=${props.insight.period.end}`;
+    return `/affiliates/${affiliateId}?start_date=${props.insight.period.start}&end_date=${props.insight.period.end}&from=insights`;
 };
 
 const attentionAffiliates = computed(() => {
@@ -1518,11 +1518,14 @@ const applyCustomPeriod = () => {
                 </div>
 
                 <div class="divide-y divide-border">
-                    <div
+                    <Link
                         v-for="(affiliate, index) in topThree"
                         :key="affiliate.affiliate_id"
+                        :href="affiliateDetailUrl(affiliate.affiliate_id)"
                         class="group flex flex-col gap-4 p-5 transition hover:bg-muted/30 md:flex-row md:items-center"
                     >
+                    
+                    
                         <!-- Rank -->
                         <div class="flex items-center gap-3 md:w-64">
                             <div
@@ -1596,7 +1599,7 @@ const applyCustomPeriod = () => {
                         </div>
 
                         <ChevronRight class="hidden h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1 md:block" />
-                    </div>
+                    </Link>
                 </div>
             </section>
         </template>

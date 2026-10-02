@@ -92,6 +92,30 @@ class AffiliateDetailController extends Controller
             ];
         }
 
+        $from = $request->input('from', 'affiliates');
+
+        $backUrl = match ($from) {
+            'dashboard' => route('dashboard', [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d'),
+            ]),
+
+            'insights' => url('/insights') . '?' . http_build_query([
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d'),
+            ]),
+
+            'affiliates' => route('affiliates.index', [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d'),
+            ]),
+
+            default => route('affiliates.index', [
+                'start_date' => $startDate->format('Y-m-d'),
+                'end_date' => $endDate->format('Y-m-d'),
+            ]),
+        };
+
         $request->session()->put(
             $sessionKey,
             [
@@ -896,6 +920,12 @@ class AffiliateDetailController extends Controller
 
             'score' =>
                 $score,
+            
+            'back_url' =>
+              $backUrl,
+            
+            'from' =>
+                $from,
         ]);
     }
 }
