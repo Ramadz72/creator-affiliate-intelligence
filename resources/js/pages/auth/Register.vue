@@ -139,7 +139,7 @@ const canSubmit = computed(() => {
                 <!-- Logo -->
                 <div class="relative z-10">
                     <img
-                        src="/images/logo-creator-affiliate.png"
+                        src="/images/creator kecil.png"
                         alt="Creator Affiliate Intelligence"
                         class="h-16 w-auto object-contain"
                     />
@@ -246,7 +246,7 @@ const canSubmit = computed(() => {
                     <!-- Mobile logo -->
                     <div class="mb-8 flex justify-center lg:hidden">
                         <img
-                            src="/images/logo-creator-affiliate.png"
+                            src="/images/creator kecil.png"
                             alt="Creator Affiliate Intelligence"
                             class="h-14 w-auto object-contain"
                         />
@@ -720,7 +720,7 @@ const canSubmit = computed(() => {
                                         {{
                                             canSubmit
                                                 ? 'Buat akun sekarang'
-                                                : 'Create account'
+                                                : 'Buat akun'
                                         }}
                                     </span>
                                 </template>

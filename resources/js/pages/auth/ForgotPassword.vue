@@ -283,7 +283,7 @@ const emailIsValid = computed(() => {
                                     for="email"
                                     class="font-semibold text-slate-700"
                                 >
-                                    Email address
+                                    Alamat email
                                 </Label>
 
                                 <div class="relative">
@@ -295,7 +295,7 @@ const emailIsValid = computed(() => {
                                         autocomplete="email"
                                         autofocus
                                         required
-                                        placeholder="email@example.com"
+                                        placeholder="email@contoh.com"
                                         class="h-12 rounded-xl border-slate-200 bg-slate-50 px-4 pr-11 text-sm transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10"
                                         :class="{
                                             'border-emerald-300 bg-emerald-50/40':

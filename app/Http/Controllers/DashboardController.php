@@ -175,13 +175,12 @@ class DashboardController extends Controller
             ->where('uploaded_by', $user->id)
             ->whereNotNull('period_start')
             ->whereNotNull('period_end')
-            ->whereDate('period_start', '>=', $startDate)
-            ->whereDate('period_end', '<=', $endDate)
+            ->where('period_start', '>=', $startDate->toDateString())
+            ->where('period_end', '<=', $endDate->toDateString())
             ->orderBy('period_start')
             ->orderBy('id')
             ->get([
                 'id',
-                'file_name',
                 'period_start',
                 'period_end',
             ]);
@@ -201,13 +200,12 @@ class DashboardController extends Controller
             ->where('uploaded_by', $user->id)
             ->whereNotNull('period_start')
             ->whereNotNull('period_end')
-            ->whereDate('period_start', '>=', $previousStartDate)
-            ->whereDate('period_end', '<=', $previousEndDate)
+            ->where('period_start', '>=', $previousStartDate->toDateString())
+            ->where('period_end', '<=', $previousEndDate->toDateString())
             ->orderBy('period_start')
             ->orderBy('id')
             ->get([
                 'id',
-                'file_name',
                 'period_start',
                 'period_end',
             ]);
@@ -239,8 +237,8 @@ class DashboardController extends Controller
                 $query->where('user_id', $user->id);
             })
             ->where('status', 'Running')
-            ->whereDate('start_date', '<=', $endDate)
-            ->whereDate('end_date', '>=', $startDate)
+            ->where('start_date', '<=', $endDate->toDateString())
+            ->where('end_date', '>=', $startDate->toDateString())
             ->count();
 
         /*
@@ -406,8 +404,8 @@ class DashboardController extends Controller
             ->whereHas('creator', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
-            ->whereDate('period_start', '>=', $startDate)
-            ->whereDate('period_end', '<=', $endDate)
+            ->where('period_start', '>=', $startDate->toDateString())
+            ->where('period_end', '<=', $endDate->toDateString())
             ->selectRaw('MAX(id) as id')
             ->groupBy('creator_id')
             ->pluck('id');
@@ -717,6 +715,32 @@ class DashboardController extends Controller
                 });
         }
 
+        $comparisonAffiliatePerformance = DB::table('affiliate_performances')
+            ->join(
+                'import_batches',
+                'import_batches.id',
+                '=',
+                'affiliate_performances.import_batch_id'
+            )
+            ->whereIn(
+                'affiliate_performances.import_batch_id',
+                $comparisonBatchIds
+            )
+            ->select(
+                'affiliate_performances.import_batch_id as batch_id',
+                'import_batches.period_start',
+                'import_batches.period_end',
+            )
+            ->selectRaw('SUM(affiliate_performances.gmv) as gmv')
+            ->selectRaw('SUM(affiliate_performances.attributed_orders) as orders')
+            ->groupBy(
+                'affiliate_performances.import_batch_id',
+                'import_batches.period_start',
+                'import_batches.period_end',
+            )
+            ->orderBy('import_batches.period_start')
+            ->get();
+
         /*
         |--------------------------------------------------------------------------
         | Dashboard Insight Preview
@@ -955,6 +979,8 @@ class DashboardController extends Controller
         */
 
         return Inertia::render('Dashboard', [
+            'business_name' => $user->business_name,
+
             'stats' => [
                 'creators' => $totalCreators,
                 'affiliates' => $totalAffiliates,
@@ -1009,6 +1035,7 @@ class DashboardController extends Controller
             */
 
             'affiliate_performance' => $affiliatePerformance,
+            'comparison_affiliate_performance' => $comparisonAffiliatePerformance,
 
             /*
             |--------------------------------------------------------------------------

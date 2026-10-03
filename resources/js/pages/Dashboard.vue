@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
-import { computed,ref } from 'vue'
+import { computed, ref } from 'vue'
 import {
     UserSearch,
     Headphones,
@@ -25,6 +25,15 @@ interface AffiliatePerformance {
     period_start: string | null
     period_end: string | null
     gmv: number
+    orders: number
+}
+
+interface ComparisonPerformance {
+    batch_id: number
+    period_start: string | null
+    period_end: string | null
+    gmv: number
+    orders: number
 }
 
 interface CreatorOverview {
@@ -46,6 +55,8 @@ interface AffiliateOverview {
 }
 
 const props = defineProps<{
+    business_name: string | null
+
     stats: {
         creators: number
         affiliates: number
@@ -57,6 +68,7 @@ const props = defineProps<{
         gmv_growth: number | null
         orders_growth: number | null
     }
+
     selected_period: {
         start: string
         end: string
@@ -69,40 +81,42 @@ const props = defineProps<{
 
     affiliate_performance: AffiliatePerformance[]
 
+    comparison_affiliate_performance: ComparisonPerformance[]
+
     creator_overview: CreatorOverview[]
     affiliate_overview: AffiliateOverview[]
 
     insight_preview: {
-    period: {
-        start: string | null
-        end: string | null
-    }
-    summary: {
-        total_gmv: number
-        total_orders: number
-        total_products_sold: number
-        affiliate_count: number
-    }
-    insights: Array<{
-        type: string
-        title: string
-        headline: string
-        description: string
-        recommended_action: string
-        affiliate_id?: number
-        count?: number
-    }>
-    top_gmv: Array<{
-        affiliate_id: number
-        name: string | null
-        username: string | null
-        gmv: number
-        orders: number
-        products_sold: number
-        overall_score: number | null
-        action: string | null
-    }>
-} | null
+        period: {
+            start: string | null
+            end: string | null
+        }
+        summary: {
+            total_gmv: number
+            total_orders: number
+            total_products_sold: number
+            affiliate_count: number
+        }
+        insights: Array<{
+            type: string
+            title: string
+            headline: string
+            description: string
+            recommended_action: string
+            affiliate_id?: number
+            count?: number
+        }>
+        top_gmv: Array<{
+            affiliate_id: number
+            name: string | null
+            username: string | null
+            gmv: number
+            orders: number
+            products_sold: number
+            overall_score: number | null
+            action: string | null
+        }>
+    } | null
 
     action_required: {
         creators_to_review: number
@@ -146,6 +160,14 @@ const selectedPeriodQuery = computed(() => {
     return `?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}`
 })
 
+const affiliateDetailUrl = (affiliateId: number) => {
+    if (!props.selected_period?.start || !props.selected_period?.end) {
+        return `/affiliates/${affiliateId}?from=dashboard`
+    }
+
+    return `/affiliates/${affiliateId}?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}&from=dashboard`
+}
+
 const selectedPeriodLabel = () => {
     if (!startDate.value || !endDate.value) {
         return 'Pilih Periode'
@@ -178,7 +200,124 @@ const applyPeriod = () => {
     )
 }
 
+/*
+|--------------------------------------------------------------------------
+| Chart
+|--------------------------------------------------------------------------
+*/
+
 const chartData = props.affiliate_performance ?? []
+
+const comparisonChartData =
+    props.comparison_affiliate_performance ?? []
+
+type ChartMetric =
+    | 'gmv'
+    | 'orders'
+
+const selectedChartMetric = ref<ChartMetric>('gmv')
+
+type ChartType =
+    | 'bar'
+    | 'line'
+
+const selectedChartType = ref<ChartType>('bar')
+
+type ChartPeriod =
+    | 'current'
+    | 'previous'
+    | 'both'
+
+const selectedChartPeriod = ref<ChartPeriod>('current')
+
+const currentChartData = computed(() => {
+    return chartData.map((item) => ({
+        ...item,
+        chartPeriod: 'current' as const,
+        value:
+            selectedChartMetric.value === 'gmv'
+                ? item.gmv
+                : item.orders,
+    }))
+})
+
+const previousChartData = computed(() => {
+    return comparisonChartData.map((item) => ({
+        ...item,
+        chartPeriod: 'previous' as const,
+        value:
+            selectedChartMetric.value === 'gmv'
+                ? item.gmv
+                : item.orders,
+    }))
+})
+
+const activeChartData = computed(() => {
+    if (selectedChartPeriod.value === 'current') {
+        return currentChartData.value
+    }
+
+    if (selectedChartPeriod.value === 'previous') {
+        return previousChartData.value
+    }
+
+    return [
+        ...previousChartData.value,
+        ...currentChartData.value,
+    ]
+})
+
+const chartHasData = computed(() => {
+    return activeChartData.value.length > 0
+})
+
+const getChartValue = (
+    item:
+        | AffiliatePerformance
+        | ComparisonPerformance
+        | {
+            batch_id: number
+            period_start: string | null
+            period_end: string | null
+            gmv: number
+            orders: number
+            chartPeriod: 'current' | 'previous'
+            value: number
+        }
+) => {
+    return selectedChartMetric.value === 'gmv'
+        ? item.gmv
+        : item.orders
+}
+
+const maxChartValue = computed(() => {
+    return Math.max(
+        ...activeChartData.value.map((item) => item.value),
+        1,
+    )
+})
+
+const getBarHeight = (value: number) => {
+    return `${Math.max(
+        (value / maxChartValue.value) * 100,
+        4,
+    )}%`
+}
+
+const getLineX = (
+    index: number,
+    total: number,
+) => {
+    if (total <= 1) {
+        return 500
+    }
+
+    return (index / (total - 1)) * 1000
+}
+
+const getLineY = (value: number) => {
+    return 270 - ((value / maxChartValue.value) * 230)
+}
 
 const formatPeriod = (
     start: string | null,
@@ -234,15 +373,6 @@ const growthClass = (value: number | null) => {
         : 'text-red-500'
 }
 
-const maxGMV = Math.max(
-    ...chartData.map((item) => item.gmv),
-    1,
-)
-
-const getBarHeight = (gmv: number) => {
-    return `${Math.max((gmv / maxGMV) * 100, 4)}%`
-}
-
 const getInsight = (type: string) => {
     return props.insight_preview?.insights.find(
         (item) => item.type === type,
@@ -254,7 +384,10 @@ const topPerformer = () => {
 }
 
 const insightPeriodLabel = () => {
-    if (!props.insight_preview?.period?.start || !props.insight_preview?.period?.end) {
+    if (
+        !props.insight_preview?.period?.start ||
+        !props.insight_preview?.period?.end
+    ) {
         return ''
     }
 
@@ -263,7 +396,6 @@ const insightPeriodLabel = () => {
         props.insight_preview.period.end,
     )
 }
-
 </script>
 
 <template>
@@ -276,15 +408,15 @@ const insightPeriodLabel = () => {
             <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <p class="text-sm text-muted-foreground">
-                        Creator & Affiliate Intelligence
+                        Selamat datang kembali 👋
                     </p>
 
                     <h1 class="mt-1 text-2xl font-semibold tracking-tight">
-                        Dashboard
+                        {{ props.business_name || 'Nama Bisnis' }}
                     </h1>
 
                     <p class="mt-1 text-sm text-muted-foreground">
-                        Overview performa creator dan affiliate kamu.
+                        Pantau performa creator dan affiliate tokomu di satu tempat.
                     </p>
                 </div>
 
@@ -606,27 +738,91 @@ const insightPeriodLabel = () => {
             <div
                 class="rounded-xl border border-border bg-card p-5 xl:col-span-2"
             >
-                <div class="flex items-start justify-between">
-                    <div>
+                <!-- Header -->
+                <div class="flex items-start justify-between gap-4">
+                    <div class="min-w-0">
                         <p class="text-base font-medium">
                             Performance Overview
                         </p>
 
                         <p class="mt-1 text-sm text-muted-foreground">
-                            Pergerakan GMV berdasarkan data import affiliate.
+                            {{
+                                selectedChartMetric === 'gmv'
+                                    ? 'Pergerakan GMV berdasarkan data import affiliate.'
+                                    : 'Pergerakan jumlah orders berdasarkan data import affiliate.'
+                            }}
                         </p>
                     </div>
 
-                    <span
-                        class="rounded-md bg-blue-500/10 px-2.5 py-1 text-xs font-medium text-blue-500"
-                    >
-                        GMV
-                    </span>
+                    <div class="flex shrink-0 items-center gap-2">
+                        <!-- Metric -->
+                        <select
+                            v-model="selectedChartMetric"
+                            class="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium outline-none transition-colors hover:bg-muted focus:ring-2 focus:ring-ring"
+                        >
+                            <option value="gmv">
+                                GMV
+                            </option>
+
+                            <option value="orders">
+                                Orders
+                            </option>
+                        </select>
+
+                        <!-- Chart Type -->
+                        <select
+                            v-model="selectedChartType"
+                            class="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium outline-none transition-colors hover:bg-muted focus:ring-2 focus:ring-ring"
+                        >
+                            <option value="bar">
+                                Bar
+                            </option>
+
+                            <option value="line">
+                                Line
+                            </option>
+                        </select>
+
+                        <!-- Period -->
+                        <select
+                            v-model="selectedChartPeriod"
+                            class="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium outline-none transition-colors hover:bg-muted focus:ring-2 focus:ring-ring"
+                        >
+                            <option value="current">
+                                Current
+                            </option>
+
+                            <option value="previous">
+                                Previous
+                            </option>
+
+                            <option value="both">
+                                Both
+                            </option>
+                        </select>
+                    </div>
                 </div>
 
-                <!-- Realtime Affiliate Performance -->
+                <!-- Legend -->
+                <div
+                    v-if="selectedChartPeriod === 'both'"
+                    class="mt-4 flex items-center gap-5 text-xs text-muted-foreground"
+                >
+                    <div class="flex items-center gap-2">
+                        <span class="h-2.5 w-2.5 rounded-full bg-blue-500" />
+                        <span>Current Period</span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span class="h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
+                        <span>Previous Period</span>
+                    </div>
+                </div>
+
+                <!-- Chart -->
                 <div class="relative mt-6 h-64">
-                    <!-- Modern chart grid -->
+
+                    <!-- Grid -->
                     <div
                         class="pointer-events-none absolute inset-x-0 inset-y-0 flex flex-col justify-between pb-8"
                     >
@@ -636,50 +832,404 @@ const insightPeriodLabel = () => {
                         <div class="border-t border-border/20" />
                         <div class="border-t border-border/30" />
                     </div>
+
+                    <!-- ========================= -->
+                    <!-- BAR CHART -->
+                    <!-- ========================= -->
                     <div
-                        v-if="chartData.length"
-                        class="flex h-full items-end gap-3"
+                        v-if="
+                            chartHasData &&
+                            selectedChartType === 'bar'
+                        "
+                        class="relative z-10 flex h-full items-end gap-3"
                     >
                         <div
-                            v-for="item in chartData"
-                            :key="item.batch_id"
+                            v-for="item in activeChartData"
+                            :key="`${item.chartPeriod}-${item.batch_id}`"
                             class="group relative flex h-full flex-1 items-end"
                         >
                             <!-- Tooltip -->
                             <div
-                                class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 w-max -translate-x-1/2 rounded-lg border border-border bg-popover px-3 py-2 text-xs opacity-0 shadow-lg transition group-hover:opacity-100"
+                                class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-max max-w-[220px] -translate-x-1/2 rounded-lg border border-border bg-popover px-3 py-2 text-xs opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100"
                             >
                                 <p class="font-medium text-foreground">
                                     {{ formatPeriod(item.period_start, item.period_end) }}
                                 </p>
 
-                                <p class="mt-1 text-blue-500">
-                                    {{ formatGMV(item.gmv) }}
+                                <p
+                                    v-if="selectedChartPeriod === 'both'"
+                                    class="mt-1 text-[10px] font-medium uppercase tracking-wide"
+                                    :class="
+                                        item.chartPeriod === 'previous'
+                                            ? 'text-muted-foreground'
+                                            : 'text-blue-500'
+                                    "
+                                >
+                                    {{
+                                        item.chartPeriod === 'previous'
+                                            ? 'Previous Period'
+                                            : 'Current Period'
+                                    }}
+                                </p>
+
+                                <p
+                                    class="mt-1 font-medium"
+                                    :class="
+                                        item.chartPeriod === 'previous'
+                                            ? 'text-muted-foreground'
+                                            : 'text-blue-500'
+                                    "
+                                >
+                                    <template v-if="selectedChartMetric === 'gmv'">
+                                        {{ formatGMV(getChartValue(item)) }}
+                                    </template>
+
+                                    <template v-else>
+                                        {{ formatNumber(getChartValue(item)) }} orders
+                                    </template>
                                 </p>
                             </div>
 
+                            <!-- Bar -->
                             <div
-                                class="group/bar relative w-full overflow-hidden rounded-t-md bg-blue-500/70 shadow-[0_-4px_18px_rgba(59,130,246,0.08)] transition-all duration-300 hover:-translate-y-1 hover:bg-blue-500 hover:shadow-[0_-6px_24px_rgba(59,130,246,0.20)]"
-                                :style="{ height: getBarHeight(item.gmv) }"
+                                class="group/bar relative w-full overflow-hidden rounded-t-md shadow-[0_-4px_18px_rgba(59,130,246,0.08)] transition-[height,transform,background-color,box-shadow] duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_-6px_24px_rgba(59,130,246,0.20)]"
+                                :class="
+                                    item.chartPeriod === 'previous'
+                                        ? 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                                        : 'bg-blue-500/70 hover:bg-blue-500'
+                                "
+                                :style="{
+                                    height: getBarHeight(
+                                        getChartValue(item)
+                                    )
+                                }"
                             >
-                                <!-- subtle top highlight -->
                                 <div
                                     class="absolute inset-x-0 top-0 h-px bg-white/50"
                                 />
 
-                                <!-- subtle vertical highlight -->
                                 <div
                                     class="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white/[0.10] to-transparent opacity-0 transition-opacity duration-300 group-hover/bar:opacity-100"
                                 />
                             </div>
                         </div>
                     </div>
-                    
 
-                    <!-- Empty state -->
+                    <!-- ========================= -->
+                    <!-- LINE CHART -->
+                    <!-- ========================= -->
+                    <div
+                        v-else-if="
+                            chartHasData &&
+                            selectedChartType === 'line'
+                        "
+                        class="relative z-10 h-full"
+                    >
+                        <svg
+                            class="h-full w-full overflow-visible"
+                            viewBox="0 0 1000 300"
+                            preserveAspectRatio="none"
+                        >
+
+                            <!-- CURRENT AREA -->
+                            <polygon
+                                v-if="
+                                    selectedChartPeriod === 'current' ||
+                                    selectedChartPeriod === 'both'
+                                "
+                                :points="
+                                    currentChartData.length
+                                        ? currentChartData
+                                            .map((item, index) => {
+                                                const x = getLineX(
+                                                    index,
+                                                    currentChartData.length
+                                                )
+
+                                                const y = getLineY(
+                                                    getChartValue(item)
+                                                )
+
+                                                return `${x},${y}`
+                                            })
+                                            .join(' ') +
+                                            ` 1000,270 0,270`
+                                        : ''
+                                "
+                                class="fill-blue-500/10"
+                            />
+
+                            <!-- PREVIOUS AREA -->
+                            <polygon
+                                v-if="
+                                    selectedChartPeriod === 'previous'
+                                "
+                                :points="
+                                    previousChartData.length
+                                        ? previousChartData
+                                            .map((item, index) => {
+                                                const x = getLineX(
+                                                    index,
+                                                    previousChartData.length
+                                                )
+
+                                                const y = getLineY(
+                                                    getChartValue(item)
+                                                )
+
+                                                return `${x},${y}`
+                                            })
+                                            .join(' ') +
+                                            ` 1000,270 0,270`
+                                        : ''
+                                "
+                                class="fill-muted-foreground/5"
+                            />
+
+                            <!-- PREVIOUS LINE -->
+                            <polyline
+                                v-if="
+                                    selectedChartPeriod === 'previous' ||
+                                    selectedChartPeriod === 'both'
+                                "
+                                :points="
+                                    previousChartData
+                                        .map((item, index) => {
+                                            const x = getLineX(
+                                                index,
+                                                previousChartData.length
+                                            )
+
+                                            const y = getLineY(
+                                                getChartValue(item)
+                                            )
+
+                                            return `${x},${y}`
+                                        })
+                                        .join(' ')
+                                "
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="3"
+                                vector-effect="non-scaling-stroke"
+                                class="text-muted-foreground/50 transition-opacity duration-500"
+                            />
+
+                            <!-- CURRENT LINE -->
+                            <polyline
+                                v-if="
+                                    selectedChartPeriod === 'current' ||
+                                    selectedChartPeriod === 'both'
+                                "
+                                :points="
+                                    currentChartData
+                                        .map((item, index) => {
+                                            const x = getLineX(
+                                                index,
+                                                currentChartData.length
+                                            )
+
+                                            const y = getLineY(
+                                                getChartValue(item)
+                                            )
+
+                                            return `${x},${y}`
+                                        })
+                                        .join(' ')
+                                "
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="3"
+                                vector-effect="non-scaling-stroke"
+                                class="text-blue-500 transition-opacity duration-500"
+                            />
+
+                            <!-- PREVIOUS POINTS -->
+                            <g
+                                v-if="
+                                    selectedChartPeriod === 'previous' ||
+                                    selectedChartPeriod === 'both'
+                                "
+                            >
+                                <g
+                                    v-for="(item, index) in previousChartData"
+                                    :key="`previous-point-${item.batch_id}`"
+                                    class="group/point"
+                                >
+                                    <circle
+                                        :cx="
+                                            getLineX(
+                                                index,
+                                                previousChartData.length
+                                            )
+                                        "
+                                        :cy="
+                                            getLineY(
+                                                getChartValue(item)
+                                            )
+                                        "
+                                        r="12"
+                                        class="fill-transparent"
+                                    />
+
+                                    <circle
+                                        :cx="
+                                            getLineX(
+                                                index,
+                                                previousChartData.length
+                                            )
+                                        "
+                                        :cy="
+                                            getLineY(
+                                                getChartValue(item)
+                                            )
+                                        "
+                                        r="5"
+                                        class="fill-muted-foreground/60 stroke-background transition-all duration-500 ease-out group-hover/point:r-7"
+                                        stroke-width="3"
+                                    />
+
+                                    <foreignObject
+                                        :x="
+                                            getLineX(
+                                                index,
+                                                previousChartData.length
+                                            ) - 90
+                                        "
+                                        :y="
+                                            getLineY(
+                                                getChartValue(item)
+                                            ) - 80
+                                        "
+                                        width="180"
+                                        height="80"
+                                        class="pointer-events-none overflow-visible opacity-0 transition-opacity duration-200 group-hover/point:opacity-100"
+                                    >
+                                        <div
+                                            class="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-xl"
+                                        >
+                                            <p class="font-medium text-foreground">
+                                                {{ formatPeriod(item.period_start, item.period_end) }}
+                                            </p>
+
+                                            <p
+                                                v-if="selectedChartPeriod === 'both'"
+                                                class="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
+                                            >
+                                                Previous Period
+                                            </p>
+
+                                            <p class="mt-1 font-medium text-muted-foreground">
+                                                <template v-if="selectedChartMetric === 'gmv'">
+                                                    {{ formatGMV(getChartValue(item)) }}
+                                                </template>
+
+                                                <template v-else>
+                                                    {{ formatNumber(getChartValue(item)) }} orders
+                                                </template>
+                                            </p>
+                                        </div>
+                                    </foreignObject>
+                                </g>
+                            </g>
+
+                            <!-- CURRENT POINTS -->
+                            <g
+                                v-if="
+                                    selectedChartPeriod === 'current' ||
+                                    selectedChartPeriod === 'both'
+                                "
+                            >
+                                <g
+                                    v-for="(item, index) in currentChartData"
+                                    :key="`current-point-${item.batch_id}`"
+                                    class="group/point"
+                                >
+                                    <circle
+                                        :cx="
+                                            getLineX(
+                                                index,
+                                                currentChartData.length
+                                            )
+                                        "
+                                        :cy="
+                                            getLineY(
+                                                getChartValue(item)
+                                            )
+                                        "
+                                        r="12"
+                                        class="fill-transparent"
+                                    />
+
+                                    <circle
+                                        :cx="
+                                            getLineX(
+                                                index,
+                                                currentChartData.length
+                                            )
+                                        "
+                                        :cy="
+                                            getLineY(
+                                                getChartValue(item)
+                                            )
+                                        "
+                                        r="5"
+                                        class="fill-blue-500 stroke-background transition-all duration-500 ease-out group-hover/point:r-7"
+                                        stroke-width="3"
+                                    />
+
+                                    <foreignObject
+                                        :x="
+                                            getLineX(
+                                                index,
+                                                currentChartData.length
+                                            ) - 90
+                                        "
+                                        :y="
+                                            getLineY(
+                                                getChartValue(item)
+                                            ) - 80
+                                        "
+                                        width="180"
+                                        height="80"
+                                        class="pointer-events-none overflow-visible opacity-0 transition-opacity duration-200 group-hover/point:opacity-100"
+                                    >
+                                        <div
+                                            class="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-xl"
+                                        >
+                                            <p class="font-medium text-foreground">
+                                                {{ formatPeriod(item.period_start, item.period_end) }}
+                                            </p>
+
+                                            <p
+                                                v-if="selectedChartPeriod === 'both'"
+                                                class="mt-1 text-[10px] font-medium uppercase tracking-wide text-blue-500"
+                                            >
+                                                Current Period
+                                            </p>
+
+                                            <p class="mt-1 font-medium text-blue-500">
+                                                <template v-if="selectedChartMetric === 'gmv'">
+                                                    {{ formatGMV(getChartValue(item)) }}
+                                                </template>
+
+                                                <template v-else>
+                                                    {{ formatNumber(getChartValue(item)) }} orders
+                                                </template>
+                                            </p>
+                                        </div>
+                                    </foreignObject>
+                                </g>
+                            </g>
+                        </svg>
+                    </div>
+
+                    <!-- ========================= -->
+                    <!-- EMPTY STATE -->
+                    <!-- ========================= -->
                     <div
                         v-else
-                        class="flex h-full items-center justify-center rounded-lg border border-dashed border-border"
+                        class="relative z-10 flex h-full items-center justify-center rounded-lg border border-dashed border-border"
                     >
                         <div class="text-center">
                             <p class="text-sm font-medium">
@@ -693,14 +1243,14 @@ const insightPeriodLabel = () => {
                     </div>
                 </div>
 
-                <!-- Period labels -->
+                <!-- Period Labels -->
                 <div
-                    v-if="chartData.length"
+                    v-if="chartHasData"
                     class="mt-3 flex gap-3"
                 >
                     <div
-                        v-for="item in chartData"
-                        :key="`label-${item.batch_id}`"
+                        v-for="item in activeChartData"
+                        :key="`label-${item.chartPeriod}-${item.batch_id}`"
                         class="min-w-0 flex-1 text-center text-[10px] text-muted-foreground"
                     >
                         {{ formatPeriod(item.period_start, item.period_end) }}
@@ -750,7 +1300,7 @@ const insightPeriodLabel = () => {
 
                     <!-- Affiliates -->
                     <Link
-                        :href="`/affiliates${selectedPeriodQuery}`"
+                        :href="`/affiliates${selectedPeriodQuery}${selectedPeriodQuery ? '&' : '?'}action=SUPPORT`"
                         class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]"
                     >
                         <div class="flex items-center justify-between">
@@ -776,7 +1326,7 @@ const insightPeriodLabel = () => {
 
                     <!-- Monitoring -->
                     <Link
-                        href="/affiliates"
+                        :href="`/affiliates${selectedPeriodQuery}${selectedPeriodQuery ? '&' : '?'}action=MONITOR`"
                         class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-500/40 hover:bg-amber-500/[0.04] hover:shadow-[0_6px_18px_rgba(245,158,11,0.08)]"
                     >
                         <div class="flex items-center justify-between">
@@ -802,7 +1352,7 @@ const insightPeriodLabel = () => {
 
                     <!-- Deprioritize -->
                     <Link
-                        href="/affiliates"
+                        :href="`/affiliates${selectedPeriodQuery}${selectedPeriodQuery ? '&' : '?'}action=DEPRIORITIZE`"
                         class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-muted-foreground/40 hover:bg-muted/60 hover:shadow-[0_6px_18px_rgba(100,116,139,0.08)]"
                     >
                         <div class="flex items-center justify-between">
@@ -1225,7 +1775,7 @@ const insightPeriodLabel = () => {
                     <Link
                         v-for="affiliate in props.affiliate_overview"
                         :key="affiliate.id"
-                        :href="`/affiliates/${affiliate.id}`"
+                        :href="affiliateDetailUrl(affiliate.id)"
                         class="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4 transition hover:border-violet-500/40 hover:bg-muted/60"
                     >
                         <div class="min-w-0">

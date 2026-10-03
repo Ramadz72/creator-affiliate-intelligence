@@ -1391,8 +1391,8 @@ const actionClass = (
                                 >
                                     <Link
                                         :href="selectedPeriod
-                                            ? `/affiliates/${affiliate.id}?start_date=${selectedPeriod.start}&end_date=${selectedPeriod.end}`
-                                            : `/affiliates/${affiliate.id}`"
+                                            ? `/affiliates/${affiliate.id}?start_date=${selectedPeriod.start}&end_date=${selectedPeriod.end}&from=affilites`
+                                            : `/affiliates/${affiliate.id}?from=affilites`"
                                         class="inline-flex items-center rounded-lg border border-border px-3 py-2 text-sm font-medium hover:bg-muted"
                                     >
                                         Detail

@@ -75,6 +75,19 @@ class AffiliateController extends Controller
         $startDate = null;
         $endDate = null;
 
+        $savedPeriod = $request->session()->get(
+            'affiliate_index_period'
+        );
+
+        /*
+        |--------------------------------------------------------------------------
+        | Priority:
+        | 1. Request URL
+        | 2. Saved Session
+        | 3. Latest Snapshot
+        |--------------------------------------------------------------------------
+        */
+
         if (
             $request->filled('start_date') &&
             $request->filled('end_date')
@@ -86,6 +99,32 @@ class AffiliateController extends Controller
 
                 $endDate = Carbon::parse(
                     $request->input('end_date')
+                )->startOfDay();
+            } catch (\Throwable $e) {
+                $startDate = null;
+                $endDate = null;
+            }
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Restore Saved Period
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+            (!$startDate || !$endDate) &&
+            is_array($savedPeriod) &&
+            !empty($savedPeriod['start']) &&
+            !empty($savedPeriod['end'])
+        ) {
+            try {
+                $startDate = Carbon::parse(
+                    $savedPeriod['start']
+                )->startOfDay();
+
+                $endDate = Carbon::parse(
+                    $savedPeriod['end']
                 )->startOfDay();
             } catch (\Throwable $e) {
                 $startDate = null;
@@ -154,6 +193,22 @@ class AffiliateController extends Controller
                 $endDate,
                 $startDate,
             ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Persist Selected Period
+        |--------------------------------------------------------------------------
+        */
+
+        if ($startDate && $endDate) {
+            $request->session()->put(
+                'affiliate_index_period',
+                [
+                    'start' => $startDate->format('Y-m-d'),
+                    'end' => $endDate->format('Y-m-d'),
+                ]
+            );
         }
 
         /*
