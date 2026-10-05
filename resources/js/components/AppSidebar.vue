@@ -9,6 +9,7 @@ import {
     Users,
     UserRoundSearch,
     Sparkles,
+    HelpCircle,
 } from '@lucide/vue';
 
 import AppLogo from '@/components/AppLogo.vue';
@@ -104,6 +105,11 @@ const systemNavItems: NavItem[] = [
         title: 'Settings',
         href: '/settings',
         icon: Settings,
+    },
+    {
+        title: 'FAQ',
+        href: '/faq',
+        icon: HelpCircle,
     },
 ];
 

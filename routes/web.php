@@ -184,3 +184,7 @@ use App\Http\Controllers\InsightsController;
 Route::get('insights', [InsightsController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('insights.index');
+
+Route::get('/faq', function () {
+    return Inertia::render('FAQ/Index');
+})->name('faq');
