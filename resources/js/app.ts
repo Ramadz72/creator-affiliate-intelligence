@@ -46,7 +46,9 @@ void createInertiaApp({
 
         vueApp.component('VChart', VChart);
 
-        vueApp.mount(el);
+        if (el) {
+            vueApp.mount(el);
+        }
     },
 
     layout: (name) => {
