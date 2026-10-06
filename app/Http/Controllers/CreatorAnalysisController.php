@@ -11,7 +11,86 @@ use Inertia\Inertia;
 
 class CreatorAnalysisController extends Controller
 {
-    public function show(
+    /**
+     * Menampilkan analysis TERAKHIR yang sudah tersimpan.
+     *
+     * Penting:
+     * Halaman ini TIDAK menghitung ulang analysis.
+     */
+    public function show(Creator $creator)
+    {
+        abort_unless($creator->user_id === Auth::id(), 404);
+
+        $score = CreatorScore::where('creator_id', $creator->id)
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$score) {
+            return Inertia::render('creators/Analysis', [
+                'creator' => $creator,
+                'analysis' => null,
+            ]);
+        }
+
+        $snapshot = CreatorAnalysisSnapshot::where(
+            'creator_score_id',
+            $score->id
+        )->first();
+
+        if (!$snapshot) {
+            return Inertia::render('creators/Analysis', [
+                'creator' => $creator,
+                'analysis' => null,
+            ]);
+        }
+
+        $analysis = [
+            'creator_id' => $creator->id,
+            'creator_name' => $creator->name,
+
+            'period_start' => $score->period_start,
+            'period_end' => $score->period_end,
+
+            'content_count' => $snapshot->content_count,
+            'average_views' => $snapshot->average_views,
+            'engagement_rate' => $snapshot->engagement_rate,
+
+            'performance_score' => $score->performance_score,
+            'engagement_score' => $score->engagement_score,
+            'audience_fit_score' => $score->audience_fit_score,
+            'historical_score' => $score->historical_score,
+            'deal_value_score' => $score->deal_value_score,
+
+            'overall_score' => $score->overall_score,
+            'recommendation' => $score->recommendation,
+
+            'average_roas' => $snapshot->average_roas ?? null,
+
+            'rate_card' => $snapshot->rate_card_platform
+                ? [
+                    'platform' => $snapshot->rate_card_platform,
+                    'deliverable' => $snapshot->rate_card_deliverable,
+                    'price' => (float) $snapshot->rate_card_price,
+                ]
+                : null,
+
+            'cost_per_view' => $snapshot->cost_per_view,
+
+            'insights' => $snapshot->insights ?? [],
+        ];
+
+        return Inertia::render('creators/Analysis', [
+            'creator' => $creator,
+            'analysis' => $analysis,
+        ]);
+    }
+
+    /**
+     * Menjalankan analysis baru.
+     *
+     * Hanya endpoint ini yang menghitung ulang score.
+     */
+    public function run(
         Creator $creator,
         CreatorAnalysisService $analysisService
     ) {
@@ -19,17 +98,16 @@ class CreatorAnalysisController extends Controller
 
         $analysis = $analysisService->analyze($creator);
 
-        /*
-        |--------------------------------------------------------------------------
-        | Simpan hasil analisis
-        |--------------------------------------------------------------------------
-        */
-
         if (
-            $analysis['period_start'] &&
-            $analysis['period_end']
+            !$analysis['period_start'] ||
+            !$analysis['period_end']
         ) {
-            $creatorScore = CreatorScore::updateOrCreate(
+            return redirect()
+                ->route('creators.analysis', $creator)
+                ->with('error', 'Creator belum memiliki content yang bisa dianalisis.');
+        }
+
+        $creatorScore = CreatorScore::updateOrCreate(
             [
                 'creator_id' => $creator->id,
                 'period_start' => $analysis['period_start'],
@@ -46,7 +124,7 @@ class CreatorAnalysisController extends Controller
             ]
         );
 
-            CreatorAnalysisSnapshot::updateOrCreate(
+        CreatorAnalysisSnapshot::updateOrCreate(
             [
                 'creator_score_id' => $creatorScore->id,
             ],
@@ -61,17 +139,19 @@ class CreatorAnalysisController extends Controller
                 'insights' => $analysis['insights'] ?? [],
             ]
         );
-        }
 
-        return Inertia::render('creators/Analysis', [
-            'creator' => $creator,
-            'analysis' => $analysis,
-        ]);
+        return redirect()
+            ->route('creators.analysis', $creator)
+            ->with('success', 'Analysis berhasil diperbarui.');
     }
 
+    /**
+     * History semua analysis creator.
+     */
     public function history(Creator $creator)
     {
         abort_unless($creator->user_id === Auth::id(), 404);
+
         $history = CreatorScore::where('creator_id', $creator->id)
             ->orderByDesc('period_end')
             ->orderByDesc('id')
@@ -82,13 +162,15 @@ class CreatorAnalysisController extends Controller
             'history' => $history,
         ]);
     }
-    
+
+    /**
+     * Detail snapshot analysis tertentu.
+     */
     public function historyDetail(
-    Creator $creator,
-    CreatorScore $score
+        Creator $creator,
+        CreatorScore $score
     ) {
         abort_unless($score->creator_id === $creator->id, 404);
-
         abort_unless($creator->user_id === Auth::id(), 404);
 
         $snapshot = CreatorAnalysisSnapshot::where(

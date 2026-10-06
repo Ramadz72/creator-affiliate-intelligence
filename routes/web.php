@@ -94,6 +94,12 @@ Route::get('/creators/{creator}/analysis', [CreatorAnalysisController::class, 's
     ->middleware(['auth'])
     ->name('creators.analysis');
 
+Route::post(
+    '/creators/{creator}/analysis/run',
+    [CreatorAnalysisController::class, 'run'])
+    ->middleware(['auth'])
+    ->name('creators.analysis.run');
+
 Route::get('/creators/{creator}/analysis/history', [CreatorAnalysisController::class, 'history'])
     ->middleware(['auth'])
     ->name('creators.analysis.history');

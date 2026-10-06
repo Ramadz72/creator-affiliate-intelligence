@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link, router } from '@inertiajs/vue3'
 import {
     ArrowLeft,
     ArrowUpRight,
@@ -23,6 +23,7 @@ import {
     Users,
     Wallet,
     XCircle,
+    RefreshCw, 
 } from '@lucide/vue'
 
 interface Creator {
@@ -39,6 +40,8 @@ interface Analysis {
     creator_id: number
     creator_name: string
     content_count: number
+    period_start: string | null
+    period_end: string | null
     average_views: number
     engagement_rate: number
     performance_score: number
@@ -82,6 +85,22 @@ const formatCurrency = (value: number | null) => {
         currency: 'IDR',
         maximumFractionDigits: 0,
     }).format(value)
+}
+
+const formatDate = (value: string | null | undefined) => {
+    if (!value) return '-'
+
+    const date = value.includes('-') && !value.includes('T')
+        ? new Date(`${value}T00:00:00`)
+        : new Date(value)
+
+    if (Number.isNaN(date.getTime())) return value
+
+    return new Intl.DateTimeFormat('id-ID', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+    }).format(date)
 }
 
 const recommendationLabel = (value: string) => {
@@ -190,6 +209,25 @@ const scoreItems = computed(() => [
         icon: Wallet,
     },
 ])
+
+const isRunningAnalysis = ref(false)
+
+const runAnalysis = () => {
+    if (isRunningAnalysis.value) return
+
+    isRunningAnalysis.value = true
+
+    router.post(
+        `/creators/${props.creator.id}/analysis/run`,
+        {},
+        {
+            preserveScroll: true,
+            onFinish: () => {
+                isRunningAnalysis.value = false
+            },
+        },
+    )
+}
 
 const visibleInsights = computed(() => {
     if (showAllInsights.value) {
@@ -319,13 +357,37 @@ const scoreBarTone = (value: number) => {
 
                 <!-- Actions -->
                 <div class="flex items-center gap-2">
-                    <Link
-                    :href="`/creators/${creator.id}/analysis/history`"
-                    class="inline-flex shrink-0 items-center justify-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted hover:shadow-md active:translate-y-0"
-                >
-                    <History class="h-4 w-4" />
-                    Analysis History
-                </Link>
+                    <Button
+                        variant="outline"
+                         class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md active:translate-y-0"
+                        :disabled="isRunningAnalysis"
+                        @click="runAnalysis"
+                    >
+                        <RefreshCw
+                            class="h-4 w-4"
+                            :class="{ 'animate-spin': isRunningAnalysis }"
+                        />
+
+                        {{
+                            isRunningAnalysis
+                                ? 'Menganalisis...'
+                                : 'Run New Analysis'
+                        }}
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
+                        as-child
+                    >
+                        <Link
+                            :href="`/creators/${creator.id}/analysis/history`"
+                            class="inline-flex items-center gap-2"
+                        >
+                            <History class="h-5 w-5 shrink-0" />
+                            <span>Analysis History</span>
+                        </Link>
+                    </Button>
                 </div>
             </div>
         </div>
@@ -333,6 +395,24 @@ const scoreBarTone = (value: number) => {
         <!-- ===================================================== -->
         <!-- CREATOR SNAPSHOT -->
         <!-- ===================================================== -->
+
+        <div class="mt-0 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            <span class="rounded-md bg-muted px-2.5 py-3">
+                Analysis Period
+            </span>
+
+            <span>
+                {{ formatDate(analysis.period_start) }}
+                —
+                {{ formatDate(analysis.period_end) }}
+            </span>
+
+            <span class="text-border">•</span>
+
+            <span>
+                {{ analysis.content_count }} content dianalisis
+            </span>
+        </div>
 
         <div
             class="group mb-5 overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all duration-200 hover:shadow-md"
@@ -452,6 +532,18 @@ const scoreBarTone = (value: number) => {
 
                         <span class="mb-2 text-sm text-muted-foreground">
                             / 100
+                        </span>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1 text-xs font-medium text-emerald-600"
+                        >
+                            Latest Analysis
+                        </span>
+
+                        <span class="text-xs text-muted-foreground">
+                            {{ formatDate(analysis.period_end) }}
                         </span>
                     </div>
 
