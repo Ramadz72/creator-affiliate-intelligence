@@ -168,6 +168,14 @@ const affiliateDetailUrl = (affiliateId: number) => {
     return `/affiliates/${affiliateId}?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}&from=dashboard`
 }
 
+const insightDetailUrl = (insightId: number) => {
+    if (!props.selected_period?.start || !props.selected_period?.end) {
+        return `/insights/${insightId}?from=dashboard`
+    }
+
+    return `/insights/${insightId}?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}&from=dashboard`
+}
+
 const selectedPeriodLabel = () => {
     if (!startDate.value || !endDate.value) {
         return 'Pilih Periode'
@@ -1408,7 +1416,7 @@ const insightPeriodLabel = () => {
                 </div>
 
                 <Link
-                    href="/insights"
+                    :href="`/insights${selectedPeriodQuery}`"
                     class="inline-flex w-fit items-center gap-1.5 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm font-medium transition hover:border-sky-500/40 hover:bg-muted"
                 >
                     Lihat semua insights
@@ -1425,7 +1433,7 @@ const insightPeriodLabel = () => {
             >
                 <!-- Top Performer -->
                 <Link
-                    href="/insights"
+                    :href="`/insights${selectedPeriodQuery}`"
                     class="group relative overflow-hidden rounded-xl border border-blue-500/20 bg-blue-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500/50 hover:bg-blue-500/[0.06] hover:shadow-lg"
                 >
                     <div
@@ -1506,7 +1514,7 @@ const insightPeriodLabel = () => {
 
                 <!-- High GMV / Low Consistency -->
                 <Link
-                    href="/insights"
+                    :href="`/insights${selectedPeriodQuery}`"
                     class="group relative overflow-hidden rounded-xl border border-amber-500/20 bg-amber-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500/50 hover:bg-amber-500/[0.06] hover:shadow-lg"
                 >
                     <div
@@ -1579,7 +1587,7 @@ const insightPeriodLabel = () => {
 
                 <!-- Potential Opportunity -->
                 <Link
-                    href="/insights"
+                    :href="`/insights${selectedPeriodQuery}`"
                     class="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-emerald-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/[0.06] hover:shadow-lg"
                 >
                     <div

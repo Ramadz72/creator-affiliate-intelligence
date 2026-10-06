@@ -431,7 +431,7 @@ const applyCustomPeriod = () => {
                 </Link>
 
                 <div>
-                    <div class="flex items-center gap-2">
+                    <div class="items-center gap-2">
                         <Lightbulb class="h-5 w-5 text-sky-500" />
                         <h1 class="text-xl font-semibold tracking-tight">
                             Performance Insights

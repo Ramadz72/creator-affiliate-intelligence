@@ -997,9 +997,9 @@ const actionInfo = (action: string) => {
 
                 <div
                     v-if="props.score && props.score.insights.length"
-                    class="mt-1 rounded-xl border border-border bg-muted/20 p-5"
+                    class="mt-1 p-1"
                 >
-                    <div class="mb-3 flex items-center gap-2">
+                    <div class="mb-2 flex items-center gap-2">
                         <Lightbulb class="h-4 w-4 text-amber-500" />
 
                         <h3 class="font-medium">
@@ -1007,7 +1007,7 @@ const actionInfo = (action: string) => {
                         </h3>
                     </div>
 
-                    <ul class="space-y-2">
+                    <ul class="space-y-1">
                         <li
                             v-for="insight in props.score.insights"
                             :key="insight"

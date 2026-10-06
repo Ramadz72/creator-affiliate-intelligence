@@ -331,11 +331,11 @@ const categoryCount = (category: string) => {
 <template>
     <Head title="FAQ" />
 
-    <div class="app bg-background space-y-4">
+    <div class="app-textured-bg min-h-full p-4 text-foreground md:p-6">
 
         <!-- Header -->
         <div>
-            <div class="flex items-start gap-3">
+            <div class="flex items-start gap-3 md:p-3">
                 <div
                     class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-border bg-card shadow-sm"
                 >
@@ -356,7 +356,7 @@ const categoryCount = (category: string) => {
 
         <!-- Search -->
         <div
-            class="rounded-xl border border-border bg-card p-4 shadow-sm"
+            class="rounded-xl border border-border bg-card p-2 shadow-sm"
         >
             <div class="relative">
                 <Search
@@ -397,7 +397,7 @@ const categoryCount = (category: string) => {
 
         <!-- Category -->
         <div class="overflow-x-auto">
-            <div class="flex min-w-max gap-2 pb-1">
+            <div class="flex min-w-max gap-3 md:p-3">
                 <button
                     v-for="category in categories"
                     :key="category.name"
