@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\CreatorCampaignPerformanceHistory;
 
 class Campaign extends Model
 {
@@ -38,5 +39,12 @@ class Campaign extends Model
     public function performances(): HasMany
     {
         return $this->hasMany(CreatorCampaignPerformance::class);
+    }
+
+    public function performanceHistories(): HasMany
+    {
+        return $this->hasMany(
+            CreatorCampaignPerformanceHistory::class
+        );
     }
 }

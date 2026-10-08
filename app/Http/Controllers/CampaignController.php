@@ -17,31 +17,164 @@ class CampaignController extends Controller
     public function index(Request $request): Response
     {
         $search = trim((string) $request->input('search', ''));
+        $status = trim((string) $request->input('status', ''));
+        $platform = trim((string) $request->input('platform', ''));
+        $sort = (string) $request->input('sort', 'latest');
 
-        $campaigns = Campaign::query()
+        $allowedStatuses = [
+            'planned',
+            'running',
+            'completed',
+            'cancelled',
+        ];
+
+        $allowedSorts = [
+            'latest',
+            'oldest',
+            'price_high',
+            'price_low',
+            'name',
+        ];
+
+        if (!in_array($status, $allowedStatuses, true)) {
+            $status = '';
+        }
+
+        if (!in_array($sort, $allowedSorts, true)) {
+            $sort = 'latest';
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Base Query
+        |--------------------------------------------------------------------------
+        */
+
+        $baseQuery = Campaign::query()
             ->whereHas('creator', function ($query) {
                 $query->where('user_id', Auth::id());
             })
-            ->with('creator:id,name,username')
             ->when($search !== '', function ($query) use ($search) {
                 $query->where(function ($query) use ($search) {
-                    $query->where('campaign_name', 'like', "%{$search}%")
+                    $query
+                        ->where('campaign_name', 'like', "%{$search}%")
                         ->orWhere('product_name', 'like', "%{$search}%")
                         ->orWhere('platform', 'like', "%{$search}%")
                         ->orWhere('status', 'like', "%{$search}%")
                         ->orWhereHas('creator', function ($query) use ($search) {
-                            $query->where('name', 'like', "%{$search}%")
+                            $query
+                                ->where('name', 'like', "%{$search}%")
                                 ->orWhere('username', 'like', "%{$search}%");
                         });
                 });
             })
-            ->latest('id')
-            ->paginate(20)
+            ->when($status !== '', function ($query) use ($status) {
+                $query->where('status', $status);
+            })
+            ->when($platform !== '', function ($query) use ($platform) {
+                $query->where('platform', $platform);
+            });
+
+        /*
+        |--------------------------------------------------------------------------
+        | Statistics
+        |--------------------------------------------------------------------------
+        */
+
+        $statsQuery = clone $baseQuery;
+
+        $stats = [
+            'total' => (clone $statsQuery)->count(),
+
+            'running' => (clone $statsQuery)
+                ->where('status', 'running')
+                ->count(),
+
+            'planned' => (clone $statsQuery)
+                ->where('status', 'planned')
+                ->count(),
+
+            'completed' => (clone $statsQuery)
+                ->where('status', 'completed')
+                ->count(),
+
+            'cancelled' => (clone $statsQuery)
+                ->where('status', 'cancelled')
+                ->count(),
+
+            'total_deal_value' => (float) (clone $statsQuery)
+                ->sum('agreed_price'),
+        ];
+
+        /*
+        |--------------------------------------------------------------------------
+        | Platform Options
+        |--------------------------------------------------------------------------
+        */
+
+        $platforms = Campaign::query()
+            ->whereHas('creator', function ($query) {
+                $query->where('user_id', Auth::id());
+            })
+            ->whereNotNull('platform')
+            ->where('platform', '!=', '')
+            ->distinct()
+            ->orderBy('platform')
+            ->pluck('platform')
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sorting
+        |--------------------------------------------------------------------------
+        */
+
+        $campaignQuery = $baseQuery
+            ->with('creator:id,name,username,profile_image');
+
+        switch ($sort) {
+            case 'oldest':
+                $campaignQuery
+                    ->orderBy('id')
+                    ->orderBy('start_date');
+                break;
+
+            case 'price_high':
+                $campaignQuery
+                    ->orderByDesc('agreed_price')
+                    ->orderByDesc('id');
+                break;
+
+            case 'price_low':
+                $campaignQuery
+                    ->orderBy('agreed_price')
+                    ->orderByDesc('id');
+                break;
+
+            case 'name':
+                $campaignQuery
+                    ->orderBy('campaign_name')
+                    ->orderByDesc('id');
+                break;
+
+            default:
+                $campaignQuery
+                    ->latest('id');
+                break;
+        }
+
+        $campaigns = $campaignQuery
+            ->paginate(10)
             ->withQueryString();
 
         return Inertia::render('campaigns/Index', [
             'campaigns' => $campaigns,
             'search' => $search,
+            'status' => $status,
+            'platform' => $platform,
+            'sort' => $sort,
+            'platforms' => $platforms,
+            'stats' => $stats,
         ]);
     }
 
@@ -58,6 +191,7 @@ class CampaignController extends Controller
                 'name',
                 'username',
                 'platform',
+                'profile_image',
             ]);
 
         return Inertia::render('campaigns/Create', [
@@ -102,7 +236,15 @@ class CampaignController extends Controller
     {
         abort_unless($campaign->creator->user_id === Auth::id(), 404);
 
-        $campaign->load('creator', 'performances');
+        $campaign->load([
+            'creator',
+            'performances',
+            'performanceHistories' => function ($query) {
+                $query
+                    ->orderBy('performance_date')
+                    ->orderBy('id');
+            },
+        ]);
 
         return Inertia::render('campaigns/Show', [
             'campaign' => $campaign,
@@ -159,7 +301,7 @@ class CampaignController extends Controller
         $campaign->update($validated);
 
         // Recalculate actual campaign performance
-        // karena Cost/View, Cost/Order, dan ROAS
+        // karena Cost/View, Cost/Order, dan ROI
         // bergantung pada Agreed Price.
         $campaign->load('performances');
 
@@ -172,8 +314,12 @@ class CampaignController extends Controller
                 ? $campaign->agreed_price / $performance->orders
                 : 0;
 
-            $performance->roi = $campaign->agreed_price > 0
+            $performance->roas = $campaign->agreed_price > 0
                 ? $performance->gmv / $campaign->agreed_price
+                : 0;
+
+            $performance->roi = $campaign->agreed_price > 0
+                ? (($performance->gmv - $campaign->agreed_price) / $campaign->agreed_price) * 100
                 : 0;
 
             $performance->save();

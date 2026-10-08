@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Campaign;
 use App\Models\CreatorCampaignPerformance;
+use App\Models\CreatorCampaignPerformanceHistory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -27,7 +28,14 @@ class CreatorCampaignPerformanceController
 
         abort_unless($campaign->creator->user_id === Auth::id(), 404);
 
+        if ($campaign->performances()->exists()) {
+            return redirect()
+                ->route('campaigns.show', $campaign)
+                ->with('error', 'Campaign ini sudah memiliki current performance. Gunakan Edit Performance atau tambah snapshot dari Performance History.');
+        }
+
         $validated = $request->validate([
+            'performance_date' => ['required', 'date'],
             'views' => ['required', 'integer', 'min:0'],
             'likes' => ['required', 'integer', 'min:0'],
             'comments' => ['required', 'integer', 'min:0'],
@@ -43,65 +51,155 @@ class CreatorCampaignPerformanceController
         $likes = $validated['likes'];
         $comments = $validated['comments'];
         $shares = $validated['shares'];
+        $saves = $validated['saves'];
         $clicks = $validated['clicks'];
         $orders = $validated['orders'];
-        $gmv = $validated['gmv'];
+        $buyers = $validated['buyers'];
+        $gmv = (float) $validated['gmv'];
+        $agreedPrice = (float) $campaign->agreed_price;
+        $performanceDate = $validated['performance_date'];
 
-        // Engagement Rate
+        /*
+        |--------------------------------------------------------------------------
+        | Engagement Rate
+        |--------------------------------------------------------------------------
+        */
+
         $engagementRate = $views > 0
-            ? (($likes + $comments + $shares) / $views) * 100
+            ? (($likes + $comments + $shares + $saves) / $views) * 100
             : 0;
 
-        // Conversion Rate
+        /*
+        |--------------------------------------------------------------------------
+        | Conversion Rate
+        |--------------------------------------------------------------------------
+        */
+
         $conversionRate = $clicks > 0
             ? ($orders / $clicks) * 100
             : 0;
 
-        // Cost per View
+        /*
+        |--------------------------------------------------------------------------
+        | Cost Per View
+        |--------------------------------------------------------------------------
+        */
+
         $costPerView = $views > 0
-            ? $campaign->agreed_price / $views
+            ? $agreedPrice / $views
             : 0;
 
-        // Cost per Order
+        /*
+        |--------------------------------------------------------------------------
+        | Cost Per Order
+        |--------------------------------------------------------------------------
+        */
+
         $costPerOrder = $orders > 0
-            ? $campaign->agreed_price / $orders
+            ? $agreedPrice / $orders
             : 0;
 
-        // ROI
-        $roi = $campaign->agreed_price > 0
-            ? ($gmv / $campaign->agreed_price)
+        /*
+        |--------------------------------------------------------------------------
+        | ROAS
+        |--------------------------------------------------------------------------
+        |
+        | ROAS = GMV / Campaign Cost
+        |
+        */
+
+        $roas = $agreedPrice > 0
+            ? $gmv / $agreedPrice
+            : 0;
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROI
+        |--------------------------------------------------------------------------
+        |
+        | GMV-based ROI
+        |
+        | ROI = ((GMV - Campaign Cost) / Campaign Cost) × 100
+        |
+        */
+
+        $roi = $agreedPrice > 0
+            ? (($gmv - $agreedPrice) / $agreedPrice) * 100
             : 0;
 
         CreatorCampaignPerformance::create([
             'campaign_id' => $campaign->id,
+            'performance_date' => $performanceDate,
+
             'views' => $views,
             'likes' => $likes,
             'comments' => $comments,
             'shares' => $shares,
-            'saves' => $validated['saves'],
+            'saves' => $saves,
+
             'clicks' => $clicks,
             'orders' => $orders,
-            'buyers' => $validated['buyers'],
+            'buyers' => $buyers,
+
+            'gmv' => $gmv,
+
+            'engagement_rate' => $engagementRate,
+            'conversion_rate' => $conversionRate,
+
+            'cost_per_view' => $costPerView,
+            'cost_per_order' => $costPerOrder,
+
+            'roas' => $roas,
+            'roi' => $roi,
+        ]);
+
+        CreatorCampaignPerformanceHistory::updateOrCreate(
+        [
+            'campaign_id' => $campaign->id,
+            'performance_date' => $performanceDate,
+        ],
+        [
+            'views' => $views,
+            'likes' => $likes,
+            'comments' => $comments,
+            'shares' => $shares,
+            'saves' => $saves,
+            'clicks' => $clicks,
+            'orders' => $orders,
+            'buyers' => $buyers,
             'gmv' => $gmv,
             'engagement_rate' => $engagementRate,
             'conversion_rate' => $conversionRate,
             'cost_per_view' => $costPerView,
             'cost_per_order' => $costPerOrder,
+            'roas' => $roas,
             'roi' => $roi,
-        ]);
+        ],
+    );
 
         return redirect()
             ->route('campaigns.show', $campaign)
-            ->with('success', 'Actual campaign performance berhasil disimpan.');
+            ->with(
+                'success',
+                'Actual campaign performance berhasil disimpan.'
+            );
     }
 
-    public function edit(Campaign $campaign, CreatorCampaignPerformance $performance)
-    {
-        abort_unless($performance->campaign_id === $campaign->id, 404);
+    public function edit(
+        Campaign $campaign,
+        CreatorCampaignPerformance $performance
+    ) {
+        abort_unless(
+            $performance->campaign_id === $campaign->id,
+            404
+        );
 
         $campaign->load('creator');
 
-        abort_unless($campaign->creator->user_id === Auth::id(), 404);
+        abort_unless(
+            $campaign->creator->user_id === Auth::id(),
+            404
+        );
 
         return Inertia::render('campaigns/PerformanceEdit', [
             'campaign' => $campaign,
@@ -110,17 +208,24 @@ class CreatorCampaignPerformanceController
     }
 
     public function update(
-    Request $request,
-    Campaign $campaign,
-    CreatorCampaignPerformance $performance
+        Request $request,
+        Campaign $campaign,
+        CreatorCampaignPerformance $performance
     ) {
-        abort_unless($performance->campaign_id === $campaign->id, 404);
+        abort_unless(
+            $performance->campaign_id === $campaign->id,
+            404
+        );
 
         $campaign->load('creator');
-        
-        abort_unless($campaign->creator->user_id === Auth::id(), 404);
+
+        abort_unless(
+            $campaign->creator->user_id === Auth::id(),
+            404
+        );
 
         $validated = $request->validate([
+            'performance_date' => ['required', 'date'],
             'views' => ['required', 'integer', 'min:0'],
             'likes' => ['required', 'integer', 'min:0'],
             'comments' => ['required', 'integer', 'min:0'],
@@ -136,54 +241,132 @@ class CreatorCampaignPerformanceController
         $likes = $validated['likes'];
         $comments = $validated['comments'];
         $shares = $validated['shares'];
+        $saves = $validated['saves'];
         $clicks = $validated['clicks'];
         $orders = $validated['orders'];
-        $gmv = $validated['gmv'];
+        $buyers = $validated['buyers'];
+        $gmv = (float) $validated['gmv'];
+        $agreedPrice = (float) $campaign->agreed_price;
+        $performanceDate = $validated['performance_date'];
 
-        // Engagement Rate
+        /*
+        |--------------------------------------------------------------------------
+        | Engagement Rate
+        |--------------------------------------------------------------------------
+        */
+
         $engagementRate = $views > 0
-            ? (($likes + $comments + $shares) / $views) * 100
+            ? (($likes + $comments + $shares + $saves) / $views) * 100
             : 0;
 
-        // Conversion Rate
+        /*
+        |--------------------------------------------------------------------------
+        | Conversion Rate
+        |--------------------------------------------------------------------------
+        */
+
         $conversionRate = $clicks > 0
             ? ($orders / $clicks) * 100
             : 0;
 
-        // Cost per View
+        /*
+        |--------------------------------------------------------------------------
+        | Cost Per View
+        |--------------------------------------------------------------------------
+        */
+
         $costPerView = $views > 0
-            ? $campaign->agreed_price / $views
+            ? $agreedPrice / $views
             : 0;
 
-        // Cost per Order
+        /*
+        |--------------------------------------------------------------------------
+        | Cost Per Order
+        |--------------------------------------------------------------------------
+        */
+
         $costPerOrder = $orders > 0
-            ? $campaign->agreed_price / $orders
+            ? $agreedPrice / $orders
             : 0;
 
-        // ROAS
-        $roas = $campaign->agreed_price > 0
-            ? $gmv / $campaign->agreed_price
+        /*
+        |--------------------------------------------------------------------------
+        | ROAS
+        |--------------------------------------------------------------------------
+        */
+
+        $roas = $agreedPrice > 0
+            ? $gmv / $agreedPrice
+            : 0;
+
+        /*
+        |--------------------------------------------------------------------------
+        | ROI
+        |--------------------------------------------------------------------------
+        |
+        | GMV-based ROI
+        |
+        | ROI = ((GMV - Campaign Cost) / Campaign Cost) × 100
+        |
+        */
+
+        $roi = $agreedPrice > 0
+            ? (($gmv - $agreedPrice) / $agreedPrice) * 100
             : 0;
 
         $performance->update([
+            'performance_date' => $performanceDate,
             'views' => $views,
             'likes' => $likes,
             'comments' => $comments,
             'shares' => $shares,
-            'saves' => $validated['saves'],
+            'saves' => $saves,
+
             'clicks' => $clicks,
             'orders' => $orders,
-            'buyers' => $validated['buyers'],
+            'buyers' => $buyers,
+
+            'gmv' => $gmv,
+
+            'engagement_rate' => $engagementRate,
+            'conversion_rate' => $conversionRate,
+
+            'cost_per_view' => $costPerView,
+            'cost_per_order' => $costPerOrder,
+
+            'roas' => $roas,
+            'roi' => $roi,
+        ]);
+
+        CreatorCampaignPerformanceHistory::updateOrCreate(
+        [
+            'campaign_id' => $campaign->id,
+            'performance_date' => $performanceDate,
+        ],
+        [
+            'views' => $views,
+            'likes' => $likes,
+            'comments' => $comments,
+            'shares' => $shares,
+            'saves' => $saves,
+            'clicks' => $clicks,
+            'orders' => $orders,
+            'buyers' => $buyers,
             'gmv' => $gmv,
             'engagement_rate' => $engagementRate,
             'conversion_rate' => $conversionRate,
             'cost_per_view' => $costPerView,
             'cost_per_order' => $costPerOrder,
-            'roi' => $roas,
-        ]);
+            'roas' => $roas,
+            'roi' => $roi,
+        ],
+    );
 
         return redirect()
             ->route('campaigns.show', $campaign)
-            ->with('success', 'Actual campaign performance berhasil diperbarui.');
+            ->with(
+                'success',
+                'Actual campaign performance berhasil diperbarui.'
+            );
     }
 }
