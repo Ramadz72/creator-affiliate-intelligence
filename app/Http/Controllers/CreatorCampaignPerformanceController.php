@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Campaign;
 use App\Models\CreatorCampaignPerformance;
 use App\Models\CreatorCampaignPerformanceHistory;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -127,55 +129,60 @@ class CreatorCampaignPerformanceController
             ? (($gmv - $agreedPrice) / $agreedPrice) * 100
             : 0;
 
-        CreatorCampaignPerformance::create([
-            'campaign_id' => $campaign->id,
-            'performance_date' => $performanceDate,
+        
+        
+        DB::transaction(function () use (
+            $campaign,
+            $performanceDate,
+            $views,
+            $likes,
+            $comments,
+            $shares,
+            $saves,
+            $clicks,
+            $orders,
+            $buyers,
+            $gmv,
+            $engagementRate,
+            $conversionRate,
+            $costPerView,
+            $costPerOrder,
+            $roas,
+            $roi
+        ) {
+            $metrics = [
+                'views' => $views,
+                'likes' => $likes,
+                'comments' => $comments,
+                'shares' => $shares,
+                'saves' => $saves,
+                'clicks' => $clicks,
+                'orders' => $orders,
+                'buyers' => $buyers,
+                'gmv' => $gmv,
+                'engagement_rate' => $engagementRate,
+                'conversion_rate' => $conversionRate,
+                'cost_per_view' => $costPerView,
+                'cost_per_order' => $costPerOrder,
+                'roas' => $roas,
+                'roi' => $roi,
+            ];
 
-            'views' => $views,
-            'likes' => $likes,
-            'comments' => $comments,
-            'shares' => $shares,
-            'saves' => $saves,
+            CreatorCampaignPerformance::create(array_merge([
+                'campaign_id' => $campaign->id,
+                'performance_date' => $performanceDate,
+            ], $metrics));
 
-            'clicks' => $clicks,
-            'orders' => $orders,
-            'buyers' => $buyers,
+            CreatorCampaignPerformanceHistory::updateOrCreate(
+                [
+                    'campaign_id' => $campaign->id,
+                    'performance_date' => $performanceDate,
+                ],
+                $metrics
+            );
+        });
 
-            'gmv' => $gmv,
 
-            'engagement_rate' => $engagementRate,
-            'conversion_rate' => $conversionRate,
-
-            'cost_per_view' => $costPerView,
-            'cost_per_order' => $costPerOrder,
-
-            'roas' => $roas,
-            'roi' => $roi,
-        ]);
-
-        CreatorCampaignPerformanceHistory::updateOrCreate(
-        [
-            'campaign_id' => $campaign->id,
-            'performance_date' => $performanceDate,
-        ],
-        [
-            'views' => $views,
-            'likes' => $likes,
-            'comments' => $comments,
-            'shares' => $shares,
-            'saves' => $saves,
-            'clicks' => $clicks,
-            'orders' => $orders,
-            'buyers' => $buyers,
-            'gmv' => $gmv,
-            'engagement_rate' => $engagementRate,
-            'conversion_rate' => $conversionRate,
-            'cost_per_view' => $costPerView,
-            'cost_per_order' => $costPerOrder,
-            'roas' => $roas,
-            'roi' => $roi,
-        ],
-    );
 
         return redirect()
             ->route('campaigns.show', $campaign)
@@ -207,6 +214,7 @@ class CreatorCampaignPerformanceController
         ]);
     }
 
+   
     public function update(
         Request $request,
         Campaign $campaign,
@@ -237,6 +245,8 @@ class CreatorCampaignPerformanceController
             'gmv' => ['required', 'numeric', 'min:0'],
         ]);
 
+        $performanceDate = $validated['performance_date'];
+
         $views = $validated['views'];
         $likes = $validated['likes'];
         $comments = $validated['comments'];
@@ -246,104 +256,40 @@ class CreatorCampaignPerformanceController
         $orders = $validated['orders'];
         $buyers = $validated['buyers'];
         $gmv = (float) $validated['gmv'];
+
         $agreedPrice = (float) $campaign->agreed_price;
-        $performanceDate = $validated['performance_date'];
 
-        /*
-        |--------------------------------------------------------------------------
-        | Engagement Rate
-        |--------------------------------------------------------------------------
-        */
-
+        // Engagement Rate
         $engagementRate = $views > 0
             ? (($likes + $comments + $shares + $saves) / $views) * 100
             : 0;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Conversion Rate
-        |--------------------------------------------------------------------------
-        */
-
+        // Conversion Rate
         $conversionRate = $clicks > 0
             ? ($orders / $clicks) * 100
             : 0;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Cost Per View
-        |--------------------------------------------------------------------------
-        */
-
+        // Cost Per View
         $costPerView = $views > 0
             ? $agreedPrice / $views
             : 0;
 
-        /*
-        |--------------------------------------------------------------------------
-        | Cost Per Order
-        |--------------------------------------------------------------------------
-        */
-
+        // Cost Per Order
         $costPerOrder = $orders > 0
             ? $agreedPrice / $orders
             : 0;
 
-        /*
-        |--------------------------------------------------------------------------
-        | ROAS
-        |--------------------------------------------------------------------------
-        */
-
+        // ROAS
         $roas = $agreedPrice > 0
             ? $gmv / $agreedPrice
             : 0;
 
-        /*
-        |--------------------------------------------------------------------------
-        | ROI
-        |--------------------------------------------------------------------------
-        |
-        | GMV-based ROI
-        |
-        | ROI = ((GMV - Campaign Cost) / Campaign Cost) × 100
-        |
-        */
-
+        // ROI
         $roi = $agreedPrice > 0
             ? (($gmv - $agreedPrice) / $agreedPrice) * 100
             : 0;
 
-        $performance->update([
-            'performance_date' => $performanceDate,
-            'views' => $views,
-            'likes' => $likes,
-            'comments' => $comments,
-            'shares' => $shares,
-            'saves' => $saves,
-
-            'clicks' => $clicks,
-            'orders' => $orders,
-            'buyers' => $buyers,
-
-            'gmv' => $gmv,
-
-            'engagement_rate' => $engagementRate,
-            'conversion_rate' => $conversionRate,
-
-            'cost_per_view' => $costPerView,
-            'cost_per_order' => $costPerOrder,
-
-            'roas' => $roas,
-            'roi' => $roi,
-        ]);
-
-        CreatorCampaignPerformanceHistory::updateOrCreate(
-        [
-            'campaign_id' => $campaign->id,
-            'performance_date' => $performanceDate,
-        ],
-        [
+        $metrics = [
             'views' => $views,
             'likes' => $likes,
             'comments' => $comments,
@@ -359,14 +305,67 @@ class CreatorCampaignPerformanceController
             'cost_per_order' => $costPerOrder,
             'roas' => $roas,
             'roi' => $roi,
-        ],
-    );
+        ];
+
+        // Ambil tanggal lama sebelum record diperbarui.
+        $oldPerformanceDate = $performance->getRawOriginal(
+            'performance_date'
+        );
+
+        
+        DB::transaction(function () use (
+            $campaign,
+            $performance,
+            $performanceDate,
+            $oldPerformanceDate,
+            $metrics,
+        ) {
+            // Cek apakah sudah ada snapshot pada tanggal tujuan.
+            $targetHistory = CreatorCampaignPerformanceHistory::query()
+                ->where('campaign_id', $campaign->id)
+                ->whereDate('performance_date', $performanceDate)
+                ->lockForUpdate()
+                ->first();
+
+            // Jika tanggal berubah dan sudah dipakai snapshot lain,
+            // jangan menimpa snapshot yang sudah ada.
+            if (
+                $oldPerformanceDate !== null
+                && $oldPerformanceDate !== $performanceDate
+                && $targetHistory
+            ) {
+                throw ValidationException::withMessages([
+                    'performance_date' =>
+                        'Tanggal tersebut sudah memiliki snapshot untuk campaign ini. Pilih tanggal lain.',
+                ]);
+            }
+
+            // Simpan atau perbarui histori berdasarkan tanggal tujuan.
+            CreatorCampaignPerformanceHistory::updateOrCreate(
+                [
+                    'campaign_id' => $campaign->id,
+                    'performance_date' => $performanceDate,
+                ],
+                $metrics
+            );
+
+            // Current performance tetap diperbarui sebagai data terkini.
+            $performance->update(array_merge(
+                [
+                    'performance_date' => $performanceDate,
+                ],
+                $metrics
+            ));
+        });
+
 
         return redirect()
             ->route('campaigns.show', $campaign)
             ->with(
                 'success',
-                'Actual campaign performance berhasil diperbarui.'
+                'Actual campaign performance dan snapshot date '
+                . 'berhasil diperbarui.'
             );
     }
+
 }

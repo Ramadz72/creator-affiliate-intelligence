@@ -38,6 +38,7 @@ interface Creator {
 
 interface Performance {
     id: number
+    performance_date?: string | null
     views: number
     likes: number
     comments: number
@@ -55,6 +56,12 @@ interface Performance {
     roi: string | number
 }
 
+interface PerformanceHistory extends Performance {
+    performance_date: string
+    created_at?: string | null
+    updated_at?: string | null
+}
+
 interface Campaign {
     id: number
     campaign_name: string
@@ -68,6 +75,7 @@ interface Campaign {
     notes: string | null
     creator: Creator
     performances: Performance[]
+    performance_histories: PerformanceHistory[]
 }
 
 type ChartMetric = 'views' | 'gmv' | 'orders' | 'roas' | 'roi'
@@ -584,37 +592,52 @@ const metricConfig = computed(() => {
 })
 
 const chartData = computed(() => {
-    return [...props.campaign.performances]
-        .reverse()
-        .map((item, index) => {
-            let value = 0
+    const histories = [
+        ...(props.campaign.performance_histories ?? []),
+    ].sort((a, b) =>
+        a.performance_date.localeCompare(b.performance_date),
+    )
 
-            switch (selectedMetric.value) {
-                case 'gmv':
-                    value = Number(item.gmv || 0)
-                    break
+    // Fallback jika backend belum mengirim riwayat snapshot.
+    const records: PerformanceHistory[] =
+        histories.length > 0
+            ? histories
+            : props.campaign.performances.map((item) => ({
+                  ...item,
+                  performance_date: '',
+              }))
 
-                case 'orders':
-                    value = Number(item.orders || 0)
-                    break
+    return records.map((item, index) => {
+        let value = 0
 
-                case 'roas':
-                    value = Number(item.roas || 0)
-                    break
+        switch (selectedMetric.value) {
+            case 'gmv':
+                value = Number(item.gmv || 0)
+                break
 
-                case 'roi':
-                    value = Number(item.roi || 0)
-                    break
+            case 'orders':
+                value = Number(item.orders || 0)
+                break
 
-                default:
-                    value = Number(item.views || 0)
-            }
+            case 'roas':
+                value = Number(item.roas || 0)
+                break
 
-            return {
-                label: `Record ${index + 1}`,
-                value,
-            }
-        })
+            case 'roi':
+                value = Number(item.roi || 0)
+                break
+
+            default:
+                value = Number(item.views || 0)
+        }
+
+        return {
+            label: item.performance_date
+                ? formatDate(item.performance_date)
+                : `Record ${index + 1}`,
+            value,
+        }
+    })
 })
 
 const performanceChartOption = computed(() => {
@@ -1515,6 +1538,29 @@ const confirmDelete = () => {
 
                                 <p class="mt-1 text-sm font-semibold">
                                     {{ formatDate(campaign.end_date) }}
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex gap-3">
+                            <div
+                                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-sky-500/10 text-sky-600"
+                            >
+                                <CalendarDays class="h-3.5 w-3.5" />
+                            </div>
+
+                            <div>
+                                <p class="text-[11px] text-muted-foreground">
+                                    Snapshot Performance Terakhir
+                                </p>
+
+                                <p class="mt-1 text-sm font-semibold">
+                                    {{
+                                        formatDate(
+                                            campaign.performance_histories?.[
+                                                campaign.performance_histories.length - 1
+                                            ]?.performance_date
+                                        )
+                                    }}
                                 </p>
                             </div>
                         </div>
@@ -2474,14 +2520,18 @@ const confirmDelete = () => {
                             <span
                                 class="rounded-full bg-muted px-2.5 py-1 text-xs font-medium"
                             >
-                                {{ campaign.performances.length }} record
+                                {{ campaign.performance_histories?.length ?? campaign.performances.length }} record
                             </span>
                         </div>
                     </div>
 
                     <div class="divide-y divide-border">
                         <div
-                            v-for="(item, index) in campaign.performances"
+                            v-for="(item, index) in (
+                                campaign.performance_histories?.length
+                                    ? campaign.performance_histories
+                                    : campaign.performances
+                            )"
                             :key="item.id"
                             class="transition-colors"
                             :class="
@@ -2509,7 +2559,22 @@ const confirmDelete = () => {
                                             <p class="text-sm font-semibold">
                                                 Performance #{{ index + 1 }}
                                             </p>
+                                            
+                                            <p
+                                                v-if="item.performance_date"
+                                                class="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground"
+                                            >
+                                                <CalendarDays class="h-3.5 w-3.5" />
+                                                {{ formatDate(item.performance_date) }}
+                                            </p>
 
+                                            <p
+                                                v-if="'performance_date' in item && item.performance_date"
+                                                class="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground"
+                                            >
+                                                <CalendarDays class="h-3.5 w-3.5" />
+                                                {{ formatDate(item.performance_date) }}
+                                            </p>
                                             <p class="mt-1 text-xs text-muted-foreground">
                                                 {{ formatNumber(item.views) }}
                                                 views

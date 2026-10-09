@@ -5,6 +5,7 @@ import {
     AlertTriangle,
     ArrowLeft,
     BarChart3,
+    CalendarDays,
     CheckCircle2,
     ChevronRight,
     CircleDollarSign,
@@ -38,6 +39,7 @@ interface Campaign {
 
 interface Performance {
     id: number
+    performance_date: string | null
     views: number
     likes: number
     comments: number
@@ -56,6 +58,16 @@ const props = defineProps<{
 
 const activeSection = ref<'reach' | 'conversion' | 'revenue'>('reach')
 
+const getDateValue = (value: string | null | undefined) => {
+    if (!value) return ''
+
+    return value.slice(0, 10)
+}
+
+const originalPerformanceDate = getDateValue(
+    props.performance.performance_date,
+)
+
 const original = {
     views: Number(props.performance.views ?? 0),
     likes: Number(props.performance.likes ?? 0),
@@ -69,6 +81,7 @@ const original = {
 }
 
 const form = useForm({
+    performance_date: originalPerformanceDate,
     views: original.views,
     likes: original.likes,
     comments: original.comments,
@@ -499,7 +512,17 @@ const changedFields = computed(() => {
     return changes
 })
 
-const hasChanges = computed(() => changedFields.value.length > 0)
+const snapshotDateChanged = computed(() => {
+    return form.performance_date !== originalPerformanceDate
+})
+
+const hasChanges = computed(() => {
+    return changedFields.value.length > 0 || snapshotDateChanged.value
+})
+
+const totalChanges = computed(() => {
+    return changedFields.value.length + (snapshotDateChanged.value ? 1 : 0)
+})
 
 /*
 |--------------------------------------------------------------------------
@@ -508,6 +531,7 @@ const hasChanges = computed(() => changedFields.value.length > 0)
 */
 
 const resetChanges = () => {
+    form.performance_date = originalPerformanceDate
     form.views = original.views
     form.likes = original.likes
     form.comments = original.comments
@@ -592,7 +616,7 @@ const inputClass = (field: string) => {
                     class="inline-flex items-center gap-2 self-start rounded-full bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-600 dark:text-amber-400"
                 >
                     <span class="h-1.5 w-1.5 rounded-full bg-current" />
-                    {{ changedFields.length }} perubahan belum disimpan
+                    {{ totalChanges }} perubahan belum disimpan
                 </div>
             </div>
 
@@ -787,6 +811,63 @@ const inputClass = (field: string) => {
                     </div>
 
                     <div class="space-y-8 p-5 sm:p-6">
+
+                        <!-- Snapshot Date -->
+                        <section
+                            id="section-snapshot-date"
+                            class="rounded-2xl border border-border bg-muted/20 p-4 sm:p-5"
+                        >
+                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="flex items-start gap-3">
+                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                        <CalendarDays class="h-5 w-5" />
+                                    </div>
+
+                                    <div>
+                                        <h2 class="font-semibold">
+                                            Snapshot Date
+                                        </h2>
+
+                                        <p class="mt-1 text-sm text-muted-foreground">
+                                            Ubah tanggal pencatatan data performance ini.
+                                        </p>
+
+                                        <p
+                                            v-if="snapshotDateChanged"
+                                            class="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400"
+                                        >
+                                            Tanggal berubah dari
+                                            {{ originalPerformanceDate || 'belum ditentukan' }}
+                                            menjadi
+                                            {{ form.performance_date || 'belum ditentukan' }}.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="w-full sm:w-56">
+                                    <label
+                                        for="performance-date"
+                                        class="mb-2 block text-sm font-medium"
+                                    >
+                                        Tanggal Performance
+                                    </label>
+
+                                    <input
+                                        id="performance-date"
+                                        v-model="form.performance_date"
+                                        type="date"
+                                        :class="inputClass('performance_date')"
+                                    />
+
+                                    <p
+                                        v-if="errorFor('performance_date')"
+                                        class="mt-1.5 text-xs text-destructive"
+                                    >
+                                        {{ errorFor('performance_date') }}
+                                    </p>
+                                </div>
+                            </div>
+                        </section>
 
                         <!-- Reach -->
                         <section id="section-reach" class="scroll-mt-24">
@@ -1408,6 +1489,15 @@ const inputClass = (field: string) => {
                         </div>
 
                         <div class="mt-4 space-y-3">
+                            <div class="flex items-center justify-between gap-3 text-sm">
+                                <span class="text-muted-foreground">
+                                    Snapshot Date
+                                </span>
+
+                                <span class="text-right font-medium">
+                                    {{ form.performance_date || 'Belum ditentukan' }}
+                                </span>
+                            </div>
                             <div class="flex items-center justify-between text-sm">
                                 <span class="text-muted-foreground">
                                     Engagement
@@ -1479,7 +1569,7 @@ const inputClass = (field: string) => {
                     </p>
 
                     <p class="text-xs text-muted-foreground">
-                        {{ changedFields.length }} field berubah
+                        {{ totalChanges }} perubahan terdeteksi
                     </p>
                 </div>
 

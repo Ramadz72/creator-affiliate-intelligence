@@ -6,6 +6,7 @@ use App\Models\Campaign;
 use App\Models\Creator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -266,6 +267,7 @@ class CampaignController extends Controller
                 'name',
                 'username',
                 'platform',
+                'profile_image'
             ]);
 
         return Inertia::render('campaigns/Edit', [
@@ -300,30 +302,66 @@ class CampaignController extends Controller
 
         $campaign->update($validated);
 
-        // Recalculate actual campaign performance
-        // karena Cost/View, Cost/Order, dan ROI
-        // bergantung pada Agreed Price.
+
+        // Recalculate current performance and all historical snapshots
+        // because Cost/View, Cost/Order, ROAS, and ROI depend on agreed price.
+        DB::transaction(function () use ($campaign) {
         $campaign->load('performances');
 
         foreach ($campaign->performances as $performance) {
-            $performance->cost_per_view = $performance->views > 0
-                ? $campaign->agreed_price / $performance->views
+            $agreedPrice = (float) $campaign->agreed_price;
+            $views = (int) $performance->views;
+            $orders = (int) $performance->orders;
+            $gmv = (float) $performance->gmv;
+
+            $performance->cost_per_view = $views > 0
+                ? $agreedPrice / $views
                 : 0;
 
-            $performance->cost_per_order = $performance->orders > 0
-                ? $campaign->agreed_price / $performance->orders
+            $performance->cost_per_order = $orders > 0
+                ? $agreedPrice / $orders
                 : 0;
 
-            $performance->roas = $campaign->agreed_price > 0
-                ? $performance->gmv / $campaign->agreed_price
+            $performance->roas = $agreedPrice > 0
+                ? $gmv / $agreedPrice
                 : 0;
 
-            $performance->roi = $campaign->agreed_price > 0
-                ? (($performance->gmv - $campaign->agreed_price) / $campaign->agreed_price) * 100
+            $performance->roi = $agreedPrice > 0
+                ? (($gmv - $agreedPrice) / $agreedPrice) * 100
                 : 0;
 
             $performance->save();
         }
+
+        $histories = \App\Models\CreatorCampaignPerformanceHistory::query()
+            ->where('campaign_id', $campaign->id)
+            ->get();
+
+        foreach ($histories as $history) {
+            $agreedPrice = (float) $campaign->agreed_price;
+            $views = (int) $history->views;
+            $orders = (int) $history->orders;
+            $gmv = (float) $history->gmv;
+
+            $history->cost_per_view = $views > 0
+                ? $agreedPrice / $views
+                : 0;
+
+            $history->cost_per_order = $orders > 0
+                ? $agreedPrice / $orders
+                : 0;
+
+            $history->roas = $agreedPrice > 0
+                ? $gmv / $agreedPrice
+                : 0;
+
+            $history->roi = $agreedPrice > 0
+                ? (($gmv - $agreedPrice) / $agreedPrice) * 100
+                : 0;
+
+            $history->save();
+        }
+    });
 
         return redirect()
             ->route('campaigns.show', $campaign)
