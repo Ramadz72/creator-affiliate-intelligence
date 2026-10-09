@@ -61,6 +61,9 @@ void createInertiaApp({
             case name === 'auth/ForgotPassword':
                 return null;
 
+            case name === 'errors/404':
+                return null;
+                
             case name.startsWith('auth/'):
                 return AuthLayout;
 
