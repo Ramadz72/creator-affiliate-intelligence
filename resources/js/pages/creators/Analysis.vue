@@ -65,9 +65,23 @@ interface Analysis {
     cost_per_view: number | null
 }
 
+interface ScoreHistoryItem {
+    id: number
+    period_start: string
+    period_end: string
+    performance_score: number
+    engagement_score: number
+    audience_fit_score: number
+    historical_score: number
+    deal_value_score: number
+    overall_score: number
+    recommendation: string
+}
+
 const props = defineProps<{
     creator: Creator
     analysis: Analysis
+    scoreHistory: ScoreHistoryItem[]
 }>()
 
 const expandedScore = ref<string | null>(null)

@@ -32,6 +32,22 @@ class CreatorAnalysisController extends Controller
             ]);
         }
 
+        $scoreHistory = CreatorScore::where('creator_id', $creator->id)
+        ->orderBy('period_end')
+        ->orderBy('id')
+        ->get([
+            'id',
+            'period_start',
+            'period_end',
+            'performance_score',
+            'engagement_score',
+            'audience_fit_score',
+            'historical_score',
+            'deal_value_score',
+            'overall_score',
+            'recommendation',
+        ]);
+
         $snapshot = CreatorAnalysisSnapshot::where(
             'creator_score_id',
             $score->id
@@ -82,6 +98,7 @@ class CreatorAnalysisController extends Controller
         return Inertia::render('creators/Analysis', [
             'creator' => $creator,
             'analysis' => $analysis,
+            'scoreHistory' => $scoreHistory,
         ]);
     }
 
@@ -107,22 +124,18 @@ class CreatorAnalysisController extends Controller
                 ->with('error', 'Creator belum memiliki content yang bisa dianalisis.');
         }
 
-        $creatorScore = CreatorScore::updateOrCreate(
-            [
-                'creator_id' => $creator->id,
-                'period_start' => $analysis['period_start'],
-                'period_end' => $analysis['period_end'],
-            ],
-            [
-                'performance_score' => $analysis['performance_score'],
-                'engagement_score' => $analysis['engagement_score'],
-                'audience_fit_score' => $analysis['audience_fit_score'],
-                'historical_score' => $analysis['historical_score'],
-                'deal_value_score' => $analysis['deal_value_score'],
-                'overall_score' => $analysis['overall_score'],
-                'recommendation' => $analysis['recommendation'],
-            ]
-        );
+        $creatorScore = CreatorScore::create([
+            'creator_id' => $creator->id,
+            'period_start' => $analysis['period_start'],
+            'period_end' => $analysis['period_end'],
+            'performance_score' => $analysis['performance_score'],
+            'engagement_score' => $analysis['engagement_score'],
+            'audience_fit_score' => $analysis['audience_fit_score'],
+            'historical_score' => $analysis['historical_score'],
+            'deal_value_score' => $analysis['deal_value_score'],
+            'overall_score' => $analysis['overall_score'],
+            'recommendation' => $analysis['recommendation'],
+        ]);
 
         CreatorAnalysisSnapshot::updateOrCreate(
             [
