@@ -80,7 +80,7 @@ interface ScoreHistoryItem {
 
 const props = defineProps<{
     creator: Creator
-    analysis: Analysis
+    analysis: Analysis | null
     scoreHistory: ScoreHistoryItem[]
 }>()
 
@@ -129,6 +129,12 @@ const recommendationLabel = (value: string) => {
 }
 
 const recommendationDescription = computed(() => {
+    const analysis = props.analysis
+
+    if (!analysis) {
+        return 'Jalankan analisis untuk melihat hasil evaluasi creator.'
+    }
+
     const descriptions: Record<string, string> = {
         highly_recommended:
             'Creator sangat layak diprioritaskan untuk kerja sama berdasarkan hasil analisis saat ini.',
@@ -140,26 +146,23 @@ const recommendationDescription = computed(() => {
             'Creator belum menunjukkan kombinasi performa dan nilai kerja sama yang cukup kuat untuk diprioritaskan.',
     }
 
-    return (
-        descriptions[props.analysis.recommendation] ??
+    return descriptions[analysis.recommendation] ??
         'Hasil analisis creator tersedia berdasarkan data yang tersimpan.'
-    )
 })
 
 const recommendationTone = computed(() => {
-    switch (props.analysis.recommendation) {
-        case 'highly_recommended':
-            return 'positive'
+    const analysis = props.analysis
 
+    if (!analysis) return 'neutral'
+
+    switch (analysis.recommendation) {
+        case 'highly_recommended':
         case 'recommended':
             return 'positive'
-
         case 'negotiate':
             return 'warning'
-
         case 'not_recommended':
             return 'negative'
-
         default:
             return 'neutral'
     }
@@ -181,12 +184,17 @@ const recommendationIcon = computed(() => {
     }
 })
 
-const scoreItems = computed(() => [
-    {
-        key: 'performance',
-        label: 'Performance',
-        value: props.analysis.performance_score,
-        description:
+const scoreItems = computed(() => {
+    const analysis = props.analysis
+
+    if (!analysis) return []
+
+    return [
+        {
+            key: 'performance',
+            label: 'Performance',
+            value: analysis.performance_score,
+            description:
             'Menggambarkan kualitas performa konten berdasarkan data yang dianalisis.',
         icon: BarChart3,
     },
@@ -222,7 +230,8 @@ const scoreItems = computed(() => [
             'Menggambarkan nilai ekonomis kerja sama berdasarkan rate card yang tersedia.',
         icon: Wallet,
     },
-])
+    ]
+})
 
 const isRunningAnalysis = ref(false)
 
@@ -244,11 +253,11 @@ const runAnalysis = () => {
 }
 
 const visibleInsights = computed(() => {
-    if (showAllInsights.value) {
-        return props.analysis.insights
-    }
+    const insights = props.analysis?.insights ?? []
 
-    return props.analysis.insights.slice(0, 4)
+    return showAllInsights.value
+        ? insights
+        : insights.slice(0, 4)
 })
 
 const insightIcon = (type: string) => {
@@ -405,6 +414,8 @@ const scoreBarTone = (value: number) => {
                 </div>
             </div>
         </div>
+
+        <template v-if="analysis">
 
         <!-- ===================================================== -->
         <!-- CREATOR SNAPSHOT -->
@@ -1193,6 +1204,68 @@ const scoreBarTone = (value: number) => {
                         History
                     </Link>
                 </div>
+            </div>
+        </div>
+        </template>
+        
+        <div
+            v-else
+            class="relative overflow-hidden rounded-2xl border border-border bg-card px-5 py-12 shadow-sm sm:px-8 sm:py-16"
+        >
+            <div class="mx-auto flex max-w-lg flex-col items-center text-center">
+                <div
+                    class="flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-500/15 bg-blue-500/10"
+                >
+                    <Brain class="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                </div>
+
+                <span
+                    class="mt-6 inline-flex items-center gap-2 rounded-full border border-border bg-muted/50 px-3 py-1 text-xs font-medium text-muted-foreground"
+                >
+                    <span class="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                    Belum dianalisis
+                </span>
+
+                <h2 class="mt-4 text-xl font-semibold tracking-tight sm:text-2xl">
+                    Belum ada hasil analisis
+                </h2>
+
+                <p class="mt-3 text-sm leading-6 text-muted-foreground">
+                    Jalankan analisis untuk mengevaluasi performa konten,
+                    engagement, kecocokan audience, dan nilai kerja sama creator ini.
+                </p>
+
+                <div
+                    class="mt-6 flex w-full flex-col justify-center gap-3 sm:w-auto sm:flex-row"
+                >
+                    <Button
+                        class="inline-flex items-center justify-center gap-2 rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        :disabled="isRunningAnalysis"
+                        @click="runAnalysis"
+                    >
+                        <RefreshCw
+                            class="h-4 w-4"
+                            :class="{ 'animate-spin': isRunningAnalysis }"
+                        />
+                        {{
+                            isRunningAnalysis
+                                ? 'Sedang menganalisis...'
+                                : 'Mulai Analisis'
+                        }}
+                    </Button>
+
+                    <Link
+                        :href="`/creators/${creator.id}`"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-background px-5 py-2.5 text-sm font-medium transition hover:bg-muted"
+                    >
+                        <ArrowLeft class="h-4 w-4" />
+                        Kembali ke Creator
+                    </Link>
+                </div>
+
+                <p class="mt-5 text-xs text-muted-foreground">
+                    Hasil analisis akan ditampilkan di halaman ini setelah proses selesai.
+                </p>
             </div>
         </div>
     </div>

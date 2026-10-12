@@ -48,6 +48,14 @@ class CreatorAnalysisController extends Controller
             'recommendation',
         ]);
 
+        if (!$score) {
+            return Inertia::render('creators/Analysis', [
+                'creator' => $creator,
+                'analysis' => null,
+                'scoreHistory' => $scoreHistory,
+            ]);
+        }
+
         $snapshot = CreatorAnalysisSnapshot::where(
             'creator_score_id',
             $score->id

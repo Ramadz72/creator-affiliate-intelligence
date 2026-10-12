@@ -1,5 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import {
+    computed,
+    nextTick,
+    onMounted,
+    onUnmounted,
+    ref,
+    watch,
+} from 'vue'
 import { router, usePage  } from '@inertiajs/vue3';
 
 import {
@@ -96,6 +103,39 @@ const searchResults = ref<
 const notificationOpen = ref(false);
 const profileOpen = ref(false);
 
+const notificationMenu = ref<HTMLElement | null>(null)
+const profileMenu = ref<HTMLElement | null>(null)
+
+const handleOutsideClick = (event: PointerEvent) => {
+    const target = event.target as Node
+
+    if (!notificationMenu.value?.contains(target)) {
+        notificationOpen.value = false
+    }
+
+    if (!profileMenu.value?.contains(target)) {
+        profileOpen.value = false
+    }
+}
+
+const handleEscape = (event: KeyboardEvent) => {
+    if (event.key === 'Escape') {
+        notificationOpen.value = false
+        profileOpen.value = false
+        searchOpen.value = false
+    }
+}
+
+onMounted(() => {
+    document.addEventListener('pointerdown', handleOutsideClick)
+    document.addEventListener('keydown', handleEscape)
+})
+
+onUnmounted(() => {
+    document.removeEventListener('pointerdown', handleOutsideClick)
+    document.removeEventListener('keydown', handleEscape)
+})
+
 const page = usePage();
 
 const user = computed(() => page.props.auth?.user as {
@@ -105,38 +145,117 @@ const user = computed(() => page.props.auth?.user as {
     profile_photo?: string | null;
 });
 
-const notifications = ref([
-    {
-        id: 1,
-        title: 'Import Data Selesai',
-        message: 'Import data affiliate berhasil diproses.',
-        time: 'Baru saja',
-        href: '/history',
-        read: false,
-    },
-    {
-        id: 2,
-        title: 'Creator Siap Dianalisis',
-        message: 'Ada creator yang memiliki data terbaru.',
-        time: '10 menit lalu',
-        href: '/creators',
-        read: false,
-    },
-    {
-        id: 3,
-        title: 'Campaign Baru',
-        message: 'Campaign baru berhasil dibuat.',
-        time: '1 jam lalu',
-        href: '/campaigns',
-        read: true,
-    },
-]);
+type AppNotification = {
+    id: string;
+    title: string;
+    message: string;
+    time: string;
+    href: string | null;
+    read: boolean;
+};
 
-const unreadNotifications = computed(() => {
-    return notifications.value.filter(
-        (notification) => !notification.read,
-    );
-});
+const notifications = ref<AppNotification[]>([]);
+const unreadCount = ref(0);
+const notificationsLoading = ref(false);
+const notificationError = ref(false);
+
+let notificationPoll: ReturnType<typeof setInterval> | undefined;
+
+const loadNotifications = async () => {
+    if (notificationsLoading.value) return;
+
+    notificationsLoading.value = true;
+
+    try {
+        const response = await fetch('/notifications', {
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+            },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        notifications.value = data.notifications ?? [];
+        unreadCount.value = data.unread_count ?? 0;
+        notificationError.value = false;
+    } catch (error) {
+        notificationError.value = true;
+        console.error('Gagal memuat notifikasi:', error);
+    } finally {
+        notificationsLoading.value = false;
+    }
+};
+
+const getCsrfToken = () =>
+    document.querySelector<HTMLMetaElement>(
+        'meta[name="csrf-token"]',
+    )?.content ?? '';
+
+const markNotificationRead = async (
+    notification: AppNotification,
+) => {
+    if (!notification.read) {
+        try {
+            const response = await fetch(
+                `/notifications/${encodeURIComponent(notification.id)}/read`,
+                {
+                    method: 'PATCH',
+                    headers: {
+                        Accept: 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': getCsrfToken(),
+                    },
+                    credentials: 'same-origin',
+                },
+            );
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            await loadNotifications();
+        } catch (error) {
+            console.error('Gagal menandai notifikasi:', error);
+            return;
+        }
+    }
+
+    notificationOpen.value = false;
+
+    if (notification.href) {
+        updateActiveTab(notification.title, notification.href);
+        router.visit(notification.href);
+    }
+};
+
+const markAllNotificationsAsRead = async () => {
+    try {
+        const response = await fetch('/notifications/read-all', {
+            method: 'PATCH',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': getCsrfToken(),
+            },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        await loadNotifications();
+    } catch (error) {
+        console.error('Gagal menandai semua notifikasi:', error);
+    }
+};
+
 
 let removeNavigateListener:
     (() => void) | undefined;
@@ -230,27 +349,6 @@ const handleSearch = () => {
         searchOpen.value = false;
         search.value = '';
     }
-};
-
-const openNotification = (notification: any) => {
-    notification.read = true;
-
-    notificationOpen.value = false;
-
-    if (notification.href) {
-        updateActiveTab(
-            notification.title,
-            notification.href,
-        );
-
-        router.visit(notification.href);
-    }
-};
-
-const markAllNotificationsAsRead = () => {
-    notifications.value.forEach((notification) => {
-        notification.read = true;
-    });
 };
 
 const getTabIcon = (tab: AppTab) => {
@@ -357,14 +455,12 @@ const getPageTitle = (url: string) => {
       // =========================
     // INSIGHTS
     // =========================
-    if (
-        /^\/insights\/[^/]+$/.test(
-            pathname,
-        )
-    ) 
+    if (/^\/insights\/[^/]+$/.test(pathname)) {
+        return 'Insight Detail'
+    }
 
     if (pathname === '/insights') {
-        return 'insights';
+        return 'Insights'
     }
    
 
@@ -441,8 +537,24 @@ const getPageTitle = (url: string) => {
     return null;
 };
 
+const toggleNotifications = () => {
+    notificationOpen.value = !notificationOpen.value
+    profileOpen.value = false
+}
+
+const toggleProfile = () => {
+    profileOpen.value = !profileOpen.value
+    notificationOpen.value = false
+}
+
 onMounted(() => {
     initializeTabs();
+
+    void loadNotifications();
+
+    notificationPoll = setInterval(() => {
+        void loadNotifications();
+    }, 30_000);
 
     window.addEventListener(
         'app:open-tab',
@@ -472,12 +584,12 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-    window.removeEventListener(
-        'app:open-tab',
-        openAppTab,
-    );
-
+    window.removeEventListener('app:open-tab', openAppTab);
     removeNavigateListener?.();
+
+    if (notificationPoll) {
+        clearInterval(notificationPoll);
+    }
 });
 </script>
 
@@ -682,30 +794,20 @@ onUnmounted(() => {
             </button>
 
             <!-- NOTIFICATION -->
-            <div class="relative">
+            <div ref="notificationMenu" class="relative">
                 <button
                     type="button"
-                    @click="
-                        notificationOpen =
-                            !notificationOpen;
-                        profileOpen = false;
-                    "
+                    @click="toggleNotifications"
                     class="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
                     title="Notifications"
                 >
                     <Bell class="h-4 w-4" />
 
                     <!-- BADGE -->
-                    <span
-                        v-if="unreadNotifications.length"
-                        class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white"
-                    >
-                        {{
-                            unreadNotifications.length > 9
-                                ? '9+'
-                                : unreadNotifications.length
-                        }}
-                    </span>
+                    <span v-if="unreadCount > 0"
+                    class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                    {{ unreadCount > 9 ? '9+' : unreadCount }}
+                </span>
                 </button>
 
                 <!-- DROPDOWN -->
@@ -724,19 +826,16 @@ onUnmounted(() => {
                                 Notifications
                             </h3>
 
-                            <p
-                                class="mt-0.5 text-[11px] text-muted-foreground"
-                            >
-                                {{
-                                    unreadNotifications.length
-                                }}
-                                belum dibaca
+                            
+                            <p class="mt-0.5 text-[11px] text-muted-foreground">
+                                {{ unreadCount }} belum dibaca
                             </p>
+
                         </div>
 
                         <button
                             v-if="
-                                unreadNotifications.length
+                                unreadCount > 0
                             "
                             type="button"
                             class="text-[11px] font-medium text-sky-600 transition hover:text-sky-700"
@@ -748,9 +847,36 @@ onUnmounted(() => {
                         </button>
                     </div>
 
-                    <!-- LIST -->
+
+                    <!-- LOADING -->
                     <div
-                        v-if="notifications.length"
+                        v-if="notificationsLoading && !notifications.length"
+                        class="px-4 py-8 text-center text-xs text-muted-foreground"
+                    >
+                        Memuat notifikasi...
+                    </div>
+
+                    <!-- ERROR -->
+                    <div
+                        v-else-if="notificationError && !notifications.length"
+                        class="px-4 py-8 text-center"
+                    >
+                        <p class="text-xs text-muted-foreground">
+                            Notifikasi gagal dimuat.
+                        </p>
+
+                        <button
+                            type="button"
+                            class="mt-2 text-xs font-medium text-sky-600 hover:text-sky-700"
+                            @click="loadNotifications"
+                        >
+                            Coba lagi
+                        </button>
+                    </div>
+
+                    <!-- NOTIFICATION LIST -->
+                    <div
+                        v-else-if="notifications.length"
                         class="max-h-80 overflow-y-auto"
                     >
                         <button
@@ -758,90 +884,52 @@ onUnmounted(() => {
                             :key="notification.id"
                             type="button"
                             class="flex w-full gap-3 border-b px-4 py-3 text-left transition last:border-b-0 hover:bg-muted/60"
-                            :class="
-                                !notification.read
-                                    ? 'bg-sky-500/5'
-                                    : ''
-                            "
-                            @click="
-                                openNotification(
-                                    notification,
-                                )
-                            "
+                            :class="!notification.read ? 'bg-sky-500/5' : ''"
+                            @click="markNotificationRead(notification)"
                         >
-                            <!-- INDICATOR -->
                             <div
                                 class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
-                                :class="
-                                    !notification.read
-                                        ? 'bg-sky-500'
-                                        : 'bg-transparent'
-                                "
+                                :class="!notification.read ? 'bg-sky-500' : 'bg-transparent'"
                             />
 
                             <div class="min-w-0 flex-1">
-                                <div
-                                    class="flex items-start justify-between gap-2"
-                                >
+                                <div class="flex items-start justify-between gap-2">
                                     <span
                                         class="text-xs font-semibold"
-                                        :class="
-                                            !notification.read
-                                                ? 'text-foreground'
-                                                : 'text-muted-foreground'
-                                        "
+                                        :class="!notification.read ? 'text-foreground' : 'text-muted-foreground'"
                                     >
-                                        {{
-                                            notification.title
-                                        }}
+                                        {{ notification.title }}
                                     </span>
 
-                                    <span
-                                        class="shrink-0 text-[10px] text-muted-foreground"
-                                    >
-                                        {{
-                                            notification.time
-                                        }}
+                                    <span class="shrink-0 text-[10px] text-muted-foreground">
+                                        {{ notification.time }}
                                     </span>
                                 </div>
 
-                                <p
-                                    class="mt-1 text-[11px] leading-relaxed text-muted-foreground"
-                                >
-                                    {{
-                                        notification.message
-                                    }}
+                                <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                                    {{ notification.message }}
                                 </p>
                             </div>
                         </button>
                     </div>
 
                     <!-- EMPTY -->
-                    <div
-                        v-else
-                        class="px-4 py-8 text-center"
-                    >
-                        <Bell
-                            class="mx-auto h-6 w-6 text-muted-foreground/40"
-                        />
+                    <div v-else class="px-4 py-8 text-center">
+                        <Bell class="mx-auto h-6 w-6 text-muted-foreground/40" />
 
-                        <p
-                            class="mt-2 text-xs text-muted-foreground"
-                        >
+                        <p class="mt-2 text-xs text-muted-foreground">
                             Belum ada notifikasi.
                         </p>
                     </div>
+
                 </div>
             </div>
 
             <!-- PROFILE -->
-            <div class="relative">
+            <div ref="profileMenu" class="relative">
                 <button
                     type="button"
-                    @click="
-                        profileOpen =
-                            !profileOpen
-                    "
+                    @click="toggleProfile"
                     class="flex h-10 items-center gap-2 rounded-lg px-2 transition hover:bg-muted"
                 >
                     <div
