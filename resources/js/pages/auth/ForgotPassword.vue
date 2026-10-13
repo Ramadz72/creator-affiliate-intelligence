@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import {
@@ -72,7 +72,7 @@ const emailIsValid = computed(() => {
                 <!-- Logo -->
                 <div class="relative z-10">
                     <img
-                        src="/images/creator kecil.png"
+                        src="/images/creator kecil.webp"
                         alt="Creator Affiliate Intelligence"
                         class="h-14 w-auto object-contain"
                     />
@@ -196,7 +196,7 @@ const emailIsValid = computed(() => {
                     <!-- Mobile logo -->
                     <div class="mb-7 flex justify-center lg:hidden">
                         <img
-                            src="/images/creator kecil.png"
+                            src="/images/creator kecil.webp"
                             alt="Creator Affiliate Intelligence"
                             class="h-14 w-auto object-contain"
                         />

@@ -228,4 +228,20 @@ function handleMouseLeave() {
     opacity: 0;
     transform: translate(-50%, 4px);
 }
+
+
+@media (prefers-reduced-motion: reduce) {
+    .chart-line,
+    .chart-area {
+        animation: none;
+        stroke-dashoffset: 0;
+        opacity: 1;
+    }
+
+    .tooltip-enter-active,
+    .tooltip-leave-active {
+        transition: none;
+    }
+}
+
 </style>

@@ -25,7 +25,7 @@ import {
                     >
                         <div class="flex h-10 w-10 items-center justify-center">
                             <img
-                                src="/images/creator kecil.png"
+                                src="/images/creator kecil.webp"
                                 alt="Creator Affiliate Intelligence"
                                 class="h-10 w-10 object-contain"
                             />

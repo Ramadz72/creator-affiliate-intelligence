@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 import {
@@ -246,7 +246,7 @@ const canSubmit = computed(() => {
                     <!-- Mobile logo -->
                     <div class="mb-8 flex justify-center lg:hidden">
                         <img
-                            src="/images/creator kecil.png"
+                            src="/images/creator kecil.webp"
                             alt="Creator Affiliate Intelligence"
                             class="h-14 w-auto object-contain"
                         />

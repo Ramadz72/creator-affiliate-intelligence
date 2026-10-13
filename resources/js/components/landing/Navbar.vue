@@ -16,7 +16,7 @@ onUnmounted(() => window.removeEventListener('scroll', onScroll))
 <header :class="['fixed inset-x-0 top-0 z-50 transition-all duration-300', (scrolled || menuOpen) ? 'bg-white/90 shadow-[0_1px_0_0_rgba(15,23,42,0.06)] backdrop-blur-xl' : 'bg-transparent']">
 <nav class="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
 <Link href="/" class="flex items-center gap-2.5"><span class="flex h-10 w-10 shrink-0 items-center justify-center"><img
-        src="/images/creator kecil.png"
+        src="/images/creator kecil.webp"
         alt="Creator Affiliate Intelligence"
         class="h-12 w-12 object-contain"
     /></span><span :class="['font-heading text-sm font-extrabold tracking-tight sm:text-base', (scrolled || menuOpen) ? 'text-slate-900' : 'text-white']">Creator Affiliate Intelligence</span></Link>

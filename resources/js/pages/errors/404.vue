@@ -1,4 +1,4 @@
-<script setup lang="ts">
+﻿<script setup lang="ts">
 import { Head, Link } from '@inertiajs/vue3'
 import {
     ArrowLeft,
@@ -23,7 +23,7 @@ function goBack() {
 </script>
 
 <template>
-    <Head title="404 — Halaman Tidak Ditemukan" />
+    <Head title="404 â€” Halaman Tidak Ditemukan" />
 
     <main
         class="relative isolate min-h-screen overflow-hidden bg-[#f8f9fc] text-[#10172a]"
@@ -55,7 +55,7 @@ function goBack() {
                         class="flex h-10 w-10 items-center justify-center rounded-xl shadow-slate-900/10 transition-transform duration-300 group-hover:-rotate-6"
                     >
                         <img
-                            src="/images/creator kecil.png"
+                            src="/images/creator kecil.webp"
                             alt="Creator Affiliate Intelligence"
                             class="h-full w-full object-contain"
                         />
@@ -211,7 +211,7 @@ function goBack() {
                 class="mt-8 flex flex-col gap-3 border-t border-slate-200/70 py-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between"
             >
                 <p>
-                    © {{ new Date().getFullYear() }} Creator Affiliate Intelligence
+                    Â© {{ new Date().getFullYear() }} Creator Affiliate Intelligence
                 </p>
 
                 <p class="flex items-center gap-2">
