@@ -163,6 +163,10 @@ Route::post('/imports/affiliate', [AffiliateImportController::class, 'store'])
     ->middleware(['auth'])
     ->name('imports.affiliate.store');
 
+Route::get('/imports/active', [AffiliateImportController::class, 'active'])
+    ->middleware(['auth', 'verified'])
+    ->name('imports.active');
+
 Route::get('/imports/{batch}/progress', [AffiliateImportController::class, 'progress'])
     ->middleware(['auth', 'verified'])
     ->name('imports.progress');

@@ -11,7 +11,7 @@ import {
     Clock3,
     Database,
 } from '@lucide/vue'
-import { onBeforeUnmount, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 
 type ImportProgress = {
     id: number
@@ -60,6 +60,7 @@ const elapsedSeconds = ref(0)
 
 let progressTimer: ReturnType<typeof setInterval> | null = null
 let elapsedTimer: ReturnType<typeof setInterval> | null = null
+let dismissTimer: ReturnType<typeof setTimeout> | null = null
 
 const stopProgressPolling = () => {
     if (progressTimer) {
@@ -183,6 +184,13 @@ const checkProgress = async (batchId: number) => {
         ) {
             stopProgressPolling()
         }
+          if (dismissTimer) {
+        clearTimeout(dismissTimer)
+        }
+
+        dismissTimer = setTimeout(() => {
+            dismissProgress()
+        }, 4000)
     } catch (error) {
         console.error(error)
         progressError.value =
@@ -213,6 +221,41 @@ const startProgressPolling = (batchId: number) => {
     }, 1000)
 }
 
+const resumeActiveImport = async () => {
+    try {
+        const response = await fetch('/imports/active', {
+            headers: {
+                Accept: 'application/json',
+            },
+        })
+
+        if (!response.ok) {
+            return
+        }
+
+        const data: { id: number | null } = await response.json()
+
+        if (data.id) {
+            startProgressPolling(data.id)
+        }
+    } catch (error) {
+        console.error('Gagal memulihkan progress import:', error)
+    }
+}
+
+const dismissProgress = () => {
+    stopProgressPolling()
+    showProgress.value = false
+    importProgress.value = null
+    progressError.value = ''
+    elapsedSeconds.value = 0
+
+    if (dismissTimer) {
+        clearTimeout(dismissTimer)
+        dismissTimer = null
+    }
+}
+
 const submit = () => {
     progressError.value = ''
 
@@ -232,7 +275,14 @@ const submit = () => {
 
 onBeforeUnmount(() => {
     stopProgressPolling()
+    resumeActiveImport()
+
+    if (dismissTimer) {
+        clearTimeout(dismissTimer)
+        dismissTimer = null
+    }
 })
+
 </script>
 
 <template>
@@ -283,7 +333,7 @@ onBeforeUnmount(() => {
         
 
         <!-- Import Card -->
-        <div class="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div class="flex min-h-[720px] flex-col rounded-xl border border-border bg-card p-6 shadow-sm">
             <div class="mb-6 flex items-center gap-3">
                 <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                     <FileSpreadsheet class="h-5 w-5 text-primary" />
@@ -300,10 +350,7 @@ onBeforeUnmount(() => {
                 </div>
             </div>
 
-            <form
-                class="space-y-5"
-                @submit.prevent="submit"
-            >
+            <form class="flex flex-1 flex-col gap-5" @submit.prevent="submit">
                 <!-- File -->
                 <div class="space-y-2">
                     <label class="text-sm font-medium">
@@ -311,7 +358,7 @@ onBeforeUnmount(() => {
                     </label>
 
                     <label
-                        class="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 px-6 py-10 text-center transition hover:bg-muted/50"
+                        class="flex min-h-[230px] flex-1 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 px-6 py-10 text-center transition hover:bg-muted/50"
                     >
                         <Upload class="mb-3 h-8 w-8 text-muted-foreground" />
 
@@ -417,7 +464,7 @@ onBeforeUnmount(() => {
                 </div>
 
                 <!-- Submit -->
-                <div class="flex justify-end">
+                <div class="mt-auto flex justify-end pt-2">
                     <button
                         type="submit"
                         :disabled="form.processing"

@@ -84,6 +84,23 @@ class AffiliateImportController extends Controller
         }
     }
 
+    public function active()
+    {
+        $batch = ImportBatch::query()
+            ->where('uploaded_by', Auth::id())
+            ->whereIn('status', [
+                'queued',
+                'processing',
+                'scoring',
+            ])
+            ->latest('id')
+            ->first();
+
+        return response()->json([
+            'id' => $batch?->id,
+        ]);
+    }
+
     public function progress(ImportBatch $batch)
     {
         abort_unless(
