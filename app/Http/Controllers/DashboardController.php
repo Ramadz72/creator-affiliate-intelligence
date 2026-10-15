@@ -322,6 +322,37 @@ class DashboardController extends Controller
                 ->get();
         }
 
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Attributed Orders Trend
+        |--------------------------------------------------------------------------
+        */
+
+        $currentTrendOrders = $currentPerformances
+            ->groupBy('import_batch_id')
+            ->map(fn ($rows) => (int) $rows->sum(
+                fn ($row) => (int) $row->attributed_orders
+            ))
+            ->values();
+
+        $comparisonTrendOrders = $comparisonPerformances
+            ->groupBy('import_batch_id')
+            ->map(fn ($rows) => (int) $rows->sum(
+                fn ($row) => (int) $row->attributed_orders
+            ))
+            ->values();
+
+        $ordersTrend = collect([
+            ...$comparisonTrendOrders->all(),
+            ...$currentTrendOrders->all(),
+        ])->map(fn ($orders) => [
+            'orders' => $orders,
+        ]);
+
+
+
         /*
         |--------------------------------------------------------------------------
         | Aggregate Current Metrics
@@ -1005,6 +1036,8 @@ class DashboardController extends Controller
                     ? round($ordersGrowth, 1)
                     : null,
             ],
+
+            'orders_trend' => $ordersTrend,
 
             /*
             |--------------------------------------------------------------------------

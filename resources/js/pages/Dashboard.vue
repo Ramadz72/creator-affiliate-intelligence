@@ -69,6 +69,10 @@ const props = defineProps<{
         orders_growth: number | null
     }
 
+    orders_trend?: Array<{
+        orders: number
+    }>
+
     selected_period: {
         start: string
         end: string
@@ -125,6 +129,36 @@ const props = defineProps<{
         deprioritize: number
     }
 }>()
+
+
+const ordersTrendPoints = computed(() => {
+    const rows = Array.isArray(props.orders_trend)
+        ? props.orders_trend
+        : [];
+
+    if (rows.length < 2) return '';
+
+    const values = rows.map((row) => Number(row.orders) || 0);
+
+    const width = 156;
+    const height = 48;
+    const left = 2;
+    const top = 8;
+    const bottom = top + height;
+
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const range = max - min || 1;
+
+    return values
+        .map((value, index) => {
+            const x = left + (index / (values.length - 1)) * width;
+            const y = bottom - ((value - min) / range) * height;
+
+            return `${x},${y}`;
+        })
+        .join(' ');
+});
 
 const showPeriodPicker = ref(false)
 
@@ -842,26 +876,34 @@ onBeforeUnmount(() => {
                         </span>
                     </div>
 
-                    <!-- Mini trend chart: placeholder -->
-                     <div class="flex min-w-0 flex-1 flex-col items-center gap-2 pr-2">
-                    <svg
-                        class="h-16 w-full max-w-[220px] text-sky-400"
-                        viewBox="0 0 160 64"
-                        fill="none"
-                        preserveAspectRatio="none"
-                        aria-label="Placeholder tren attributed orders"
-                        role="img"
-                    >
-                        <path
-                            d="M2 42 L16 31 L29 24 L43 12 L56 39 L70 48 L84 29 L98 21 L112 32 L126 43 L141 45 L158 51"
-                            stroke="currentColor"
-                            stroke-width="5"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            opacity="0.75"
-                        />
-                    </svg>
+                                        
+                    <!-- Mini trend chart: actual attributed orders -->
+                    <div class="flex min-w-0 flex-1 flex-col items-center gap-2 pr-2">
+                        <svg
+                            v-if="ordersTrendPoints"
+                            class="h-16 w-full max-w-[220px] text-sky-400"
+                            viewBox="0 0 160 64"
+                            fill="none"
+                            preserveAspectRatio="none"
+                            aria-label="Tren attributed orders berdasarkan data harian"
+                            role="img"
+                        >
+                            <polyline
+                                :points="ordersTrendPoints"
+                                stroke="currentColor"
+                                stroke-width="3"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                opacity="0.85"
+                            />
+                        </svg>
+
+                        <p v-else class="text-xs text-muted-foreground">
+                            Belum ada data tren
+                        </p>
+
                     </div>
+
                 </div>
             </div>
 
