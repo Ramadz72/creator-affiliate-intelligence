@@ -190,7 +190,7 @@ const checkProgress = async (batchId: number) => {
 
         dismissTimer = setTimeout(() => {
             dismissProgress()
-        }, 4000)
+        }, 1500)
     } catch (error) {
         console.error(error)
         progressError.value =
@@ -203,7 +203,6 @@ const startProgressPolling = (batchId: number) => {
 
     showProgress.value = true
     progressError.value = ''
-    elapsedSeconds.value = 0
 
     checkProgress(batchId)
 
@@ -221,7 +220,25 @@ const startProgressPolling = (batchId: number) => {
     }, 1000)
 }
 
+
 const resumeActiveImport = async () => {
+    // Pulihkan ID dari browser terlebih dahulu agar tidak perlu
+    // menunggu endpoint /imports/active.
+    const savedBatchId = localStorage.getItem(ACTIVE_IMPORT_KEY)
+
+    if (savedBatchId) {
+        const id = Number(savedBatchId)
+
+        if (Number.isInteger(id) && id > 0) {
+            showProgress.value = true
+            startProgressPolling(id)
+            return
+        }
+
+        localStorage.removeItem(ACTIVE_IMPORT_KEY)
+    }
+
+    // Fallback jika browser belum menyimpan ID batch.
     try {
         const response = await fetch('/imports/active', {
             headers: {
@@ -229,13 +246,13 @@ const resumeActiveImport = async () => {
             },
         })
 
-        if (!response.ok) {
-            return
-        }
+        if (!response.ok) return
 
         const data: { id: number | null } = await response.json()
 
         if (data.id) {
+            localStorage.setItem(ACTIVE_IMPORT_KEY, String(data.id))
+            showProgress.value = true
             startProgressPolling(data.id)
         }
     } catch (error) {
@@ -243,18 +260,23 @@ const resumeActiveImport = async () => {
     }
 }
 
+
 const dismissProgress = () => {
     stopProgressPolling()
     showProgress.value = false
     importProgress.value = null
     progressError.value = ''
     elapsedSeconds.value = 0
+    localStorage.removeItem(ACTIVE_IMPORT_KEY)
 
     if (dismissTimer) {
         clearTimeout(dismissTimer)
         dismissTimer = null
     }
 }
+
+
+const ACTIVE_IMPORT_KEY = 'creator_affiliate_active_batch'
 
 const submit = () => {
     progressError.value = ''
@@ -267,15 +289,24 @@ const submit = () => {
             const batchId = page.props.flash?.import_batch_id
 
             if (batchId) {
-                startProgressPolling(Number(batchId))
+                const id = Number(batchId)
+
+                // Simpan ID agar bisa dipulihkan setelah halaman dibuka lagi.
+                localStorage.setItem(ACTIVE_IMPORT_KEY, String(id))
+
+                startProgressPolling(id)
             }
         },
     })
 }
 
+
+onMounted(() => {
+    resumeActiveImport()
+})
+
 onBeforeUnmount(() => {
     stopProgressPolling()
-    resumeActiveImport()
 
     if (dismissTimer) {
         clearTimeout(dismissTimer)
@@ -499,11 +530,9 @@ onBeforeUnmount(() => {
         leave-from-class="translate-y-0 opacity-100"
         leave-to-class="translate-y-4 opacity-0"
     >
-        <div
-            v-if="showProgress && importProgress"
-            class="fixed inset-x-0 bottom-5 z-50 mx-auto w-[calc(100%-2rem)] max-w-2xl"
-        >
-            <div
+        <div v-if="showProgress" class="fixed inset-x-0 bottom-5 z-50 mx-auto w-[calc(100%-2rem)] max-w-2xl">
+             <div v-if="importProgress">
+                <div
                 class="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
             >
                 <!-- Header -->
@@ -661,6 +690,18 @@ onBeforeUnmount(() => {
                     class="border-t border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400"
                 >
                     ✓ Data berhasil diimport dan scoring telah selesai.
+                </div>
+            </div>
+            </div>
+            <div v-else class="rounded-2xl border border-border bg-card p-5 shadow-2xl">
+                <div class="flex items-center gap-3">
+                    <Loader2 class="h-5 w-5 animate-spin text-sky-600" />
+                    <div>
+                        <p class="font-semibold">Memulihkan progres import...</p>
+                        <p class="text-sm text-muted-foreground">
+                            Mengambil status terbaru dari server.
+                        </p>
+                    </div>
                 </div>
             </div>
         </div>

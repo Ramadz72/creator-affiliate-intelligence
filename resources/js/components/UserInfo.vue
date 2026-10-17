@@ -18,8 +18,11 @@ const { getInitials } = useInitials();
 const { state } = useSidebar();
 
 const hasProfilePhoto = computed(
-    () => !!props.user.avatar && props.user.avatar.trim() !== '',
+    () => !!props.user.profile_photo && props.user.profile_photo.trim() !== '',
 );
+
+console.log('Profile photo:', props.user.profile_photo);
+console.log('Has profile photo:', hasProfilePhoto.value);
 
 const isCollapsed = computed(() => state.value === 'collapsed');
 </script>
@@ -39,8 +42,8 @@ const isCollapsed = computed(() => state.value === 'collapsed');
                 <!-- Foto profil asli -->
                 <AvatarImage
                     v-if="hasProfilePhoto"
-                    :src="user.avatar!"
-                    :alt="user.name"
+                    :src="`/storage/${props.user.profile_photo}`"
+                    :alt="props.user.name"
                     class="h-full w-full object-cover"
                 />
 

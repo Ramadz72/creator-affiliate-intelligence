@@ -19,14 +19,24 @@ import {
 import UserInfo from '@/components/UserInfo.vue';
 import UserMenuContent from '@/components/UserMenuContent.vue';
 
-const page = usePage();
+const page = usePage<{
+    auth: {
+        user: {
+            name: string;
+            email?: string | null;
+            profile_photo?: string | null;
+        };
+    };
+}>();
 
 const user = computed(() => page.props.auth.user);
 
 const { isMobile, state } = useSidebar();
 
 const hasProfilePhoto = computed(
-    () => !!user.value.avatar && user.value.avatar.trim() !== '',
+    () =>
+        typeof user.value?.profile_photo === 'string' &&
+        user.value.profile_photo.trim() !== '',
 );
 
 </script>
@@ -85,7 +95,7 @@ const hasProfilePhoto = computed(
                         >
                             <img
                                 v-if="hasProfilePhoto"
-                                :src="user.avatar"
+                                :src="`/storage/${user.profile_photo}`"
                                 :alt="user.name"
                                 class="h-full w-full object-cover"
                             />
