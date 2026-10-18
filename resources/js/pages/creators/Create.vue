@@ -306,11 +306,11 @@ const fieldClass = (
                             class="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border text-sm font-semibold transition"
                             :class="
                                 step.number < currentStep
-                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
                                     : step.number === currentStep
-                                      ? 'border-primary bg-primary/10 text-primary'
-                                      : 'border-border bg-muted text-muted-foreground'
-                            "
+                                      ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
+                                      : 'border-border hover:bg-muted'
+                                "
                         >
                             <Check
                                 v-if="step.number < currentStep"
@@ -594,8 +594,8 @@ const fieldClass = (
                                         class="relative h-6 w-11 rounded-full transition"
                                         :class="
                                             form.status === 'active'
-                                                ? 'bg-primary'
-                                                : 'bg-muted'
+                                                ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
+                                                : 'border-border hover:bg-muted'
                                         "
                                         @click="
                                             form.status =
@@ -1192,7 +1192,7 @@ const fieldClass = (
                             class="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"
                         >
                             <div
-                                class="h-full rounded-full bg-primary transition-all duration-300"
+                                class="h-full rounded-full bg-sky-600 transition-all duration-300"
                                 :style="{
                                     width: `${completion}%`,
                                 }"
@@ -1233,7 +1233,7 @@ const fieldClass = (
                                 currentStep === 1 &&
                                 !canContinueFromProfile
                             "
-                            class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                             @click="nextStep"
                         >
                             Lanjutkan
@@ -1244,7 +1244,7 @@ const fieldClass = (
                             v-else
                             type="submit"
                             :disabled="form.processing"
-                            class="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <Save class="h-4 w-4" />
 
@@ -1453,7 +1453,7 @@ const fieldClass = (
                             class="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
                         >
                             <div
-                                class="h-full rounded-full bg-primary transition-all duration-300"
+                                class="h-full rounded-full bg-sky-600 transition-all duration-300"
                                 :style="{
                                     width: `${completion}%`,
                                 }"

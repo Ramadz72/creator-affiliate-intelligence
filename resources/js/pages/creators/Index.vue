@@ -212,9 +212,9 @@ const platformClass = (platform: string) => {
                     <!-- Add -->
                     <Link
                         href="/creators/create"
-                        class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
+                        class="group inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-sky-700 hover:shadow-md"
                     >
-                        <Plus class="h-4 w-4" />
+                        <Plus class="h-4 w-4 transition-transform duration-200 group-hover:rotate-90" />
                         <span class="hidden sm:inline">
                             Tambah Creator
                         </span>

@@ -148,16 +148,6 @@ const statusIcon = (status: Campaign['status']) => {
     return icons[status]
 }
 
-const statusDotClass = (status: Campaign['status']) => {
-    const classes = {
-        planned: 'bg-muted-foreground',
-        running: 'bg-blue-500',
-        completed: 'bg-green-500',
-        cancelled: 'bg-red-500',
-    }
-
-    return classes[status]
-}
 
 const campaignDuration = (campaign: Campaign) => {
     if (!campaign.end_date) {

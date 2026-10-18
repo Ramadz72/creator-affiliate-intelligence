@@ -405,7 +405,7 @@ const categoryCount = (category: string) => {
                     class="inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-medium transition-all duration-200"
                     :class="
                         selectedCategory === category.name
-                            ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                            ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
                             : 'border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground'
                     "
                     @click="selectCategory(category.name)"
