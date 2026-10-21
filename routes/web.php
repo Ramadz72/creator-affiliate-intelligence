@@ -203,9 +203,13 @@ Route::get('insights', [InsightsController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('insights.index');
 
-Route::get('/faq', function () {
-    return Inertia::render('FAQ/Index');
-})->name('faq');
+use App\Http\Controllers\FaqController;
+use App\Http\Controllers\SeoController;
+
+Route::get('/faq', [FaqController::class, 'index'])->name('faq');
+
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 use App\Http\Controllers\NotificationController;
 
