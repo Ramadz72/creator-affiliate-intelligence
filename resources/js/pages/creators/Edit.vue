@@ -205,17 +205,17 @@ const hasChanges = computed(() => {
 <template>
     <Head :title="`Edit ${creator.name}`" />
 
-    <div class="app-textured-bg min-h-full">
-        <div class="mx-auto max-w-7xl space-y-6 px-6 py-6">
+    <div class="app-textured-bg min-h-full p-4 text-foreground md:p-6">
+        <div class="mx-auto max-w-7xl space-y-6">
 
             <!-- Header -->
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                <div class="flex items-start gap-3">
+            <div class="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex items-start gap-4">
                     <Link
                         :href="`/creators/${creator.id}`"
                         class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background transition-all duration-200 hover:-translate-x-0.5 hover:bg-muted"
                     >
-                        <ArrowLeft class="h-4 w-4" />
+                        <ArrowLeft class="h-5 w-5" />
                     </Link>
 
                     <div>
@@ -265,9 +265,9 @@ const hasChanges = computed(() => {
 
             <!-- Creator Profile -->
             <section
-                class="group rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md"
+                class="group rounded-xl border border-border bg-card p-3 shadow-sm transition-all duration-200 hover:shadow-md"
             >
-                <div class="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
 
                     <div class="flex items-center gap-4">
 
@@ -366,10 +366,10 @@ const hasChanges = computed(() => {
             </section>
 
             <!-- Main -->
-            <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+            <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
 
                 <!-- Form -->
-                <div class="space-y-6">
+                <div class="space-y-5">
 
                     <!-- Profile -->
                     <section
@@ -393,7 +393,7 @@ const hasChanges = computed(() => {
                             </div>
                         </div>
 
-                        <div class="grid gap-5 p-5 sm:grid-cols-2">
+                        <div class="grid gap-5 p-5 md:p-6 sm:grid-cols-2">
 
                             <!-- Name -->
                             <div class="space-y-2">
@@ -523,7 +523,7 @@ const hasChanges = computed(() => {
                             </p>
                         </div>
 
-                        <div class="grid gap-5 p-5 sm:grid-cols-3">
+                        <div class="grid gap-5 p-5 md:p-6 sm:grid-cols-3">
 
                             <div class="space-y-2">
                                 <label class="text-xs font-medium">
@@ -610,7 +610,7 @@ const hasChanges = computed(() => {
                             </p>
                         </div>
 
-                        <div class="space-y-5 p-5">
+                        <div class="space-y-5 p-5 md:p-6">
 
                             <!-- Profile link -->
                             <div class="space-y-2">
@@ -737,7 +737,7 @@ const hasChanges = computed(() => {
                             </p>
                         </div>
 
-                        <div class="p-5">
+                        <div class="p-5 md:p-6">
 
                             <div class="flex flex-col items-center text-center">
                                 <div
@@ -832,7 +832,7 @@ const hasChanges = computed(() => {
             </div>
 
             <!-- Bottom action -->
-            <div class="flex items-center justify-between border-t border-border pt-5">
+            <div class="flex items-center justify-between border-t border-border pt-4">
                 <Link
                     :href="`/creators/${creator.id}`"
                     class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium transition hover:bg-muted"

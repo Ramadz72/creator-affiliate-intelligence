@@ -153,6 +153,7 @@ class CreatorAnalysisController extends Controller
                 'content_count' => $analysis['content_count'],
                 'average_views' => $analysis['average_views'],
                 'engagement_rate' => $analysis['engagement_rate'],
+                'average_roas' => $analysis['average_roas'] ?? null,
                 'rate_card_platform' => $analysis['rate_card']['platform'] ?? null,
                 'rate_card_deliverable' => $analysis['rate_card']['deliverable'] ?? null,
                 'rate_card_price' => $analysis['rate_card']['price'] ?? null,

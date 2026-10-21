@@ -769,7 +769,7 @@ const inputClass = (field: string) => {
                                 type="button"
                                 class="rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
                                 :class="activeSection === 'reach'
-                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
                                 @click="setActiveSection('reach')"
                             >
@@ -785,7 +785,7 @@ const inputClass = (field: string) => {
                                 type="button"
                                 class="rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
                                 :class="activeSection === 'conversion'
-                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
                                 @click="setActiveSection('conversion')"
                             >
@@ -801,7 +801,7 @@ const inputClass = (field: string) => {
                                 type="button"
                                 class="rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
                                 :class="activeSection === 'revenue'
-                                    ? 'bg-primary text-primary-foreground shadow-sm'
+                                    ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
                                     : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
                                 @click="setActiveSection('revenue')"
                             >
@@ -1334,7 +1334,7 @@ const inputClass = (field: string) => {
                             <button
                                 type="submit"
                                 :disabled="form.processing"
-                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-sky/90 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Save class="h-4 w-4" />
 

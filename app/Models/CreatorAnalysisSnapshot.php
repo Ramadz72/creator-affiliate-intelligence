@@ -16,6 +16,7 @@ class CreatorAnalysisSnapshot extends Model
         'content_count',
         'average_views',
         'engagement_rate',
+        'average_roas',
         'rate_card_platform',
         'rate_card_deliverable',
         'rate_card_price',
