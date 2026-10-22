@@ -71,8 +71,7 @@
             }
         </style>
 
-        <link rel="icon" href="/images/creator kecil.png" sizes="any">
-        <link rel="icon" href="/images/creator kecil.png" type="image/svg+xml">
+        <link rel="icon" href="/images/favicon.webp" type="image/webp" sizes="64x64">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         @fonts

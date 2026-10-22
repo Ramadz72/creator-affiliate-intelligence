@@ -977,7 +977,7 @@ const actionInfo = (action: string) => {
                         Score akan tersedia setelah affiliate memiliki data performance yang sudah diproses.
                     </p>
                 </div>
-            </div
+            </div>
 
         <!-- Period -->
         <div

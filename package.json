@@ -5,6 +5,7 @@
     "scripts": {
         "build": "vp build",
         "build:ssr": "vp build && vp build --ssr",
+        "ssr": "node bootstrap/ssr/ssr.js",
         "dev": "vp dev",
         "check": "vp check",
         "check:fix": "vp check --fix",
@@ -19,7 +20,6 @@
         "clsx": "^2.1.1",
         "echarts": "^6.1.0",
         "laravel-vite-plugin": "^3.0.0",
-        "lucide-vue-next": "^1.0.0",
         "reka-ui": "^2.9.8",
         "tailwind-merge": "^3.2.0",
         "tailwindcss": "^4.1.1",

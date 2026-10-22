@@ -165,7 +165,7 @@
                                             "
                                         >
                                             <img
-                                                src="{{ asset('images/creator kecil.png') }}"
+                                                src="{{ asset('images/creator kecil.webp') }}"
                                                 alt="CAI"
                                                 width="42"
                                                 height="42"

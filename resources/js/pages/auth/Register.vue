@@ -139,7 +139,7 @@ const canSubmit = computed(() => {
                 <!-- Logo -->
                 <div class="relative z-10">
                     <img
-                        src="/images/creator kecil.png"
+                        src="/images/creator kecil.webp"
                         alt="Creator Affiliate Intelligence"
                         class="h-16 w-auto object-contain"
                     />

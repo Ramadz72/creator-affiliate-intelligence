@@ -9,7 +9,7 @@ import {
     LockKeyhole,
     ShieldCheck,
     X,
-} from 'lucide-vue-next'
+} from '@lucide/vue'
 
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController'
 import Heading from '@/components/Heading.vue'

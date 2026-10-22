@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { ArrowUpRight } from '@lucide/vue'
+
 import {
-    ArrowUpRight,
-    BarChart3,
-    Github,
-    Instagram,
-    Linkedin,
-} from 'lucide-vue-next'
+    GithubIcon,
+    InstagramIcon,
+    LinkedinIcon,
+} from '@/components/icons/BrandIcon'
 </script>
 
 <template>
@@ -216,7 +216,7 @@ import {
                                 aria-label="GitHub"
                                 class="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
                             >
-                                <Github class="h-4 w-4" />
+                                <GithubIcon class="h-4 w-4" />
                             </a>
 
                             <a
@@ -224,7 +224,7 @@ import {
                                 aria-label="LinkedIn"
                                 class="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
                             >
-                                <Linkedin class="h-4 w-4" />
+                                <LinkedinIcon class="h-4 w-4" />
                             </a>
 
                             <a
@@ -232,7 +232,7 @@ import {
                                 aria-label="Instagram"
                                 class="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] text-slate-400 transition hover:border-white/20 hover:bg-white/10 hover:text-white"
                             >
-                                <Instagram class="h-4 w-4" />
+                                <InstagramIcon class="h-4 w-4" />
                             </a>
 
                         </div>

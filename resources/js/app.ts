@@ -7,31 +7,6 @@ import AuthLayout from '@/layouts/AuthLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { initializeFlashToast } from '@/lib/flashToast';
 
-import VChart from 'vue-echarts';
-
-import { use } from 'echarts/core';
-import { CanvasRenderer } from 'echarts/renderers';
-
-import {
-    LineChart,
-    BarChart,
-} from 'echarts/charts';
-
-import {
-    GridComponent,
-    TooltipComponent,
-    LegendComponent,
-} from 'echarts/components';
-
-use([
-    CanvasRenderer,
-    LineChart,
-    BarChart,
-    GridComponent,
-    TooltipComponent,
-    LegendComponent,
-]);
-
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 void createInertiaApp({
@@ -43,8 +18,6 @@ void createInertiaApp({
         });
 
         vueApp.use(plugin);
-
-        vueApp.component('VChart', VChart);
 
         if (el) {
             vueApp.mount(el);
@@ -63,7 +36,7 @@ void createInertiaApp({
 
             case name === 'errors/404':
                 return null;
-                
+
             case name.startsWith('auth/'):
                 return AuthLayout;
 

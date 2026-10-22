@@ -95,7 +95,7 @@ const progressWidth = computed(() => {
                 <!-- Logo -->
                 <div class="relative z-10">
                     <img
-                        src="/images/creator kecil.png"
+                        src="/images/creator kecil.webp"
                         alt="Creator Affiliate Intelligence"
                         class="h-14 w-auto object-contain"
                     />

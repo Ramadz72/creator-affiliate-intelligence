@@ -18,6 +18,8 @@ import {
     CircleDollarSign,
 } from '@lucide/vue'
 
+import PerformanceChart from '@/components/PerformanceChart.vue'
+
 interface Creator {
     id: number
     name: string
@@ -548,11 +550,7 @@ const scoreChartOption = computed(() => ({
                     class="w-full"
                     style="height: 320px;"
                 >
-                    <VChart
-                        :option="scoreChartOption"
-                        autoresize
-                        style="width: 100%; height: 100%;"
-                    />
+                    <PerformanceChart :option="scoreChartOption" />
                 </div>
 
                 <div

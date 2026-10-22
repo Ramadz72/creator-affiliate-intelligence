@@ -23,7 +23,7 @@ function goBack() {
 </script>
 
 <template>
-    <Head title="404 â€” Halaman Tidak Ditemukan" />
+    <Head title="404 — Halaman Tidak Ditemukan" />
 
     <main
         class="relative isolate min-h-screen overflow-hidden bg-[#f8f9fc] text-[#10172a]"
@@ -211,7 +211,7 @@ function goBack() {
                 class="mt-8 flex flex-col gap-3 border-t border-slate-200/70 py-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between"
             >
                 <p>
-                    Â© {{ new Date().getFullYear() }} Creator Affiliate Intelligence
+                    © {{ new Date().getFullYear() }} Creator Affiliate Intelligence
                 </p>
 
                 <p class="flex items-center gap-2">

@@ -17,9 +17,12 @@ return [
 
     'ssr' => [
         'enabled' => true,
-        'url' => 'http://127.0.0.1:13714',
-        // 'bundle' => base_path('bootstrap/ssr/ssr.mjs'),
+        'url' => env('INERTIA_SSR_URL', 'http://127.0.0.1:13714'),
+        'bundle' => base_path('bootstrap/ssr/ssr.js'),
 
+        // Lewati SSR bila bundle belum di-build, sehingga request tidak
+        // gagal saat server SSR belum dijalankan.
+        'ensure_bundle_exists' => true,
     ],
 
     /*

@@ -10,7 +10,7 @@
             class="flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-lg transition-all duration-200 group-data-[collapsible=icon]:h-9 group-data-[collapsible=icon]:w-9"
         >
             <img
-                src="/images/creator kecil.png"
+                src="/images/creator kecil.webp"
                 alt="Creator Affiliate Intelligence"
                 class="h-16 w-16 object-contain transition-all duration-200 group-data-[collapsible=icon]:h-8 group-data-[collapsible=icon]:w-8"
             />

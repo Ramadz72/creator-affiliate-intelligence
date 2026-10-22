@@ -1,16 +1,13 @@
-
 <script setup lang="ts">
-import { computed, defineAsyncComponent } from 'vue'
+import { computed, defineAsyncComponent } from 'vue';
 
 const props = defineProps<{
-    option: Record<string, unknown>
-}>()
+    option: Record<string, unknown>;
+}>();
 
-const AsyncVChart = defineAsyncComponent(
-    () => import('vue-echarts'),
-)
+const AsyncVChart = defineAsyncComponent(() => import('@/lib/echarts'));
 
-const chartOption = computed(() => props.option)
+const chartOption = computed(() => props.option);
 </script>
 
 <template>
@@ -22,7 +19,7 @@ const chartOption = computed(() => props.option)
         />
         <template #fallback>
             <div
-                class="flex h-full w-full items-center justify-center text-sm text-muted-foreground"
+                class="text-muted-foreground flex h-full w-full items-center justify-center text-sm"
             >
                 Memuat grafik...
             </div>

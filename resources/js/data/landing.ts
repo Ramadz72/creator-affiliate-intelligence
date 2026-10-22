@@ -91,7 +91,7 @@ export const REVIEWS: ReviewItem[] = [
     quote:
       "Affiliate Opportunity Analysis menunjukkan siapa yang harus saya kejar, diberi support, atau dilepas. Tim saya berhenti membuang waktu ke affiliate yang tidak berkembang.",
     metric: "GMV dari affiliate naik 58%",
-    image: "/images/reviews/review-1.webp",
+    image: "/images/reviews/review-1.opt.webp",
   },
   {
     id: "rev-2",
@@ -101,7 +101,7 @@ export const REVIEWS: ReviewItem[] = [
     quote:
       "Dulu saya booking KOL lima juta berdasarkan feeling. Sekarang tiap creator dianalisis dulu: performa, rate card, sampai estimasi value-nya. Yang tidak masuk akal tinggal saya negosiasi atau lewat.",
     metric: "ROI kolaborasi naik 3,4x dalam 3 bulan",
-    image: "/images/reviews/review-2.webp",
+    image: "/images/reviews/review-2.opt.webp",
   },
   {
     id: "rev-3",
@@ -111,7 +111,7 @@ export const REVIEWS: ReviewItem[] = [
     quote:
       "Rate card creator skincare besar bisa 9 juta per konten. Aplikasi ini menghitung estimasi value-nya dan memberi verdict Negotiate — jadi saya tahu angka wajar untuk menawar.",
     metric: "Biaya KOL turun 30% dengan hasil setara",
-    image: "/images/reviews/review-3.webp",
+    image: "/images/reviews/review-3.opt.webp",
   },
   {
     id: "rev-4",
@@ -121,7 +121,7 @@ export const REVIEWS: ReviewItem[] = [
     quote:
       "Kami mengelola 40+ affiliate. Yang dulu manual 8 jam di spreadsheet, sekarang 10 menit: daftar CHASE, SUPPORT, MONITOR, dan DEPRIORITIZE sudah jadi.",
     metric: "Waktu analisis turun dari 8 jam ke 10 menit",
-    image: "/images/reviews/review-4.webp",
+    image: "/images/reviews/review-4.opt.webp",
   },
 ];
 

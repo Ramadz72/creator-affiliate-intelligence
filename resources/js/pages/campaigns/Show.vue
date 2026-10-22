@@ -28,6 +28,8 @@ import {
     X,
 } from '@lucide/vue'
 
+import PerformanceChart from '@/components/PerformanceChart.vue'
+
 interface Creator {
     id: number
     name: string
@@ -2154,10 +2156,8 @@ const confirmDelete = () => {
                                 class="w-full"
                                 style="height: 320px"
                             >
-                                <VChart
+                                <PerformanceChart
                                     :option="performanceChartOption"
-                                    autoresize
-                                    style="width: 100%; height: 100%"
                                 />
                             </div>
                         </div>
