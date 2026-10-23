@@ -1,13 +1,9 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue'
-import {
-    UserSearch,
-    Headphones,
-    Eye,
-    CircleSlash,
-} from '@lucide/vue';
+import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
+import { UserSearch, Headphones, Eye, CircleSlash } from '@lucide/vue';
+import PerformanceOverviewChart from '@/components/dashboard/PerformanceOverviewChart.vue';
 
 defineOptions({
     layout: {
@@ -21,120 +17,117 @@ defineOptions({
 });
 
 interface AffiliatePerformance {
-    batch_id: number
-    period_start: string | null
-    period_end: string | null
-    gmv: number
-    orders: number
+    batch_id: number;
+    period_start: string | null;
+    period_end: string | null;
+    gmv: number;
+    orders: number;
 }
 
 interface ComparisonPerformance {
-    batch_id: number
-    period_start: string | null
-    period_end: string | null
-    gmv: number
-    orders: number
+    batch_id: number;
+    period_start: string | null;
+    period_end: string | null;
+    gmv: number;
+    orders: number;
 }
 
 interface CreatorOverview {
-    id: number
-    name: string
-    platform: string | null
-    category: string | null
-    score: number
+    id: number;
+    name: string;
+    platform: string | null;
+    category: string | null;
+    score: number;
 }
 
 interface AffiliateOverview {
-    id: number
-    name: string
-    username: string | null
-    platform: string | null
-    score: number
-    action: string
-    gmv: number
+    id: number;
+    name: string;
+    username: string | null;
+    platform: string | null;
+    score: number;
+    action: string;
+    gmv: number;
 }
 
 const props = defineProps<{
-    business_name: string | null
+    business_name: string | null;
 
     stats: {
-        creators: number
-        affiliates: number
-        campaigns: number
-        gmv: number
-        orders: number
-        avg_creator_score: number | null
-        avg_affiliate_opportunity: number | null
-        gmv_growth: number | null
-        orders_growth: number | null
-    }
+        creators: number;
+        affiliates: number;
+        campaigns: number;
+        gmv: number;
+        orders: number;
+        avg_creator_score: number | null;
+        avg_affiliate_opportunity: number | null;
+        gmv_growth: number | null;
+        orders_growth: number | null;
+    };
 
     orders_trend?: Array<{
-        orders: number
-    }>
+        orders: number;
+    }>;
 
     selected_period: {
-        start: string
-        end: string
-    }
+        start: string;
+        end: string;
+    };
 
     comparison_period: {
-        start: string
-        end: string
-    }
+        start: string;
+        end: string;
+    };
 
-    affiliate_performance: AffiliatePerformance[]
+    affiliate_performance: AffiliatePerformance[];
 
-    comparison_affiliate_performance: ComparisonPerformance[]
+    comparison_affiliate_performance: ComparisonPerformance[];
 
-    creator_overview: CreatorOverview[]
-    affiliate_overview: AffiliateOverview[]
+    creator_overview: CreatorOverview[];
+    affiliate_overview: AffiliateOverview[];
 
     insight_preview: {
         period: {
-            start: string | null
-            end: string | null
-        }
+            start: string | null;
+            end: string | null;
+        };
         summary: {
-            total_gmv: number
-            total_orders: number
-            total_products_sold: number
-            affiliate_count: number
-        }
+            total_gmv: number;
+            total_orders: number;
+            total_products_sold: number;
+            affiliate_count: number;
+        };
         insights: Array<{
-            type: string
-            title: string
-            headline: string
-            description: string
-            recommended_action: string
-            affiliate_id?: number
-            count?: number
-        }>
+            type: string;
+            title: string;
+            headline: string;
+            description: string;
+            recommended_action: string;
+            affiliate_id?: number;
+            count?: number;
+        }>;
         top_gmv: Array<{
-            affiliate_id: number
-            name: string | null
-            username: string | null
-            gmv: number
-            orders: number
-            products_sold: number
-            overall_score: number | null
-            action: string | null
-        }>
-    } | null
+            affiliate_id: number;
+            name: string | null;
+            username: string | null;
+            gmv: number;
+            orders: number;
+            products_sold: number;
+            overall_score: number | null;
+            action: string | null;
+        }>;
+    } | null;
 
     action_required: {
-        creators_to_review: number
-        affiliates_to_support: number
-        need_monitoring: number
-        deprioritize: number
-    }
-}>()
-
+        creators_to_review: number;
+        affiliates_to_support: number;
+        need_monitoring: number;
+        deprioritize: number;
+    };
+}>();
 
 const ordersTrendPoints = computed(() => {
-    const rows = Array.isArray(props.orders_trend)
-        ? props.orders_trend
-        : [];
+    const rows = Array.isArray(props.orders_trend) ? props.orders_trend : [];
 
     if (rows.length < 2) return '';
 
@@ -160,117 +153,113 @@ const ordersTrendPoints = computed(() => {
         .join(' ');
 });
 
-const showPeriodPicker = ref(false)
+const showPeriodPicker = ref(false);
 
-const startDate = ref(
-    props.selected_period?.start ?? ''
-)
+const startDate = ref(props.selected_period?.start ?? '');
 
-const endDate = ref(
-    props.selected_period?.end ?? ''
-)
+const endDate = ref(props.selected_period?.end ?? '');
 
-type PeriodPreset = '7days' | '30days' | 'today' | 'custom'
+type PeriodPreset = '7days' | '30days' | 'today' | 'custom';
 
-const periodPreset = ref<PeriodPreset>('custom')
+const periodPreset = ref<PeriodPreset>('custom');
 
 const formatDateInput = (date: Date) => {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
 
-    return `${year}-${month}-${day}`
-}
+    return `${year}-${month}-${day}`;
+};
 
-const getToday = () => formatDateInput(new Date())
+const getToday = () => formatDateInput(new Date());
 
 const getDaysAgo = (days: number) => {
-    const date = new Date()
-    date.setDate(date.getDate() - days)
-    return formatDateInput(date)
-}
+    const date = new Date();
+    date.setDate(date.getDate() - days);
+    return formatDateInput(date);
+};
 
 const selectPreset = (preset: '7days' | '30days' | 'today') => {
-    periodPreset.value = preset
+    periodPreset.value = preset;
 
     if (preset === 'today') {
-        startDate.value = getToday()
-        endDate.value = getToday()
+        startDate.value = getToday();
+        endDate.value = getToday();
     }
 
     if (preset === '7days') {
-        startDate.value = getDaysAgo(6)
-        endDate.value = getToday()
+        startDate.value = getDaysAgo(6);
+        endDate.value = getToday();
     }
 
     if (preset === '30days') {
-        startDate.value = getDaysAgo(29)
-        endDate.value = getToday()
+        startDate.value = getDaysAgo(29);
+        endDate.value = getToday();
     }
-}
+};
 
 const selectCustom = () => {
-    periodPreset.value = 'custom'
-}
+    periodPreset.value = 'custom';
+};
 
 const formatDate = (date: string | null) => {
-    if (!date) return '-'
+    if (!date) return '-';
 
-    const parsed = new Date(`${date}T00:00:00`)
+    const parsed = new Date(`${date}T00:00:00`);
 
     if (Number.isNaN(parsed.getTime())) {
-        return date
+        return date;
     }
 
     return new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
-    }).format(parsed)
-}
+    }).format(parsed);
+};
 
 const selectedPeriodQuery = computed(() => {
     if (!props.selected_period) {
-        return ''
+        return '';
     }
 
-    return `?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}`
-})
+    return `?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}`;
+});
 
 const affiliateDetailUrl = (affiliateId: number) => {
     if (!props.selected_period?.start || !props.selected_period?.end) {
-        return `/affiliates/${affiliateId}?from=dashboard`
+        return `/affiliates/${affiliateId}?from=dashboard`;
     }
 
-    return `/affiliates/${affiliateId}?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}&from=dashboard`
-}
+    return `/affiliates/${affiliateId}?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}&from=dashboard`;
+};
 
 const insightDetailUrl = (insightId: number) => {
     if (!props.selected_period?.start || !props.selected_period?.end) {
-        return `/insights/${insightId}?from=dashboard`
+        return `/insights/${insightId}?from=dashboard`;
     }
 
-    return `/insights/${insightId}?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}&from=dashboard`
-}
+    return `/insights/${insightId}?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}&from=dashboard`;
+};
 
 const selectedPeriodLabel = () => {
     if (!startDate.value || !endDate.value) {
-        return 'Pilih Periode'
+        return 'Pilih Periode';
     }
 
-    return `${formatDate(startDate.value)} — ${formatDate(endDate.value)}`
-}
+    return `${formatDate(startDate.value)} — ${formatDate(endDate.value)}`;
+};
 
 const applyPeriod = () => {
     if (!startDate.value || !endDate.value) {
-        return
+        return;
     }
 
     if (startDate.value > endDate.value) {
-        return
+        return;
     }
 
-    showPeriodPicker.value = false
+    showPeriodPicker.value = false;
 
     router.get(
         '/dashboard',
@@ -282,234 +271,114 @@ const applyPeriod = () => {
             preserveScroll: true,
             preserveState: false,
         },
-    )
-}
+    );
+};
 
 /*
 |--------------------------------------------------------------------------
-| Chart
+| Chart Helpers
 |--------------------------------------------------------------------------
 */
 
-const chartData = props.affiliate_performance ?? []
+const formatPeriod = (start: string | null, end: string | null) => {
+    if (!start || !end) return '-';
 
-const comparisonChartData =
-    props.comparison_affiliate_performance ?? []
+    const startDate = new Date(start);
+    const endDate = new Date(end);
 
-type ChartMetric =
-    | 'gmv'
-    | 'orders'
-
-const selectedChartMetric = ref<ChartMetric>('gmv')
-
-type ChartType =
-    | 'bar'
-    | 'line'
-
-const selectedChartType = ref<ChartType>('bar')
-
-type ChartPeriod =
-    | 'current'
-    | 'previous'
-    | 'both'
-
-const selectedChartPeriod = ref<ChartPeriod>('both')
-
-const currentChartData = computed(() => {
-    return chartData.map((item) => ({
-        ...item,
-        chartPeriod: 'current' as const,
-        value:
-            selectedChartMetric.value === 'gmv'
-                ? item.gmv
-                : item.orders,
-    }))
-})
-
-const previousChartData = computed(() => {
-    return comparisonChartData.map((item) => ({
-        ...item,
-        chartPeriod: 'previous' as const,
-        value:
-            selectedChartMetric.value === 'gmv'
-                ? item.gmv
-                : item.orders,
-    }))
-})
-
-const activeChartData = computed(() => {
-    if (selectedChartPeriod.value === 'current') {
-        return currentChartData.value
-    }
-
-    if (selectedChartPeriod.value === 'previous') {
-        return previousChartData.value
-    }
-
-    return [
-        ...previousChartData.value,
-        ...currentChartData.value,
-    ]
-})
-
-const chartHasData = computed(() => {
-    return activeChartData.value.length > 0
-})
-
-const getChartValue = (
-    item:
-        | AffiliatePerformance
-        | ComparisonPerformance
-        | {
-            batch_id: number
-            period_start: string | null
-            period_end: string | null
-            gmv: number
-            orders: number
-            chartPeriod: 'current' | 'previous'
-            value: number
-        }
-) => {
-    return selectedChartMetric.value === 'gmv'
-        ? item.gmv
-        : item.orders
-}
-
-const maxChartValue = computed(() => {
-    return Math.max(
-        ...activeChartData.value.map((item) => item.value),
-        1,
-    )
-})
-
-const getBarHeight = (value: number) => {
-    return `${Math.max(
-        (value / maxChartValue.value) * 100,
-        4,
-    )}%`
-}
-
-const getLineX = (
-    index: number,
-    total: number,
-) => {
-    if (total <= 1) {
-        return 500
-    }
-
-    return (index / (total - 1)) * 1000
-}
-
-const getLineY = (value: number) => {
-    return 270 - ((value / maxChartValue.value) * 230)
-}
-
-const formatPeriod = (
-    start: string | null,
-    end: string | null,
-) => {
-    if (!start || !end) return '-'
-
-    const startDate = new Date(start)
-    const endDate = new Date(end)
-
-    if (
-        Number.isNaN(startDate.getTime()) ||
-        Number.isNaN(endDate.getTime())
-    ) {
-        return '-'
+    if (Number.isNaN(startDate.getTime()) || Number.isNaN(endDate.getTime())) {
+        return '-';
     }
 
     const format = new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
         month: 'short',
-    })
+    });
 
-    return `${format.format(startDate)} — ${format.format(endDate)}`
-}
+    return `${format.format(startDate)} — ${format.format(endDate)}`;
+};
 
 const formatGMV = (value: number) => {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         maximumFractionDigits: 0,
-    }).format(value)
-}
+    }).format(value);
+};
 
 const formatNumber = (value: number) => {
-    return new Intl.NumberFormat('id-ID').format(value)
-}
+    return new Intl.NumberFormat('id-ID').format(value);
+};
 
 const formatGrowth = (value: number | null) => {
     if (value === null || value === undefined) {
-        return 'No comparison'
+        return 'No comparison';
     }
 
-    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`
-}
+    return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+};
 
 const growthClass = (value: number | null) => {
     if (value === null || value === undefined) {
-        return 'text-muted-foreground'
+        return 'text-muted-foreground';
     }
 
-    return value >= 0
-        ? 'text-emerald-500'
-        : 'text-red-500'
-}
+    return value >= 0 ? 'text-emerald-500' : 'text-red-500';
+};
 
 const getInsight = (type: string) => {
-    return props.insight_preview?.insights.find(
-        (item) => item.type === type,
-    ) ?? null
-}
+    return (
+        props.insight_preview?.insights.find((item) => item.type === type) ??
+        null
+    );
+};
 
 const topPerformer = () => {
-    return props.insight_preview?.top_gmv?.[0] ?? null
-}
+    return props.insight_preview?.top_gmv?.[0] ?? null;
+};
 
 const insightPeriodLabel = () => {
     if (
         !props.insight_preview?.period?.start ||
         !props.insight_preview?.period?.end
     ) {
-        return ''
+        return '';
     }
 
     return formatPeriod(
         props.insight_preview.period.start,
         props.insight_preview.period.end,
-    )
-}
+    );
+};
 
 const handleOutsideClick = (event: MouseEvent) => {
-    const target = event.target as HTMLElement
+    const target = event.target as HTMLElement;
 
     if (!target.closest('[data-period-dropdown]')) {
-        showPeriodPicker.value = false
+        showPeriodPicker.value = false;
     }
-}
+};
 
 onMounted(() => {
-    document.addEventListener('click', handleOutsideClick)
-})
+    document.addEventListener('click', handleOutsideClick);
+});
 
 onBeforeUnmount(() => {
-    document.removeEventListener('click', handleOutsideClick)
-})
-
+    document.removeEventListener('click', handleOutsideClick);
+});
 </script>
 
 <template>
     <Head title="Dashboard" />
 
-    <div class="app-textured-bg min-h-full p-4 text-foreground md:p-6">
-
+    <div class="app-textured-bg text-foreground min-h-full p-4 md:p-6">
         <!-- Header -->
         <div class="mb-6">
-            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div
+                class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+            >
                 <div>
-                    <p class="text-sm text-muted-foreground">
+                    <p class="text-muted-foreground text-sm">
                         Selamat datang kembali 👋
                     </p>
 
@@ -517,30 +386,34 @@ onBeforeUnmount(() => {
                         {{ props.business_name || 'Nama Bisnis' }}
                     </h1>
 
-                    <p class="mt-1 text-sm text-muted-foreground">
-                        Pantau performa creator dan affiliate tokomu di satu tempat.
+                    <p class="text-muted-foreground mt-1 text-sm">
+                        Pantau performa creator dan affiliate tokomu di satu
+                        tempat.
                     </p>
                 </div>
 
                 <!-- Periode Data -->
-                <div
-                    class="relative ml-auto shrink-0"
-                    data-period-dropdown
-                >
+                <div class="relative ml-auto shrink-0" data-period-dropdown>
                     <button
                         type="button"
                         @click="showPeriodPicker = !showPeriodPicker"
-                        class="flex h-10 min-w-[285px] items-center justify-between gap-3 rounded-lg border border-border bg-background px-3.5 text-sm text-foreground shadow-sm transition-all hover:border-sky-300 hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
+                        class="border-border bg-background text-foreground hover:bg-muted/40 flex h-10 min-w-[285px] items-center justify-between gap-3 rounded-lg border px-3.5 text-sm shadow-sm transition-all hover:border-sky-300 focus:ring-2 focus:ring-sky-500/20 focus:outline-none"
                     >
                         <span class="flex min-w-0 items-center gap-2">
                             <svg
-                                class="h-4 w-4 shrink-0 text-muted-foreground"
+                                class="text-muted-foreground h-4 w-4 shrink-0"
                                 viewBox="0 0 24 24"
                                 fill="none"
                                 stroke="currentColor"
                                 stroke-width="2"
                             >
-                                <rect x="3" y="4" width="18" height="18" rx="2" />
+                                <rect
+                                    x="3"
+                                    y="4"
+                                    width="18"
+                                    height="18"
+                                    rx="2"
+                                />
                                 <line x1="16" y1="2" x2="16" y2="6" />
                                 <line x1="8" y1="2" x2="8" y2="6" />
                                 <line x1="3" y1="10" x2="21" y2="10" />
@@ -552,7 +425,7 @@ onBeforeUnmount(() => {
                         </span>
 
                         <svg
-                            class="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200"
+                            class="text-muted-foreground h-4 w-4 shrink-0 transition-transform duration-200"
                             :class="{ 'rotate-180': showPeriodPicker }"
                             viewBox="0 0 24 24"
                             fill="none"
@@ -573,21 +446,27 @@ onBeforeUnmount(() => {
                     >
                         <div
                             v-if="showPeriodPicker"
-                            class="absolute right-0 z-50 mt-2 w-[min(92vw,420px)] overflow-hidden rounded-xl border border-border bg-popover shadow-xl shadow-black/10"
+                            class="border-border bg-popover absolute right-0 z-50 mt-2 w-[min(92vw,420px)] overflow-hidden rounded-xl border shadow-xl shadow-black/10"
                         >
-                            <div class="grid grid-cols-[140px_minmax(0,1fr)] sm:grid-cols-[150px_minmax(0,1fr)]">
-
+                            <div
+                                class="grid grid-cols-[140px_minmax(0,1fr)] sm:grid-cols-[150px_minmax(0,1fr)]"
+                            >
                                 <!-- Preset -->
-                                <div class="border-r border-border p-2">
-                                    <p class="px-3 py-2 text-xs font-medium text-muted-foreground">
+                                <div class="border-border border-r p-2">
+                                    <p
+                                        class="text-muted-foreground px-3 py-2 text-xs font-medium"
+                                    >
                                         Periode
                                     </p>
 
                                     <button
                                         type="button"
                                         @click="selectPreset('7days')"
-                                        class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
-                                        :class="{ 'bg-muted font-medium': periodPreset === '7days' }"
+                                        class="hover:bg-muted flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition"
+                                        :class="{
+                                            'bg-muted font-medium':
+                                                periodPreset === '7days',
+                                        }"
                                     >
                                         7 hari terakhir
                                     </button>
@@ -595,8 +474,11 @@ onBeforeUnmount(() => {
                                     <button
                                         type="button"
                                         @click="selectPreset('30days')"
-                                        class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
-                                        :class="{ 'bg-muted font-medium': periodPreset === '30days' }"
+                                        class="hover:bg-muted flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition"
+                                        :class="{
+                                            'bg-muted font-medium':
+                                                periodPreset === '30days',
+                                        }"
                                     >
                                         30 hari terakhir
                                     </button>
@@ -604,8 +486,11 @@ onBeforeUnmount(() => {
                                     <button
                                         type="button"
                                         @click="selectPreset('today')"
-                                        class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
-                                        :class="{ 'bg-muted font-medium': periodPreset === 'today' }"
+                                        class="hover:bg-muted flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition"
+                                        :class="{
+                                            'bg-muted font-medium':
+                                                periodPreset === 'today',
+                                        }"
                                     >
                                         Hari ini
                                     </button>
@@ -613,11 +498,16 @@ onBeforeUnmount(() => {
                                     <button
                                         type="button"
                                         @click="selectCustom"
-                                        class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
-                                        :class="{ 'bg-muted font-medium': periodPreset === 'custom' }"
+                                        class="hover:bg-muted flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition"
+                                        :class="{
+                                            'bg-muted font-medium':
+                                                periodPreset === 'custom',
+                                        }"
                                     >
                                         <span>Kustom</span>
-                                        <span class="text-muted-foreground">›</span>
+                                        <span class="text-muted-foreground"
+                                            >›</span
+                                        >
                                     </button>
                                 </div>
 
@@ -627,25 +517,32 @@ onBeforeUnmount(() => {
                                         <p class="text-sm font-medium">
                                             Pilih rentang tanggal
                                         </p>
-                                        <p class="mt-1 text-xs leading-relaxed text-muted-foreground">
-                                            Data dibandingkan dengan periode sebelumnya.
+                                        <p
+                                            class="text-muted-foreground mt-1 text-xs leading-relaxed"
+                                        >
+                                            Data dibandingkan dengan periode
+                                            sebelumnya.
                                         </p>
                                     </div>
 
                                     <div>
-                                        <label class="mb-1.5 block text-xs font-medium text-muted-foreground">
+                                        <label
+                                            class="text-muted-foreground mb-1.5 block text-xs font-medium"
+                                        >
                                             Tanggal mulai
                                         </label>
                                         <input
                                             v-model="startDate"
                                             type="date"
                                             @focus="selectCustom"
-                                            class="h-10 w-full min-w-0 rounded-lg border border-border bg-background px-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
+                                            class="border-border bg-background h-10 w-full min-w-0 rounded-lg border px-2 text-sm transition outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
                                         />
                                     </div>
 
                                     <div class="mt-3">
-                                        <label class="mb-1.5 block text-xs font-medium text-muted-foreground">
+                                        <label
+                                            class="text-muted-foreground mb-1.5 block text-xs font-medium"
+                                        >
                                             Tanggal akhir
                                         </label>
                                         <input
@@ -653,20 +550,29 @@ onBeforeUnmount(() => {
                                             type="date"
                                             :min="startDate || undefined"
                                             @focus="selectCustom"
-                                            class="h-10 w-full min-w-0 rounded-lg border border-border bg-background px-2 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
+                                            class="border-border bg-background h-10 w-full min-w-0 rounded-lg border px-2 text-sm transition outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
                                         />
                                     </div>
 
                                     <p
-                                        v-if="startDate && endDate && startDate > endDate"
+                                        v-if="
+                                            startDate &&
+                                            endDate &&
+                                            startDate > endDate
+                                        "
                                         class="mt-2 text-xs text-red-500"
                                     >
-                                        Tanggal akhir tidak boleh sebelum tanggal mulai.
+                                        Tanggal akhir tidak boleh sebelum
+                                        tanggal mulai.
                                     </p>
 
                                     <!-- Preview -->
-                                    <div class="mt-4 rounded-lg border border-border bg-muted/30 p-3">
-                                        <p class="text-xs text-muted-foreground">
+                                    <div
+                                        class="border-border bg-muted/30 mt-4 rounded-lg border p-3"
+                                    >
+                                        <p
+                                            class="text-muted-foreground text-xs"
+                                        >
                                             Periode terpilih
                                         </p>
 
@@ -674,25 +580,39 @@ onBeforeUnmount(() => {
                                             v-if="startDate && endDate"
                                             class="mt-1.5 text-sm font-semibold"
                                         >
-                                            {{ formatDate(startDate) }} — {{ formatDate(endDate) }}
+                                            {{ formatDate(startDate) }} —
+                                            {{ formatDate(endDate) }}
                                         </p>
                                         <p
                                             v-else
-                                            class="mt-1.5 text-sm text-muted-foreground"
+                                            class="text-muted-foreground mt-1.5 text-sm"
                                         >
                                             Pilih rentang tanggal
                                         </p>
 
                                         <div
                                             v-if="props.comparison_period"
-                                            class="mt-3 border-t border-border pt-3"
+                                            class="border-border mt-3 border-t pt-3"
                                         >
-                                            <p class="text-xs text-muted-foreground">
+                                            <p
+                                                class="text-muted-foreground text-xs"
+                                            >
                                                 Periode pembanding
                                             </p>
                                             <p class="mt-1 text-sm font-medium">
-                                                {{ formatDate(props.comparison_period.start) }}
-                                                — {{ formatDate(props.comparison_period.end) }}
+                                                {{
+                                                    formatDate(
+                                                        props.comparison_period
+                                                            .start,
+                                                    )
+                                                }}
+                                                —
+                                                {{
+                                                    formatDate(
+                                                        props.comparison_period
+                                                            .end,
+                                                    )
+                                                }}
                                             </p>
                                         </div>
                                     </div>
@@ -700,7 +620,11 @@ onBeforeUnmount(() => {
                                     <button
                                         type="button"
                                         @click="applyPeriod"
-                                        :disabled="!startDate || !endDate || startDate > endDate"
+                                        :disabled="
+                                            !startDate ||
+                                            !endDate ||
+                                            startDate > endDate
+                                        "
                                         class="mt-4 flex h-10 w-full items-center justify-center rounded-lg bg-sky-600 px-4 text-sm font-medium text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         Terapkan Periode
@@ -710,21 +634,19 @@ onBeforeUnmount(() => {
                         </div>
                     </Transition>
                 </div>
-
             </div>
         </div>
 
         <!-- Executive KPI -->
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-
             <!-- Total Creators -->
             <Link
                 href="/creators"
-                class="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500/40 hover:shadow-lg"
+                class="group border-border bg-card rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500/40 hover:shadow-lg"
             >
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-sm text-muted-foreground">
+                        <p class="text-muted-foreground text-sm">
                             Total Creators
                         </p>
 
@@ -732,7 +654,7 @@ onBeforeUnmount(() => {
                             {{ formatNumber(props.stats.creators) }}
                         </p>
 
-                        <p class="mt-2 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-2 text-xs">
                             Creator dalam database
                         </p>
                     </div>
@@ -748,11 +670,11 @@ onBeforeUnmount(() => {
             <!-- Total Affiliates -->
             <Link
                 href="/affiliates"
-                class="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-lg"
+                class="group border-border bg-card rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-lg"
             >
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-sm text-muted-foreground">
+                        <p class="text-muted-foreground text-sm">
                             Total Affiliates
                         </p>
 
@@ -760,7 +682,7 @@ onBeforeUnmount(() => {
                             {{ formatNumber(props.stats.affiliates) }}
                         </p>
 
-                        <p class="mt-2 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-2 text-xs">
                             Affiliate terdaftar
                         </p>
                     </div>
@@ -775,13 +697,11 @@ onBeforeUnmount(() => {
 
             <!-- GMV -->
             <div
-                class="rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                class="border-border bg-card rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
             >
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-sm text-muted-foreground">
-                            Total GMV
-                        </p>
+                        <p class="text-muted-foreground text-sm">Total GMV</p>
 
                         <p class="mt-3 text-2xl font-semibold tracking-tight">
                             {{ formatGMV(props.stats.gmv) }}
@@ -809,11 +729,11 @@ onBeforeUnmount(() => {
             <!-- Active Campaigns -->
             <Link
                 href="/campaigns"
-                class="group rounded-xl border border-border bg-card p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg"
+                class="group border-border bg-card rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg"
             >
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-sm text-muted-foreground">
+                        <p class="text-muted-foreground text-sm">
                             Active Campaigns
                         </p>
 
@@ -821,7 +741,7 @@ onBeforeUnmount(() => {
                             {{ formatNumber(props.stats.campaigns) }}
                         </p>
 
-                        <p class="mt-2 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-2 text-xs">
                             Campaign yang sedang berjalan
                         </p>
                     </div>
@@ -837,15 +757,11 @@ onBeforeUnmount(() => {
 
         <!-- Intelligence Summary -->
         <div class="mt-4 grid gap-4 md:grid-cols-2">
-
-                
             <!-- Orders -->
-            <div
-                class="rounded-xl border border-border bg-card p-5"
-            >
+            <div class="border-border bg-card rounded-xl border p-5">
                 <div class="flex items-start justify-between gap-4">
                     <div class="min-w-0">
-                        <p class="text-sm text-muted-foreground">
+                        <p class="text-muted-foreground text-sm">
                             Attributed Orders
                         </p>
 
@@ -853,7 +769,7 @@ onBeforeUnmount(() => {
                             {{ formatNumber(props.stats.orders) }}
                         </p>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             Order yang teratribusi ke affiliate
                         </p>
                     </div>
@@ -876,9 +792,10 @@ onBeforeUnmount(() => {
                         </span>
                     </div>
 
-                                        
                     <!-- Mini trend chart: actual attributed orders -->
-                    <div class="flex min-w-0 flex-1 flex-col items-center gap-2 pr-2">
+                    <div
+                        class="flex min-w-0 flex-1 flex-col items-center gap-2 pr-2"
+                    >
                         <svg
                             v-if="ordersTrendPoints"
                             class="h-16 w-full max-w-[220px] text-sky-400"
@@ -898,34 +815,26 @@ onBeforeUnmount(() => {
                             />
                         </svg>
 
-                        <p v-else class="text-xs text-muted-foreground">
+                        <p v-else class="text-muted-foreground text-xs">
                             Belum ada data tren
                         </p>
-
                     </div>
-
                 </div>
             </div>
 
-
             <!-- Intelligence Scores -->
-            <div
-                class="rounded-xl border border-border bg-card p-5"
-            >
+            <div class="border-border bg-card rounded-xl border p-5">
                 <div class="mb-4">
-                    <p class="text-sm font-medium">
-                        Intelligence Score
-                    </p>
+                    <p class="text-sm font-medium">Intelligence Score</p>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Gambaran kualitas creator dan peluang affiliate.
                     </p>
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
-
-                    <div class="rounded-lg bg-muted/40 p-3">
-                        <p class="text-xs text-muted-foreground">
+                    <div class="bg-muted/40 rounded-lg p-3">
+                        <p class="text-muted-foreground text-xs">
                             Avg Creator Score
                         </p>
 
@@ -937,579 +846,57 @@ onBeforeUnmount(() => {
                             }}
                         </p>
 
-                        <p class="mt-1 text-[11px] text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-[11px]">
                             Overall creator
                         </p>
                     </div>
 
-                    <div class="rounded-lg bg-muted/40 p-3">
-                        <p class="text-xs text-muted-foreground">
+                    <div class="bg-muted/40 rounded-lg p-3">
+                        <p class="text-muted-foreground text-xs">
                             Avg Opportunity
                         </p>
 
                         <p class="mt-2 text-2xl font-semibold">
                             {{
                                 props.stats.avg_affiliate_opportunity !== null
-                                    ? props.stats.avg_affiliate_opportunity.toFixed(1)
+                                    ? props.stats.avg_affiliate_opportunity.toFixed(
+                                          1,
+                                      )
                                     : '-'
                             }}
                         </p>
 
-                        <p class="mt-1 text-[11px] text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-[11px]">
                             Affiliate opportunity
                         </p>
                     </div>
-
                 </div>
             </div>
-
         </div>
 
         <!-- Main Analytics -->
         <div class="mt-4 grid gap-4 xl:grid-cols-3">
-
-            <!-- Affiliate Performance -->
-            <div
-                class="rounded-xl border border-border bg-card p-5 xl:col-span-2"
-            >
-                <!-- Header -->
-                <div class="flex items-start justify-between gap-4">
-                    <div class="min-w-0">
-                        <p class="text-base font-medium">
-                            Performance Overview
-                        </p>
-
-                        <p class="mt-1 text-sm text-muted-foreground">
-                            {{
-                                selectedChartMetric === 'gmv'
-                                    ? 'Pergerakan GMV berdasarkan data import affiliate.'
-                                    : 'Pergerakan jumlah orders berdasarkan data import affiliate.'
-                            }}
-                        </p>
-                    </div>
-
-                    <div class="flex shrink-0 items-center gap-2">
-                        <!-- Metric -->
-                        <select
-                            v-model="selectedChartMetric"
-                            class="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium outline-none transition-colors hover:bg-muted focus:ring-2 focus:ring-ring"
-                        >
-                            <option value="gmv">
-                                GMV
-                            </option>
-
-                            <option value="orders">
-                                Orders
-                            </option>
-                        </select>
-
-                        <!-- Chart Type -->
-                        <select
-                            v-model="selectedChartType"
-                            class="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium outline-none transition-colors hover:bg-muted focus:ring-2 focus:ring-ring"
-                        >
-                            <option value="bar">
-                                Bar
-                            </option>
-
-                            <option value="line">
-                                Line
-                            </option>
-                        </select>
-
-                        <!-- Period -->
-                        <select
-                            v-model="selectedChartPeriod"
-                            class="rounded-md border border-border bg-background px-2.5 py-1 text-xs font-medium outline-none transition-colors hover:bg-muted focus:ring-2 focus:ring-ring"
-                        >
-                            <option value="current">
-                                Current
-                            </option>
-
-                            <option value="previous">
-                                Previous
-                            </option>
-
-                            <option value="both">
-                                Both
-                            </option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Legend -->
-                <div
-                    v-if="selectedChartPeriod === 'both'"
-                    class="mt-4 flex items-center gap-5 text-xs text-muted-foreground"
-                >
-                    <div class="flex items-center gap-2">
-                        <span class="h-2.5 w-2.5 rounded-full bg-blue-500" />
-                        <span>Current Period</span>
-                    </div>
-
-                    <div class="flex items-center gap-2">
-                        <span class="h-2.5 w-2.5 rounded-full bg-muted-foreground/40" />
-                        <span>Previous Period</span>
-                    </div>
-                </div>
-
-                <!-- Chart -->
-                <div class="relative mt-6 h-64">
-
-                    <!-- Grid -->
-                    <div
-                        class="pointer-events-none absolute inset-x-0 inset-y-0 flex flex-col justify-between pb-8"
-                    >
-                        <div class="border-t border-border/30" />
-                        <div class="border-t border-border/20" />
-                        <div class="border-t border-border/20" />
-                        <div class="border-t border-border/20" />
-                        <div class="border-t border-border/30" />
-                    </div>
-
-                    <!-- ========================= -->
-                    <!-- BAR CHART -->
-                    <!-- ========================= -->
-                    <div
-                        v-if="
-                            chartHasData &&
-                            selectedChartType === 'bar'
-                        "
-                        class="relative z-10 flex h-full items-end gap-3"
-                    >
-                        <div
-                            v-for="item in activeChartData"
-                            :key="`${item.chartPeriod}-${item.batch_id}`"
-                            class="group relative flex h-full flex-1 items-end"
-                        >
-                            <!-- Tooltip -->
-                            <div
-                                class="pointer-events-none absolute bottom-full left-1/2 z-20 mb-2 w-max max-w-[220px] -translate-x-1/2 rounded-lg border border-border bg-popover px-3 py-2 text-xs opacity-0 shadow-lg transition-opacity duration-200 group-hover:opacity-100"
-                            >
-                                <p class="font-medium text-foreground">
-                                    {{ formatPeriod(item.period_start, item.period_end) }}
-                                </p>
-
-                                <p
-                                    v-if="selectedChartPeriod === 'both'"
-                                    class="mt-1 text-[10px] font-medium uppercase tracking-wide"
-                                    :class="
-                                        item.chartPeriod === 'previous'
-                                            ? 'text-muted-foreground'
-                                            : 'text-blue-500'
-                                    "
-                                >
-                                    {{
-                                        item.chartPeriod === 'previous'
-                                            ? 'Previous Period'
-                                            : 'Current Period'
-                                    }}
-                                </p>
-
-                                <p
-                                    class="mt-1 font-medium"
-                                    :class="
-                                        item.chartPeriod === 'previous'
-                                            ? 'text-muted-foreground'
-                                            : 'text-blue-500'
-                                    "
-                                >
-                                    <template v-if="selectedChartMetric === 'gmv'">
-                                        {{ formatGMV(getChartValue(item)) }}
-                                    </template>
-
-                                    <template v-else>
-                                        {{ formatNumber(getChartValue(item)) }} orders
-                                    </template>
-                                </p>
-                            </div>
-
-                            <!-- Bar -->
-                            <div
-                                class="group/bar relative w-full overflow-hidden rounded-t-md shadow-[0_-4px_18px_rgba(59,130,246,0.08)] transition-[height,transform,background-color,box-shadow] duration-500 ease-out hover:-translate-y-1 hover:shadow-[0_-6px_24px_rgba(59,130,246,0.20)]"
-                                :class="
-                                    item.chartPeriod === 'previous'
-                                        ? 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
-                                        : 'bg-blue-500/70 hover:bg-blue-500'
-                                "
-                                :style="{
-                                    height: getBarHeight(
-                                        getChartValue(item)
-                                    )
-                                }"
-                            >
-                                <div
-                                    class="absolute inset-x-0 top-0 h-px bg-white/50"
-                                />
-
-                                <div
-                                    class="absolute inset-y-0 left-0 w-1/3 bg-gradient-to-r from-white/[0.10] to-transparent opacity-0 transition-opacity duration-300 group-hover/bar:opacity-100"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ========================= -->
-                    <!-- LINE CHART -->
-                    <!-- ========================= -->
-                    <div
-                        v-else-if="
-                            chartHasData &&
-                            selectedChartType === 'line'
-                        "
-                        class="relative z-10 h-full"
-                    >
-                        <svg
-                            class="h-full w-full overflow-visible"
-                            viewBox="0 0 1000 300"
-                            preserveAspectRatio="none"
-                        >
-
-                            <!-- CURRENT AREA -->
-                            <polygon
-                                v-if="
-                                    selectedChartPeriod === 'current' ||
-                                    selectedChartPeriod === 'both'
-                                "
-                                :points="
-                                    currentChartData.length
-                                        ? currentChartData
-                                            .map((item, index) => {
-                                                const x = getLineX(
-                                                    index,
-                                                    currentChartData.length
-                                                )
-
-                                                const y = getLineY(
-                                                    getChartValue(item)
-                                                )
-
-                                                return `${x},${y}`
-                                            })
-                                            .join(' ') +
-                                            ` 1000,270 0,270`
-                                        : ''
-                                "
-                                class="fill-blue-500/10"
-                            />
-
-                            <!-- PREVIOUS AREA -->
-                            <polygon
-                                v-if="
-                                    selectedChartPeriod === 'previous'
-                                "
-                                :points="
-                                    previousChartData.length
-                                        ? previousChartData
-                                            .map((item, index) => {
-                                                const x = getLineX(
-                                                    index,
-                                                    previousChartData.length
-                                                )
-
-                                                const y = getLineY(
-                                                    getChartValue(item)
-                                                )
-
-                                                return `${x},${y}`
-                                            })
-                                            .join(' ') +
-                                            ` 1000,270 0,270`
-                                        : ''
-                                "
-                                class="fill-muted-foreground/5"
-                            />
-
-                            <!-- PREVIOUS LINE -->
-                            <polyline
-                                v-if="
-                                    selectedChartPeriod === 'previous' ||
-                                    selectedChartPeriod === 'both'
-                                "
-                                :points="
-                                    previousChartData
-                                        .map((item, index) => {
-                                            const x = getLineX(
-                                                index,
-                                                previousChartData.length
-                                            )
-
-                                            const y = getLineY(
-                                                getChartValue(item)
-                                            )
-
-                                            return `${x},${y}`
-                                        })
-                                        .join(' ')
-                                "
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="3"
-                                vector-effect="non-scaling-stroke"
-                                class="text-muted-foreground/50 transition-opacity duration-500"
-                            />
-
-                            <!-- CURRENT LINE -->
-                            <polyline
-                                v-if="
-                                    selectedChartPeriod === 'current' ||
-                                    selectedChartPeriod === 'both'
-                                "
-                                :points="
-                                    currentChartData
-                                        .map((item, index) => {
-                                            const x = getLineX(
-                                                index,
-                                                currentChartData.length
-                                            )
-
-                                            const y = getLineY(
-                                                getChartValue(item)
-                                            )
-
-                                            return `${x},${y}`
-                                        })
-                                        .join(' ')
-                                "
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="3"
-                                vector-effect="non-scaling-stroke"
-                                class="text-blue-500 transition-opacity duration-500"
-                            />
-
-                            <!-- PREVIOUS POINTS -->
-                            <g
-                                v-if="
-                                    selectedChartPeriod === 'previous' ||
-                                    selectedChartPeriod === 'both'
-                                "
-                            >
-                                <g
-                                    v-for="(item, index) in previousChartData"
-                                    :key="`previous-point-${item.batch_id}`"
-                                    class="group/point"
-                                >
-                                    <circle
-                                        :cx="
-                                            getLineX(
-                                                index,
-                                                previousChartData.length
-                                            )
-                                        "
-                                        :cy="
-                                            getLineY(
-                                                getChartValue(item)
-                                            )
-                                        "
-                                        r="12"
-                                        class="fill-transparent"
-                                    />
-
-                                    <circle
-                                        :cx="
-                                            getLineX(
-                                                index,
-                                                previousChartData.length
-                                            )
-                                        "
-                                        :cy="
-                                            getLineY(
-                                                getChartValue(item)
-                                            )
-                                        "
-                                        r="5"
-                                        class="fill-muted-foreground/60 stroke-background transition-all duration-500 ease-out group-hover/point:r-7"
-                                        stroke-width="3"
-                                    />
-
-                                    <foreignObject
-                                        :x="
-                                            getLineX(
-                                                index,
-                                                previousChartData.length
-                                            ) - 90
-                                        "
-                                        :y="
-                                            getLineY(
-                                                getChartValue(item)
-                                            ) - 80
-                                        "
-                                        width="180"
-                                        height="80"
-                                        class="pointer-events-none overflow-visible opacity-0 transition-opacity duration-200 group-hover/point:opacity-100"
-                                    >
-                                        <div
-                                            class="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-xl"
-                                        >
-                                            <p class="font-medium text-foreground">
-                                                {{ formatPeriod(item.period_start, item.period_end) }}
-                                            </p>
-
-                                            <p
-                                                v-if="selectedChartPeriod === 'both'"
-                                                class="mt-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground"
-                                            >
-                                                Previous Period
-                                            </p>
-
-                                            <p class="mt-1 font-medium text-muted-foreground">
-                                                <template v-if="selectedChartMetric === 'gmv'">
-                                                    {{ formatGMV(getChartValue(item)) }}
-                                                </template>
-
-                                                <template v-else>
-                                                    {{ formatNumber(getChartValue(item)) }} orders
-                                                </template>
-                                            </p>
-                                        </div>
-                                    </foreignObject>
-                                </g>
-                            </g>
-
-                            <!-- CURRENT POINTS -->
-                            <g
-                                v-if="
-                                    selectedChartPeriod === 'current' ||
-                                    selectedChartPeriod === 'both'
-                                "
-                            >
-                                <g
-                                    v-for="(item, index) in currentChartData"
-                                    :key="`current-point-${item.batch_id}`"
-                                    class="group/point"
-                                >
-                                    <circle
-                                        :cx="
-                                            getLineX(
-                                                index,
-                                                currentChartData.length
-                                            )
-                                        "
-                                        :cy="
-                                            getLineY(
-                                                getChartValue(item)
-                                            )
-                                        "
-                                        r="12"
-                                        class="fill-transparent"
-                                    />
-
-                                    <circle
-                                        :cx="
-                                            getLineX(
-                                                index,
-                                                currentChartData.length
-                                            )
-                                        "
-                                        :cy="
-                                            getLineY(
-                                                getChartValue(item)
-                                            )
-                                        "
-                                        r="5"
-                                        class="fill-blue-500 stroke-background transition-all duration-500 ease-out group-hover/point:r-7"
-                                        stroke-width="3"
-                                    />
-
-                                    <foreignObject
-                                        :x="
-                                            getLineX(
-                                                index,
-                                                currentChartData.length
-                                            ) - 90
-                                        "
-                                        :y="
-                                            getLineY(
-                                                getChartValue(item)
-                                            ) - 80
-                                        "
-                                        width="180"
-                                        height="80"
-                                        class="pointer-events-none overflow-visible opacity-0 transition-opacity duration-200 group-hover/point:opacity-100"
-                                    >
-                                        <div
-                                            class="rounded-lg border border-border bg-popover px-3 py-2 text-xs shadow-xl"
-                                        >
-                                            <p class="font-medium text-foreground">
-                                                {{ formatPeriod(item.period_start, item.period_end) }}
-                                            </p>
-
-                                            <p
-                                                v-if="selectedChartPeriod === 'both'"
-                                                class="mt-1 text-[10px] font-medium uppercase tracking-wide text-blue-500"
-                                            >
-                                                Current Period
-                                            </p>
-
-                                            <p class="mt-1 font-medium text-blue-500">
-                                                <template v-if="selectedChartMetric === 'gmv'">
-                                                    {{ formatGMV(getChartValue(item)) }}
-                                                </template>
-
-                                                <template v-else>
-                                                    {{ formatNumber(getChartValue(item)) }} orders
-                                                </template>
-                                            </p>
-                                        </div>
-                                    </foreignObject>
-                                </g>
-                            </g>
-                        </svg>
-                    </div>
-
-                    <!-- ========================= -->
-                    <!-- EMPTY STATE -->
-                    <!-- ========================= -->
-                    <div
-                        v-else
-                        class="relative z-10 flex h-full items-center justify-center rounded-lg border border-dashed border-border"
-                    >
-                        <div class="text-center">
-                            <p class="text-sm font-medium">
-                                Belum ada data performance
-                            </p>
-
-                            <p class="mt-1 text-xs text-muted-foreground">
-                                Import data affiliate untuk melihat GMV.
-                            </p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Period Labels -->
-                <div
-                    v-if="chartHasData"
-                    class="mt-3 flex gap-3"
-                >
-                    <div
-                        v-for="item in activeChartData"
-                        :key="`label-${item.chartPeriod}-${item.batch_id}`"
-                        class="min-w-0 flex-1 text-center text-[10px] text-muted-foreground"
-                    >
-                        {{ formatPeriod(item.period_start, item.period_end) }}
-                    </div>
-                </div>
-            </div>
+            <PerformanceOverviewChart
+                class="xl:col-span-2"
+                :current="props.affiliate_performance"
+                :previous="props.comparison_affiliate_performance"
+            />
 
             <!-- Action Required -->
-            <div class="rounded-xl border border-border bg-card p-5">
+            <div class="border-border bg-card rounded-xl border p-5">
                 <div>
-                    <p class="text-base font-medium">
-                        Action Center
-                    </p>
+                    <p class="text-base font-medium">Action Center</p>
 
-                    <p class="mt-1 text-sm text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-sm">
                         Prioritas yang membutuhkan perhatian.
                     </p>
                 </div>
 
                 <div class="mt-6 space-y-3">
-
                     <!-- Creators -->
                     <Link
                         :href="`/creators${selectedPeriodQuery}`"
-                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/40 hover:bg-orange-500/[0.04]"
+                        class="group border-border bg-muted/30 block rounded-lg border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/40 hover:bg-orange-500/[0.04]"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -1521,12 +908,16 @@ onBeforeUnmount(() => {
                                     />
                                 </div>
 
-                                <span class="text-sm transition-colors duration-300 group-hover:text-orange-500">
+                                <span
+                                    class="text-sm transition-colors duration-300 group-hover:text-orange-500"
+                                >
                                     Creators to review
                                 </span>
                             </div>
 
-                            <span class="font-semibold transition-transform duration-300 group-hover:translate-x-1">
+                            <span
+                                class="font-semibold transition-transform duration-300 group-hover:translate-x-1"
+                            >
                                 {{ props.action_required.creators_to_review }}
                             </span>
                         </div>
@@ -1535,7 +926,7 @@ onBeforeUnmount(() => {
                     <!-- Affiliates -->
                     <Link
                         :href="`/affiliates${selectedPeriodQuery}${selectedPeriodQuery ? '&' : '?'}action=SUPPORT`"
-                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]"
+                        class="group border-border bg-muted/30 block rounded-lg border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -1547,13 +938,19 @@ onBeforeUnmount(() => {
                                     />
                                 </div>
 
-                                <span class="text-sm transition-colors duration-300 group-hover:text-emerald-500">
+                                <span
+                                    class="text-sm transition-colors duration-300 group-hover:text-emerald-500"
+                                >
                                     Affiliates to support
                                 </span>
                             </div>
 
-                            <span class="font-semibold transition-transform duration-300 group-hover:translate-x-1">
-                                {{ props.action_required.affiliates_to_support }}
+                            <span
+                                class="font-semibold transition-transform duration-300 group-hover:translate-x-1"
+                            >
+                                {{
+                                    props.action_required.affiliates_to_support
+                                }}
                             </span>
                         </div>
                     </Link>
@@ -1561,7 +958,7 @@ onBeforeUnmount(() => {
                     <!-- Monitoring -->
                     <Link
                         :href="`/affiliates${selectedPeriodQuery}${selectedPeriodQuery ? '&' : '?'}action=MONITOR`"
-                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-500/40 hover:bg-amber-500/[0.04] hover:shadow-[0_6px_18px_rgba(245,158,11,0.08)]"
+                        class="group border-border bg-muted/30 block rounded-lg border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-500/40 hover:bg-amber-500/[0.04] hover:shadow-[0_6px_18px_rgba(245,158,11,0.08)]"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
@@ -1573,12 +970,16 @@ onBeforeUnmount(() => {
                                     />
                                 </div>
 
-                                <span class="text-sm transition-colors duration-300 group-hover:text-amber-500">
+                                <span
+                                    class="text-sm transition-colors duration-300 group-hover:text-amber-500"
+                                >
                                     Need monitoring
                                 </span>
                             </div>
 
-                            <span class="font-semibold transition-transform duration-300 group-hover:translate-x-1">
+                            <span
+                                class="font-semibold transition-transform duration-300 group-hover:translate-x-1"
+                            >
                                 {{ props.action_required.need_monitoring }}
                             </span>
                         </div>
@@ -1587,37 +988,42 @@ onBeforeUnmount(() => {
                     <!-- Deprioritize -->
                     <Link
                         :href="`/affiliates${selectedPeriodQuery}${selectedPeriodQuery ? '&' : '?'}action=DEPRIORITIZE`"
-                        class="group block rounded-lg border border-border bg-muted/30 p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-muted-foreground/40 hover:bg-muted/60 hover:shadow-[0_6px_18px_rgba(100,116,139,0.08)]"
+                        class="group border-border bg-muted/30 hover:border-muted-foreground/40 hover:bg-muted/60 block rounded-lg border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(100,116,139,0.08)]"
                     >
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground transition-all duration-300 group-hover:scale-110 group-hover:bg-muted/80 group-hover:shadow-[0_0_14px_rgba(100,116,139,0.15)]"
+                                    class="bg-muted text-muted-foreground group-hover:bg-muted/80 flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_14px_rgba(100,116,139,0.15)]"
                                 >
                                     <CircleSlash
                                         class="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
                                     />
                                 </div>
 
-                                <span class="text-sm transition-colors duration-300 group-hover:text-foreground">
+                                <span
+                                    class="group-hover:text-foreground text-sm transition-colors duration-300"
+                                >
                                     Deprioritize
                                 </span>
                             </div>
 
-                            <span class="font-semibold transition-transform duration-300 group-hover:translate-x-1">
+                            <span
+                                class="font-semibold transition-transform duration-300 group-hover:translate-x-1"
+                            >
                                 {{ props.action_required.deprioritize }}
                             </span>
                         </div>
                     </Link>
-
                 </div>
             </div>
-         </div>
+        </div>
 
-         <!-- Insights Preview -->
-        <div class="mt-4 rounded-xl border border-border bg-card p-5">
+        <!-- Insights Preview -->
+        <div class="border-border bg-card mt-4 rounded-xl border p-5">
             <!-- Header -->
-            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div
+                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+            >
                 <div>
                     <div class="flex items-center gap-2">
                         <p class="text-base font-semibold">
@@ -1632,7 +1038,7 @@ onBeforeUnmount(() => {
                         </span>
                     </div>
 
-                    <p class="mt-1 text-sm text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-sm">
                         {{
                             props.insight_preview
                                 ? `Analisis otomatis · ${insightPeriodLabel()}`
@@ -1643,10 +1049,12 @@ onBeforeUnmount(() => {
 
                 <Link
                     :href="`/insights${selectedPeriodQuery}`"
-                    class="inline-flex w-fit items-center gap-1.5 rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm font-medium transition hover:border-sky-500/40 hover:bg-muted"
+                    class="border-border bg-muted/40 hover:bg-muted inline-flex w-fit items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition hover:border-sky-500/40"
                 >
                     Lihat semua insights
-                    <span class="transition-transform group-hover:translate-x-0.5">
+                    <span
+                        class="transition-transform group-hover:translate-x-0.5"
+                    >
                         →
                     </span>
                 </Link>
@@ -1663,7 +1071,7 @@ onBeforeUnmount(() => {
                     class="group relative overflow-hidden rounded-xl border border-blue-500/20 bg-blue-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500/50 hover:bg-blue-500/[0.06] hover:shadow-lg"
                 >
                     <div
-                        class="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl transition-opacity group-hover:opacity-100"
+                        class="pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl transition-opacity group-hover:opacity-100"
                     />
 
                     <div class="relative">
@@ -1675,13 +1083,15 @@ onBeforeUnmount(() => {
                                     ↑
                                 </div>
 
-                                <span class="text-xs font-semibold uppercase tracking-wide text-blue-500">
+                                <span
+                                    class="text-xs font-semibold tracking-wide text-blue-500 uppercase"
+                                >
                                     Top Performer
                                 </span>
                             </div>
 
                             <span
-                                class="text-xs text-muted-foreground transition-transform group-hover:translate-x-1"
+                                class="text-muted-foreground text-xs transition-transform group-hover:translate-x-1"
                             >
                                 →
                             </span>
@@ -1692,33 +1102,45 @@ onBeforeUnmount(() => {
                                 {{ topPerformer()?.name ?? '-' }}
                             </p>
 
-                            <p class="mt-1 text-xs text-muted-foreground">
+                            <p class="text-muted-foreground mt-1 text-xs">
                                 Kontributor GMV terbesar
                             </p>
 
                             <div class="mt-4 grid grid-cols-2 gap-2">
-                                <div class="rounded-lg bg-background/60 p-3">
-                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                <div class="bg-background/60 rounded-lg p-3">
+                                    <p
+                                        class="text-muted-foreground text-[10px] tracking-wide uppercase"
+                                    >
                                         GMV
                                     </p>
 
                                     <p class="mt-1 text-sm font-semibold">
-                                        {{ formatGMV(topPerformer()?.gmv ?? 0) }}
+                                        {{
+                                            formatGMV(topPerformer()?.gmv ?? 0)
+                                        }}
                                     </p>
                                 </div>
 
-                                <div class="rounded-lg bg-background/60 p-3">
-                                    <p class="text-[10px] uppercase tracking-wide text-muted-foreground">
+                                <div class="bg-background/60 rounded-lg p-3">
+                                    <p
+                                        class="text-muted-foreground text-[10px] tracking-wide uppercase"
+                                    >
                                         Orders
                                     </p>
 
                                     <p class="mt-1 text-sm font-semibold">
-                                        {{ formatNumber(topPerformer()?.orders ?? 0) }}
+                                        {{
+                                            formatNumber(
+                                                topPerformer()?.orders ?? 0,
+                                            )
+                                        }}
                                     </p>
                                 </div>
                             </div>
 
-                            <div class="mt-4 flex items-center justify-between text-xs">
+                            <div
+                                class="mt-4 flex items-center justify-between text-xs"
+                            >
                                 <span class="text-muted-foreground">
                                     Lihat performa lengkap
                                 </span>
@@ -1729,10 +1151,7 @@ onBeforeUnmount(() => {
                             </div>
                         </template>
 
-                        <p
-                            v-else
-                            class="mt-5 text-sm text-muted-foreground"
-                        >
+                        <p v-else class="text-muted-foreground mt-5 text-sm">
                             Belum ada top performer.
                         </p>
                     </div>
@@ -1744,7 +1163,7 @@ onBeforeUnmount(() => {
                     class="group relative overflow-hidden rounded-xl border border-amber-500/20 bg-amber-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500/50 hover:bg-amber-500/[0.06] hover:shadow-lg"
                 >
                     <div
-                        class="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl"
+                        class="pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl"
                     />
 
                     <div class="relative">
@@ -1756,13 +1175,15 @@ onBeforeUnmount(() => {
                                     !
                                 </div>
 
-                                <span class="text-xs font-semibold uppercase tracking-wide text-amber-500">
+                                <span
+                                    class="text-xs font-semibold tracking-wide text-amber-500 uppercase"
+                                >
                                     Attention
                                 </span>
                             </div>
 
                             <span
-                                class="text-xs text-muted-foreground transition-transform group-hover:translate-x-1"
+                                class="text-muted-foreground text-xs transition-transform group-hover:translate-x-1"
                             >
                                 →
                             </span>
@@ -1777,21 +1198,30 @@ onBeforeUnmount(() => {
                                 High GMV, Low Consistency
                             </p>
 
-                            <p class="mt-2 text-xs leading-relaxed text-muted-foreground">
-                                Affiliate dengan kontribusi GMV tinggi tetapi consistency score masih rendah.
+                            <p
+                                class="text-muted-foreground mt-2 text-xs leading-relaxed"
+                            >
+                                Affiliate dengan kontribusi GMV tinggi tetapi
+                                consistency score masih rendah.
                             </p>
 
-                            <div class="mt-4 flex items-center justify-between rounded-lg bg-background/60 px-3 py-2.5">
-                                <span class="text-xs text-muted-foreground">
+                            <div
+                                class="bg-background/60 mt-4 flex items-center justify-between rounded-lg px-3 py-2.5"
+                            >
+                                <span class="text-muted-foreground text-xs">
                                     Fokus
                                 </span>
 
-                                <span class="text-xs font-medium text-amber-500">
+                                <span
+                                    class="text-xs font-medium text-amber-500"
+                                >
                                     Konsistensi konten
                                 </span>
                             </div>
 
-                            <div class="mt-4 flex items-center justify-between text-xs">
+                            <div
+                                class="mt-4 flex items-center justify-between text-xs"
+                            >
                                 <span class="text-muted-foreground">
                                     Buka detail perhatian
                                 </span>
@@ -1802,10 +1232,7 @@ onBeforeUnmount(() => {
                             </div>
                         </template>
 
-                        <p
-                            v-else
-                            class="mt-5 text-sm text-muted-foreground"
-                        >
+                        <p v-else class="text-muted-foreground mt-5 text-sm">
                             Tidak ada pola yang perlu diperhatikan.
                         </p>
                     </div>
@@ -1817,7 +1244,7 @@ onBeforeUnmount(() => {
                     class="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-emerald-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/[0.06] hover:shadow-lg"
                 >
                     <div
-                        class="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl"
+                        class="pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl"
                     />
 
                     <div class="relative">
@@ -1829,13 +1256,15 @@ onBeforeUnmount(() => {
                                     ✦
                                 </div>
 
-                                <span class="text-xs font-semibold uppercase tracking-wide text-emerald-500">
+                                <span
+                                    class="text-xs font-semibold tracking-wide text-emerald-500 uppercase"
+                                >
                                     Opportunity
                                 </span>
                             </div>
 
                             <span
-                                class="text-xs text-muted-foreground transition-transform group-hover:translate-x-1"
+                                class="text-muted-foreground text-xs transition-transform group-hover:translate-x-1"
                             >
                                 →
                             </span>
@@ -1850,21 +1279,30 @@ onBeforeUnmount(() => {
                                 Potential Opportunity
                             </p>
 
-                            <p class="mt-2 text-xs leading-relaxed text-muted-foreground">
-                                Affiliate dengan opportunity score tinggi meskipun kontribusi GMV masih kecil.
+                            <p
+                                class="text-muted-foreground mt-2 text-xs leading-relaxed"
+                            >
+                                Affiliate dengan opportunity score tinggi
+                                meskipun kontribusi GMV masih kecil.
                             </p>
 
-                            <div class="mt-4 flex items-center justify-between rounded-lg bg-background/60 px-3 py-2.5">
-                                <span class="text-xs text-muted-foreground">
+                            <div
+                                class="bg-background/60 mt-4 flex items-center justify-between rounded-lg px-3 py-2.5"
+                            >
+                                <span class="text-muted-foreground text-xs">
                                     Fokus
                                 </span>
 
-                                <span class="text-xs font-medium text-emerald-500">
+                                <span
+                                    class="text-xs font-medium text-emerald-500"
+                                >
                                     Aktivasi & support
                                 </span>
                             </div>
 
-                            <div class="mt-4 flex items-center justify-between text-xs">
+                            <div
+                                class="mt-4 flex items-center justify-between text-xs"
+                            >
                                 <span class="text-muted-foreground">
                                     Eksplorasi peluang
                                 </span>
@@ -1875,10 +1313,7 @@ onBeforeUnmount(() => {
                             </div>
                         </template>
 
-                        <p
-                            v-else
-                            class="mt-5 text-sm text-muted-foreground"
-                        >
+                        <p v-else class="text-muted-foreground mt-5 text-sm">
                             Belum ada potential opportunity.
                         </p>
                     </div>
@@ -1888,14 +1323,15 @@ onBeforeUnmount(() => {
             <!-- No data -->
             <div
                 v-else
-                class="mt-5 rounded-xl border border-dashed border-border p-8 text-center"
+                class="border-border mt-5 rounded-xl border border-dashed p-8 text-center"
             >
                 <p class="text-sm font-medium">
                     Belum ada Performance Insights
                 </p>
 
-                <p class="mt-1 text-xs text-muted-foreground">
-                    Import data affiliate terlebih dahulu untuk menghasilkan insight.
+                <p class="text-muted-foreground mt-1 text-xs">
+                    Import data affiliate terlebih dahulu untuk menghasilkan
+                    insight.
                 </p>
 
                 <Link
@@ -1909,18 +1345,13 @@ onBeforeUnmount(() => {
 
         <!-- Bottom Overview -->
         <div class="mt-4 grid gap-4 md:grid-cols-2">
-
             <!-- Creator Overview -->
-            <div
-                class="rounded-xl border border-border bg-card p-5"
-            >
+            <div class="border-border bg-card rounded-xl border p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-base font-medium">
-                            Creator Overview
-                        </p>
+                        <p class="text-base font-medium">Creator Overview</p>
 
-                        <p class="mt-1 text-sm text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-sm">
                             Latest creator intelligence.
                         </p>
                     </div>
@@ -1932,66 +1363,61 @@ onBeforeUnmount(() => {
                         View all →
                     </Link>
                 </div>
-            <div class="mt-4 space-y-3">
+                <div class="mt-4 space-y-3">
+                    <Link
+                        v-for="creator in props.creator_overview"
+                        :key="creator.id"
+                        :href="`/creators/${creator.id}`"
+                        class="border-border bg-muted/30 hover:bg-muted/60 flex items-center justify-between rounded-lg border p-4 transition hover:border-blue-500/40"
+                    >
+                        <div class="min-w-0">
+                            <p class="truncate font-medium">
+                                {{ creator.name }}
+                            </p>
 
-                <Link
-                    v-for="creator in props.creator_overview"
-                    :key="creator.id"
-                    :href="`/creators/${creator.id}`"
-                    class="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4 transition hover:border-blue-500/40 hover:bg-muted/60"
-                >
-                    <div class="min-w-0">
-                        <p class="truncate font-medium">
-                            {{ creator.name }}
+                            <p class="text-muted-foreground mt-1 text-xs">
+                                {{ creator.platform ?? '-' }}
+
+                                <span v-if="creator.category">
+                                    · {{ creator.category }}
+                                </span>
+                            </p>
+                        </div>
+
+                        <div class="ml-4 shrink-0 text-right">
+                            <p class="text-lg font-semibold">
+                                {{ creator.score.toFixed(1) }}
+                            </p>
+
+                            <p class="text-muted-foreground text-[11px]">
+                                Overall Score
+                            </p>
+                        </div>
+                    </Link>
+
+                    <div
+                        v-if="!props.creator_overview.length"
+                        class="border-border rounded-lg border border-dashed p-6 text-center"
+                    >
+                        <p class="text-sm font-medium">
+                            Belum ada data creator
                         </p>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            {{ creator.platform ?? '-' }}
-
-                            <span v-if="creator.category">
-                                · {{ creator.category }}
-                            </span>
+                        <p class="text-muted-foreground mt-1 text-xs">
+                            Tambahkan dan analisis creator untuk melihat
+                            intelligence.
                         </p>
                     </div>
-
-                    <div class="ml-4 shrink-0 text-right">
-                        <p class="text-lg font-semibold">
-                            {{ creator.score.toFixed(1) }}
-                        </p>
-
-                        <p class="text-[11px] text-muted-foreground">
-                            Overall Score
-                        </p>
-                    </div>
-                </Link>
-
-                <div
-                    v-if="!props.creator_overview.length"
-                    class="rounded-lg border border-dashed border-border p-6 text-center"
-                >
-                    <p class="text-sm font-medium">
-                        Belum ada data creator
-                    </p>
-
-                    <p class="mt-1 text-xs text-muted-foreground">
-                        Tambahkan dan analisis creator untuk melihat intelligence.
-                    </p>
                 </div>
-
             </div>
-        </div>
 
             <!-- Affiliate Overview -->
-            <div
-                class="rounded-xl border border-border bg-card p-5"
-            >
+            <div class="border-border bg-card rounded-xl border p-5">
                 <div class="flex items-center justify-between">
                     <div>
-                        <p class="text-base font-medium">
-                            Affiliate Overview
-                        </p>
+                        <p class="text-base font-medium">Affiliate Overview</p>
 
-                        <p class="mt-1 text-sm text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-sm">
                             Recent affiliate opportunities.
                         </p>
                     </div>
@@ -2004,20 +1430,19 @@ onBeforeUnmount(() => {
                     </Link>
                 </div>
 
-               <div class="mt-4 space-y-3">
-
+                <div class="mt-4 space-y-3">
                     <Link
                         v-for="affiliate in props.affiliate_overview"
                         :key="affiliate.id"
                         :href="affiliateDetailUrl(affiliate.id)"
-                        class="flex items-center justify-between rounded-lg border border-border bg-muted/30 p-4 transition hover:border-violet-500/40 hover:bg-muted/60"
+                        class="border-border bg-muted/30 hover:bg-muted/60 flex items-center justify-between rounded-lg border p-4 transition hover:border-violet-500/40"
                     >
                         <div class="min-w-0">
                             <p class="truncate font-medium">
                                 {{ affiliate.name }}
                             </p>
 
-                            <p class="mt-1 text-xs text-muted-foreground">
+                            <p class="text-muted-foreground mt-1 text-xs">
                                 {{ affiliate.platform ?? '-' }}
                                 · GMV {{ formatGMV(affiliate.gmv) }}
                             </p>
@@ -2051,17 +1476,17 @@ onBeforeUnmount(() => {
 
                     <div
                         v-if="!props.affiliate_overview.length"
-                        class="rounded-lg border border-dashed border-border p-6 text-center"
+                        class="border-border rounded-lg border border-dashed p-6 text-center"
                     >
                         <p class="text-sm font-medium">
                             Belum ada data affiliate
                         </p>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            Import data affiliate untuk melihat opportunity intelligence.
+                        <p class="text-muted-foreground mt-1 text-xs">
+                            Import data affiliate untuk melihat opportunity
+                            intelligence.
                         </p>
                     </div>
-
                 </div>
             </div>
         </div>
