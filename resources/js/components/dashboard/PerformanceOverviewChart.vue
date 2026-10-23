@@ -47,12 +47,22 @@ const selectedChartPeriod = ref<ChartPeriod>('both');
 const hoveredIndex = ref<number | null>(null);
 const plotEl = ref<HTMLElement | null>(null);
 
+const toNumber = (value: unknown) => {
+    const numeric = Number(value);
+
+    return Number.isFinite(numeric) ? numeric : 0;
+};
+
 const metricValue = (row: PerformancePoint) =>
-    selectedChartMetric.value === 'gmv' ? row.gmv : row.orders;
+    selectedChartMetric.value === 'gmv'
+        ? toNumber(row.gmv)
+        : toNumber(row.orders);
 
 const currentData = computed<ChartDatum[]>(() =>
     currentRows.value.map((row) => ({
         ...row,
+        gmv: toNumber(row.gmv),
+        orders: toNumber(row.orders),
         series: 'current' as const,
         value: metricValue(row),
     })),
@@ -61,6 +71,8 @@ const currentData = computed<ChartDatum[]>(() =>
 const previousData = computed<ChartDatum[]>(() =>
     previousRows.value.map((row) => ({
         ...row,
+        gmv: toNumber(row.gmv),
+        orders: toNumber(row.orders),
         series: 'previous' as const,
         value: metricValue(row),
     })),
@@ -252,7 +264,7 @@ const categories = computed(() =>
 );
 
 const sumValue = (rows: ChartDatum[]) =>
-    rows.reduce((total, row) => total + row.value, 0);
+    rows.reduce((total, row) => total + toNumber(row.value), 0);
 
 const currentTotal = computed(() => sumValue(currentData.value));
 const previousTotal = computed(() => sumValue(previousData.value));
@@ -264,9 +276,16 @@ const totalDelta = computed(() => {
         return null;
     }
 
-    return (
-        ((currentTotal.value - previousTotal.value) / previousTotal.value) * 100
-    );
+    const current = toNumber(currentTotal.value);
+    const previous = toNumber(previousTotal.value);
+
+    if (current === 0 && previous === 0) {
+        return null;
+    }
+
+    const delta = ((current - previous) / previous) * 100;
+
+    return Number.isFinite(delta) ? delta : null;
 });
 
 const toggleSeries = (series: 'current' | 'previous') => {
@@ -373,10 +392,13 @@ const formatGMV = (value: number) =>
         maximumFractionDigits: 0,
     }).format(value);
 
-const formatMetricValue = (value: number) =>
-    selectedChartMetric.value === 'gmv'
-        ? formatGMV(value)
-        : `${formatNumber(value)} orders`;
+const formatMetricValue = (value: number) => {
+    const numeric = toNumber(value);
+
+    return selectedChartMetric.value === 'gmv'
+        ? formatGMV(numeric)
+        : `${formatNumber(numeric)} orders`;
+};
 
 const trimNumber = (value: number) =>
     new Intl.NumberFormat('id-ID', {
