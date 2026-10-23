@@ -313,7 +313,7 @@ type ChartPeriod =
     | 'previous'
     | 'both'
 
-const selectedChartPeriod = ref<ChartPeriod>('current')
+const selectedChartPeriod = ref<ChartPeriod>('both')
 
 const currentChartData = computed(() => {
     return chartData.map((item) => ({
