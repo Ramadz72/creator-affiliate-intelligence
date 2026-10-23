@@ -1,9 +1,32 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
-import { computed, ref, onMounted, onBeforeUnmount } from 'vue';
-import { UserSearch, Headphones, Eye, CircleSlash } from '@lucide/vue';
+import { computed, markRaw, onBeforeUnmount, onMounted, ref } from 'vue';
+import {
+    Activity,
+    ArrowDownRight,
+    ArrowUpRight,
+    CalendarDays,
+    CircleSlash,
+    Crown,
+    Eye,
+    Headphones,
+    Megaphone,
+    Sparkles,
+    Target,
+    Upload,
+    UserRound,
+    UserSearch,
+    Users,
+    Wallet,
+    Zap,
+} from '@lucide/vue';
+import MiniSparkline from '@/components/dashboard/MiniSparkline.vue';
 import PerformanceOverviewChart from '@/components/dashboard/PerformanceOverviewChart.vue';
+import ScoreGauge from '@/components/dashboard/ScoreGauge.vue';
+import { useCountUp } from '@/composables/useCountUp';
+import { getInitials } from '@/composables/useInitials';
+import { areaPath, buildChartPoints, smoothPath } from '@/lib/chart';
 
 defineOptions({
     layout: {
@@ -126,32 +149,130 @@ const props = defineProps<{
     };
 }>();
 
-const ordersTrendPoints = computed(() => {
-    const rows = Array.isArray(props.orders_trend) ? props.orders_trend : [];
+const creatorsDisplay = useCountUp(() => props.stats.creators);
+const affiliatesDisplay = useCountUp(() => props.stats.affiliates);
+const campaignsDisplay = useCountUp(() => props.stats.campaigns);
+const gmvDisplay = useCountUp(() => props.stats.gmv);
+const ordersDisplay = useCountUp(() => props.stats.orders);
 
-    if (rows.length < 2) return '';
+const gmvSparkValues = computed(() => {
+    const current = (props.affiliate_performance ?? []).map(
+        (row) => Number(row.gmv) || 0,
+    );
 
-    const values = rows.map((row) => Number(row.orders) || 0);
+    if (current.length > 1) {
+        return current;
+    }
 
-    const width = 156;
-    const height = 48;
-    const left = 2;
-    const top = 8;
-    const bottom = top + height;
+    const previous = (props.comparison_affiliate_performance ?? [])
+        .slice()
+        .reverse()
+        .map((row) => Number(row.gmv) || 0);
 
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const range = max - min || 1;
+    if (current.length === 1 && previous.length >= 1) {
+        return [previous[0] ?? 0, current[0]];
+    }
 
-    return values
-        .map((value, index) => {
-            const x = left + (index / (values.length - 1)) * width;
-            const y = bottom - ((value - min) / range) * height;
+    if (previous.length > 1) {
+        return previous;
+    }
 
-            return `${x},${y}`;
-        })
-        .join(' ');
+    return current;
 });
+
+const ordersSparkValues = computed(() => {
+    const current = (props.affiliate_performance ?? []).map(
+        (row) => Number(row.orders) || 0,
+    );
+
+    if (current.length > 1) {
+        return current;
+    }
+
+    const previous = (props.comparison_affiliate_performance ?? [])
+        .slice()
+        .reverse()
+        .map((row) => Number(row.orders) || 0);
+
+    if (current.length === 1 && previous.length >= 1) {
+        return [previous[0] ?? 0, current[0]];
+    }
+
+    if (previous.length > 1) {
+        return previous;
+    }
+
+    return current;
+});
+
+const signalRows = computed(() => {
+    const current = props.affiliate_performance ?? [];
+    const previous = props.comparison_affiliate_performance ?? [];
+
+    if (current.length > 1) {
+        return current;
+    }
+
+    if (current.length === 1 && previous.length >= 1) {
+        const reversed = [...previous].reverse();
+        return [reversed[0], current[0]];
+    }
+
+    if (current.length === 0 && previous.length > 1) {
+        return [...previous].reverse();
+    }
+
+    return current;
+});
+
+const signalWidth = 100;
+const signalHeight = 40;
+
+const signalPoints = computed(() =>
+    buildChartPoints(ordersSparkValues.value, signalWidth, signalHeight, 2),
+);
+
+const signalLine = computed(() => smoothPath(signalPoints.value));
+const signalArea = computed(() => areaPath(signalPoints.value, signalHeight));
+
+const hoveredSignalIndex = ref<number | null>(null);
+
+const hoveredSignalPoint = computed(() =>
+    hoveredSignalIndex.value === null
+        ? null
+        : (signalPoints.value[hoveredSignalIndex.value] ?? null),
+);
+
+const hoveredSignalRow = computed(() =>
+    hoveredSignalIndex.value === null
+        ? null
+        : (signalRows.value[hoveredSignalIndex.value] ?? null),
+);
+
+const updateSignalHover = (event: PointerEvent) => {
+    const total = ordersSparkValues.value.length;
+
+    if (total === 0) {
+        return;
+    }
+
+    const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+
+    if (rect.width === 0) {
+        return;
+    }
+
+    const ratio = Math.min(
+        1,
+        Math.max(0, (event.clientX - rect.left) / rect.width),
+    );
+
+    hoveredSignalIndex.value = Math.round(ratio * (total - 1));
+};
+
+const clearSignalHover = () => {
+    hoveredSignalIndex.value = null;
+};
 
 const showPeriodPicker = ref(false);
 
@@ -306,25 +427,199 @@ const formatGMV = (value: number) => {
     }).format(value);
 };
 
+const formatCompactNumber = (value: number) =>
+    new Intl.NumberFormat('id-ID', {
+        notation: 'compact',
+        maximumFractionDigits: 1,
+    }).format(value);
+
+const formatGMVCompact = (value: number) => `Rp${formatCompactNumber(value)}`;
+
 const formatNumber = (value: number) => {
     return new Intl.NumberFormat('id-ID').format(value);
 };
 
-const formatGrowth = (value: number | null) => {
+const formatGrowthShort = (value: number | null) => {
     if (value === null || value === undefined) {
-        return 'No comparison';
+        return '—';
     }
 
     return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
 };
 
-const growthClass = (value: number | null) => {
+const growthChipClass = (value: number | null) => {
     if (value === null || value === undefined) {
-        return 'text-muted-foreground';
+        return 'bg-muted text-muted-foreground';
     }
 
-    return value >= 0 ? 'text-emerald-500' : 'text-red-500';
+    return value >= 0
+        ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+        : 'bg-red-500/10 text-red-600 dark:text-red-400';
 };
+
+const scoreToneClass = (value: number) => {
+    if (value >= 75) {
+        return 'text-emerald-500';
+    }
+
+    if (value >= 55) {
+        return 'text-sky-500';
+    }
+
+    if (value >= 35) {
+        return 'text-amber-500';
+    }
+
+    return 'text-rose-500';
+};
+
+const scoreBarClass = (value: number) => {
+    if (value >= 75) {
+        return 'bg-emerald-500';
+    }
+
+    if (value >= 55) {
+        return 'bg-sky-500';
+    }
+
+    if (value >= 35) {
+        return 'bg-amber-500';
+    }
+
+    return 'bg-rose-500';
+};
+
+const avatarClasses = [
+    'from-blue-500/25 to-violet-500/10 text-blue-600 ring-blue-500/20 dark:text-blue-300',
+    'from-emerald-500/25 to-teal-500/10 text-emerald-600 ring-emerald-500/20 dark:text-emerald-300',
+    'from-amber-500/25 to-orange-500/10 text-amber-600 ring-amber-500/20 dark:text-amber-300',
+    'from-violet-500/25 to-fuchsia-500/10 text-violet-600 ring-violet-500/20 dark:text-violet-300',
+];
+
+const avatarClass = (index: number) =>
+    avatarClasses[index % avatarClasses.length];
+
+const actionChipClass = (action: string | null) => {
+    switch (action) {
+        case 'CHASE':
+            return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
+        case 'SUPPORT':
+            return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
+        case 'MONITOR':
+            return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
+        default:
+            return 'bg-muted text-muted-foreground';
+    }
+};
+
+const priorityTotal = computed(
+    () =>
+        props.action_required.creators_to_review +
+        props.action_required.affiliates_to_support +
+        props.action_required.need_monitoring +
+        props.action_required.deprioritize,
+);
+
+const priorityMax = computed(() =>
+    Math.max(
+        1,
+        props.action_required.creators_to_review,
+        props.action_required.affiliates_to_support,
+        props.action_required.need_monitoring,
+        props.action_required.deprioritize,
+    ),
+);
+
+const priorityProgress = (count: number) => {
+    if (count <= 0) {
+        return 0;
+    }
+
+    return Math.round(Math.max(8, (count / priorityMax.value) * 100));
+};
+
+const prioritySegments = computed(() => {
+    const total = priorityTotal.value || 1;
+
+    return [
+        {
+            key: 'creators',
+            value: props.action_required.creators_to_review,
+            class: 'bg-orange-500',
+        },
+        {
+            key: 'support',
+            value: props.action_required.affiliates_to_support,
+            class: 'bg-emerald-500',
+        },
+        {
+            key: 'monitoring',
+            value: props.action_required.need_monitoring,
+            class: 'bg-amber-500',
+        },
+        {
+            key: 'deprioritize',
+            value: props.action_required.deprioritize,
+            class: 'bg-slate-400',
+        },
+    ]
+        .filter((segment) => segment.value > 0)
+        .map((segment) => ({
+            ...segment,
+            width: (segment.value / total) * 100,
+        }));
+});
+
+const actionItems = computed(() => [
+    {
+        key: 'creators',
+        label: 'Creators to review',
+        hint: 'Skor creator perlu ditinjau ulang',
+        count: props.action_required.creators_to_review,
+        href: `/creators${selectedPeriodQuery.value}`,
+        icon: markRaw(UserSearch),
+        iconClass: 'bg-orange-500/10 text-orange-500 ring-orange-500/15',
+        hoverClass: 'hover:border-orange-500/40 hover:bg-orange-500/[0.04]',
+        barClass: 'bg-orange-500',
+        valueClass: 'text-orange-500',
+    },
+    {
+        key: 'support',
+        label: 'Affiliates to support',
+        hint: 'Butuh dukungan aktivasi konten',
+        count: props.action_required.affiliates_to_support,
+        href: `/affiliates${selectedPeriodQuery.value}${selectedPeriodQuery.value ? '&' : '?'}action=SUPPORT`,
+        icon: markRaw(Headphones),
+        iconClass: 'bg-emerald-500/10 text-emerald-500 ring-emerald-500/15',
+        hoverClass: 'hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]',
+        barClass: 'bg-emerald-500',
+        valueClass: 'text-emerald-500',
+    },
+    {
+        key: 'monitoring',
+        label: 'Need monitoring',
+        hint: 'GMV tinggi, konsistensi rendah',
+        count: props.action_required.need_monitoring,
+        href: `/affiliates${selectedPeriodQuery.value}${selectedPeriodQuery.value ? '&' : '?'}action=MONITOR`,
+        icon: markRaw(Eye),
+        iconClass: 'bg-amber-500/10 text-amber-500 ring-amber-500/15',
+        hoverClass: 'hover:border-amber-500/40 hover:bg-amber-500/[0.04]',
+        barClass: 'bg-amber-500',
+        valueClass: 'text-amber-500',
+    },
+    {
+        key: 'deprioritize',
+        label: 'Deprioritize',
+        hint: 'Prioritas rendah periode ini',
+        count: props.action_required.deprioritize,
+        href: `/affiliates${selectedPeriodQuery.value}${selectedPeriodQuery.value ? '&' : '?'}action=DEPRIORITIZE`,
+        icon: markRaw(CircleSlash),
+        iconClass: 'bg-slate-500/10 text-slate-500 ring-slate-500/15',
+        hoverClass: 'hover:border-slate-400/40 hover:bg-slate-500/[0.04]',
+        barClass: 'bg-slate-400',
+        valueClass: 'text-slate-500',
+    },
+]);
 
 const getInsight = (type: string) => {
     return (
@@ -373,23 +668,67 @@ onBeforeUnmount(() => {
 
     <div class="app-textured-bg text-foreground min-h-full p-4 md:p-6">
         <!-- Header -->
-        <div class="mb-6">
+        <section
+            class="border-border/70 bg-card/70 relative z-30 mb-5 rounded-2xl border p-5 shadow-sm backdrop-blur md:p-6"
+        >
             <div
-                class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
+                class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
             >
-                <div>
-                    <p class="text-muted-foreground text-sm">
-                        Selamat datang kembali 👋
-                    </p>
+                <div
+                    class="absolute -top-24 -left-20 h-64 w-64 rounded-full bg-sky-500/10 blur-3xl"
+                />
+                <div
+                    class="dash-soft-pulse absolute -right-10 -bottom-24 h-64 w-64 rounded-full bg-violet-500/10 blur-3xl"
+                />
+                <div
+                    class="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-sky-400/50 to-transparent"
+                />
+            </div>
 
-                    <h1 class="mt-1 text-2xl font-semibold tracking-tight">
+            <div
+                class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"
+            >
+                <div class="min-w-0">
+                    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
+                    </div>
+
+                    <h1
+                        class="dash-gradient-text from-foreground via-foreground mt-3 inline-block bg-gradient-to-r to-sky-500 bg-clip-text text-2xl font-semibold tracking-tight text-transparent md:text-3xl"
+                    >
                         {{ props.business_name || 'Nama Bisnis' }}
                     </h1>
 
-                    <p class="text-muted-foreground mt-1 text-sm">
+                    <p class="text-muted-foreground mt-1.5 max-w-xl text-sm">
                         Pantau performa creator dan affiliate tokomu di satu
-                        tempat.
+                        tempat, lengkap dengan prioritas tindakan.
                     </p>
+
+                    <div class="mt-4 flex flex-wrap items-center gap-2">
+                        <Link
+                            href="/imports"
+                            class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-sky-600/20 transition hover:-translate-y-0.5 hover:bg-sky-500 hover:shadow-md"
+                        >
+                            <Upload class="h-3.5 w-3.5" />
+                            Import Data
+                        </Link>
+
+                        <Link
+                            :href="`/insights${selectedPeriodQuery}`"
+                            class="border-border bg-background/70 inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-xs font-medium transition hover:-translate-y-0.5 hover:border-violet-400/40 hover:bg-violet-500/[0.04]"
+                        >
+                            <Sparkles class="h-3.5 w-3.5 text-violet-500" />
+                            Lihat Insights
+                        </Link>
+
+                        <span
+                            class="text-muted-foreground border-border bg-background/50 inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs"
+                        >
+                            <CalendarDays class="h-3.5 w-3.5" />
+                            Pembanding
+                            {{ formatDate(props.comparison_period.start) }} —
+                            {{ formatDate(props.comparison_period.end) }}
+                        </span>
+                    </div>
                 </div>
 
                 <!-- Periode Data -->
@@ -635,241 +974,555 @@ onBeforeUnmount(() => {
                     </Transition>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Executive KPI -->
         <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <!-- Total Creators -->
             <Link
                 href="/creators"
-                class="group border-border bg-card rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500/40 hover:shadow-lg"
+                class="dash-enter group border-border bg-card relative min-h-[172px] overflow-hidden rounded-xl border p-5 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/40 hover:shadow-xl hover:shadow-blue-500/5"
+                :style="{ animationDelay: '0ms' }"
             >
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-muted-foreground text-sm">
+                <div
+                    class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                />
+                <div
+                    class="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-blue-500/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+                />
+
+                <div class="relative flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p
+                            class="text-muted-foreground text-[10px] font-semibold tracking-[0.14em] uppercase"
+                        >
                             Total Creators
                         </p>
 
-                        <p class="mt-3 text-3xl font-semibold tracking-tight">
-                            {{ formatNumber(props.stats.creators) }}
+                        <p
+                            class="mt-2.5 text-3xl font-semibold tracking-tight tabular-nums"
+                        >
+                            {{ formatNumber(Math.round(creatorsDisplay)) }}
                         </p>
 
-                        <p class="text-muted-foreground mt-2 text-xs">
+                        <p class="text-muted-foreground mt-1.5 text-xs">
                             Creator dalam database
                         </p>
                     </div>
 
                     <div
-                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-500 transition-transform group-hover:scale-105"
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-500/5 text-blue-500 ring-1 ring-blue-500/20 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
                     >
-                        ◎
+                        <Users class="h-5 w-5" />
                     </div>
+                </div>
+
+                <div
+                    class="relative mt-4 flex items-center justify-between text-xs"
+                >
+                    <span
+                        class="text-muted-foreground inline-flex items-center gap-1.5"
+                    >
+                        <span class="h-1.5 w-1.5 rounded-full bg-blue-500/60" />
+                        Active roster
+                    </span>
+
+                    <span
+                        class="inline-flex -translate-x-1 items-center gap-1 font-medium text-blue-500 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"
+                    >
+                        Kelola
+                        <ArrowUpRight class="h-3 w-3" />
+                    </span>
                 </div>
             </Link>
 
             <!-- Total Affiliates -->
             <Link
                 href="/affiliates"
-                class="group border-border bg-card rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-violet-500/40 hover:shadow-lg"
+                class="dash-enter group border-border bg-card relative min-h-[172px] overflow-hidden rounded-xl border p-5 transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-xl hover:shadow-violet-500/5"
+                :style="{ animationDelay: '60ms' }"
             >
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-muted-foreground text-sm">
+                <div
+                    class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                />
+                <div
+                    class="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-violet-500/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+                />
+
+                <div class="relative flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p
+                            class="text-muted-foreground text-[10px] font-semibold tracking-[0.14em] uppercase"
+                        >
                             Total Affiliates
                         </p>
 
-                        <p class="mt-3 text-3xl font-semibold tracking-tight">
-                            {{ formatNumber(props.stats.affiliates) }}
+                        <p
+                            class="mt-2.5 text-3xl font-semibold tracking-tight tabular-nums"
+                        >
+                            {{ formatNumber(Math.round(affiliatesDisplay)) }}
                         </p>
 
-                        <p class="text-muted-foreground mt-2 text-xs">
+                        <p class="text-muted-foreground mt-1.5 text-xs">
                             Affiliate terdaftar
                         </p>
                     </div>
 
                     <div
-                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10 text-violet-500 transition-transform group-hover:scale-105"
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-500/5 text-violet-500 ring-1 ring-violet-500/20 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
                     >
-                        ◈
+                        <UserRound class="h-5 w-5" />
                     </div>
+                </div>
+
+                <div
+                    class="relative mt-4 flex items-center justify-between text-xs"
+                >
+                    <span
+                        class="text-muted-foreground inline-flex items-center gap-1.5"
+                    >
+                        <span
+                            class="h-1.5 w-1.5 rounded-full bg-violet-500/60"
+                        />
+                        Partner network
+                    </span>
+
+                    <span
+                        class="inline-flex -translate-x-1 items-center gap-1 font-medium text-violet-500 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"
+                    >
+                        Jelajahi
+                        <ArrowUpRight class="h-3 w-3" />
+                    </span>
                 </div>
             </Link>
 
             <!-- GMV -->
             <div
-                class="border-border bg-card rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg"
+                class="dash-enter group border-border bg-card relative min-h-[172px] overflow-hidden rounded-xl border p-5 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/40 hover:shadow-xl hover:shadow-emerald-500/5"
+                :style="{ animationDelay: '120ms' }"
             >
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-muted-foreground text-sm">Total GMV</p>
+                <div
+                    class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                />
 
-                        <p class="mt-3 text-2xl font-semibold tracking-tight">
-                            {{ formatGMV(props.stats.gmv) }}
+                <div class="relative flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p
+                            class="text-muted-foreground text-[10px] font-semibold tracking-[0.14em] uppercase"
+                        >
+                            Total GMV
                         </p>
 
-                        <div class="mt-2 flex items-center gap-2 text-xs">
-                            <span :class="growthClass(props.stats.gmv_growth)">
-                                {{ formatGrowth(props.stats.gmv_growth) }}
+                        <p
+                            class="mt-2.5 text-2xl font-semibold tracking-tight tabular-nums"
+                            :title="formatGMV(props.stats.gmv)"
+                        >
+                            {{ formatGMVCompact(gmvDisplay) }}
+                        </p>
+
+                        <div class="mt-1.5 flex flex-wrap items-center gap-2">
+                            <span
+                                class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                                :class="growthChipClass(props.stats.gmv_growth)"
+                            >
+                                <ArrowUpRight
+                                    v-if="(props.stats.gmv_growth ?? 0) >= 0"
+                                    class="h-3 w-3"
+                                />
+                                <ArrowDownRight v-else class="h-3 w-3" />
+
+                                {{ formatGrowthShort(props.stats.gmv_growth) }}
                             </span>
 
-                            <span class="text-muted-foreground">
-                                vs periode sebelumnya
+                            <span class="text-muted-foreground text-[11px]">
+                                vs sebelumnya
                             </span>
                         </div>
                     </div>
 
                     <div
-                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500"
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 text-emerald-500 ring-1 ring-emerald-500/20 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
                     >
-                        Rp
+                        <Wallet class="h-5 w-5" />
                     </div>
+                </div>
+
+                <div class="relative mt-3 h-10">
+                    <MiniSparkline
+                        v-if="gmvSparkValues.length >= 2"
+                        :values="gmvSparkValues"
+                        class="h-10 w-full text-emerald-500"
+                        :stroke-width="2"
+                    />
+
+                    <p
+                        v-else
+                        class="text-muted-foreground flex h-full items-end text-[11px]"
+                    >
+                        Belum ada tren GMV
+                    </p>
                 </div>
             </div>
 
             <!-- Active Campaigns -->
             <Link
                 href="/campaigns"
-                class="group border-border bg-card rounded-xl border p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500/40 hover:shadow-lg"
+                class="dash-enter group border-border bg-card relative min-h-[172px] overflow-hidden rounded-xl border p-5 transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/40 hover:shadow-xl hover:shadow-amber-500/5"
+                :style="{ animationDelay: '180ms' }"
             >
-                <div class="flex items-start justify-between">
-                    <div>
-                        <p class="text-muted-foreground text-sm">
+                <div
+                    class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                />
+                <div
+                    class="pointer-events-none absolute -top-10 -right-10 h-28 w-28 rounded-full bg-amber-500/10 opacity-0 blur-2xl transition-opacity duration-300 group-hover:opacity-100"
+                />
+
+                <div class="relative flex items-start justify-between gap-3">
+                    <div class="min-w-0">
+                        <p
+                            class="text-muted-foreground text-[10px] font-semibold tracking-[0.14em] uppercase"
+                        >
                             Active Campaigns
                         </p>
 
-                        <p class="mt-3 text-3xl font-semibold tracking-tight">
-                            {{ formatNumber(props.stats.campaigns) }}
+                        <p
+                            class="mt-2.5 text-3xl font-semibold tracking-tight tabular-nums"
+                        >
+                            {{ formatNumber(Math.round(campaignsDisplay)) }}
                         </p>
 
-                        <p class="text-muted-foreground mt-2 text-xs">
+                        <p class="text-muted-foreground mt-1.5 text-xs">
                             Campaign yang sedang berjalan
                         </p>
                     </div>
 
                     <div
-                        class="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10 text-amber-500 transition-transform group-hover:scale-105"
+                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/5 text-amber-500 ring-1 ring-amber-500/20 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
                     >
-                        ◇
+                        <Megaphone class="h-5 w-5" />
                     </div>
+                </div>
+
+                <div
+                    class="relative mt-4 flex items-center justify-between text-xs"
+                >
+                    <span
+                        class="text-muted-foreground inline-flex items-center gap-1.5"
+                    >
+                        <span
+                            class="h-1.5 w-1.5 rounded-full bg-amber-500/60"
+                        />
+                        Running now
+                    </span>
+
+                    <span
+                        class="inline-flex -translate-x-1 items-center gap-1 font-medium text-amber-500 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"
+                    >
+                        Lihat
+                        <ArrowUpRight class="h-3 w-3" />
+                    </span>
                 </div>
             </Link>
         </div>
 
         <!-- Intelligence Summary -->
         <div class="mt-4 grid gap-4 md:grid-cols-2">
-            <!-- Orders -->
-            <div class="border-border bg-card rounded-xl border p-5">
-                <div class="flex items-start justify-between gap-4">
+            <!-- Orders signal -->
+            <div
+                class="dash-enter group border-border bg-card relative overflow-hidden rounded-xl border p-5 transition-shadow duration-300 hover:shadow-lg"
+                :style="{ animationDelay: '240ms' }"
+            >
+                <div
+                    class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/50 to-transparent"
+                />
+
+                <div class="relative flex items-start justify-between gap-4">
                     <div class="min-w-0">
-                        <p class="text-muted-foreground text-sm">
-                            Attributed Orders
-                        </p>
+                        <div class="flex items-center gap-2.5">
+                            <div
+                                class="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500 ring-1 ring-sky-500/15"
+                            >
+                                <Activity class="h-4 w-4" />
+                            </div>
 
-                        <p class="mt-2 text-2xl font-semibold tracking-tight">
-                            {{ formatNumber(props.stats.orders) }}
-                        </p>
+                            <div>
+                                <p class="text-sm font-medium">
+                                    Attributed Orders
+                                </p>
 
-                        <p class="text-muted-foreground mt-1 text-xs">
-                            Order yang teratribusi ke affiliate
-                        </p>
-                    </div>
+                                <p class="text-muted-foreground text-[11px]">
+                                    Order yang teratribusi ke affiliate
+                                </p>
+                            </div>
+                        </div>
 
-                    <div
-                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-500"
-                    >
-                        #
+                        <div class="mt-3 flex flex-wrap items-end gap-2.5">
+                            <p
+                                class="text-3xl font-semibold tracking-tight tabular-nums"
+                            >
+                                {{ formatNumber(Math.round(ordersDisplay)) }}
+                            </p>
+
+                            <span
+                                class="mb-1 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium"
+                                :class="
+                                    growthChipClass(props.stats.orders_growth)
+                                "
+                            >
+                                <ArrowUpRight
+                                    v-if="(props.stats.orders_growth ?? 0) >= 0"
+                                    class="h-3 w-3"
+                                />
+                                <ArrowDownRight v-else class="h-3 w-3" />
+
+                                {{
+                                    formatGrowthShort(props.stats.orders_growth)
+                                }}
+                            </span>
+
+                            <span
+                                class="text-muted-foreground mb-1 text-[11px]"
+                            >
+                                vs periode sebelumnya
+                            </span>
+                        </div>
                     </div>
                 </div>
 
-                <div class="mt-4 flex items-end justify-between gap-3">
-                    <div class="flex shrink-0 items-center gap-2 text-xs">
-                        <span :class="growthClass(props.stats.orders_growth)">
-                            {{ formatGrowth(props.stats.orders_growth) }}
-                        </span>
-
-                        <span class="text-muted-foreground">
-                            vs periode sebelumnya
-                        </span>
-                    </div>
-
-                    <!-- Mini trend chart: actual attributed orders -->
+                <div class="relative mt-4">
                     <div
-                        class="flex min-w-0 flex-1 flex-col items-center gap-2 pr-2"
+                        v-if="signalPoints.length >= 2"
+                        class="relative h-28 w-full touch-pan-y"
+                        role="img"
+                        aria-label="Tren attributed orders pada periode terpilih"
+                        @pointermove="updateSignalHover"
+                        @pointerdown="updateSignalHover"
+                        @pointerleave="clearSignalHover"
                     >
                         <svg
-                            v-if="ordersTrendPoints"
-                            class="h-16 w-full max-w-[220px] text-sky-400"
-                            viewBox="0 0 160 64"
-                            fill="none"
+                            class="h-full w-full overflow-visible"
+                            viewBox="0 0 100 40"
                             preserveAspectRatio="none"
-                            aria-label="Tren attributed orders berdasarkan data harian"
-                            role="img"
+                            fill="none"
+                            aria-hidden="true"
                         >
-                            <polyline
-                                :points="ordersTrendPoints"
+                            <defs>
+                                <linearGradient
+                                    id="dashboard-orders-area"
+                                    x1="0"
+                                    y1="0"
+                                    x2="0"
+                                    y2="1"
+                                >
+                                    <stop
+                                        offset="0%"
+                                        stop-color="rgb(14 165 233)"
+                                        stop-opacity="0.3"
+                                    />
+                                    <stop
+                                        offset="100%"
+                                        stop-color="rgb(14 165 233)"
+                                        stop-opacity="0"
+                                    />
+                                </linearGradient>
+                            </defs>
+
+                            <line
+                                v-for="step in [0, 1, 2, 3, 4]"
+                                :key="step"
+                                x1="0"
+                                x2="100"
+                                :y1="(step * 40) / 4"
+                                :y2="(step * 40) / 4"
                                 stroke="currentColor"
-                                stroke-width="3"
+                                class="text-border/40"
+                                stroke-width="0.2"
+                                vector-effect="non-scaling-stroke"
+                            />
+
+                            <path
+                                :d="signalArea"
+                                fill="url(#dashboard-orders-area)"
+                            />
+
+                            <path
+                                :d="signalLine"
+                                stroke="rgb(14 165 233)"
+                                stroke-width="2"
                                 stroke-linecap="round"
                                 stroke-linejoin="round"
-                                opacity="0.85"
+                                vector-effect="non-scaling-stroke"
+                            />
+
+                            <line
+                                v-if="hoveredSignalPoint"
+                                :x1="hoveredSignalPoint.x"
+                                :x2="hoveredSignalPoint.x"
+                                y1="0"
+                                y2="40"
+                                stroke="currentColor"
+                                class="text-sky-500/50"
+                                stroke-width="0.5"
+                                stroke-dasharray="1.5 1.5"
+                                vector-effect="non-scaling-stroke"
                             />
                         </svg>
 
-                        <p v-else class="text-muted-foreground text-xs">
-                            Belum ada data tren
-                        </p>
+                        <span
+                            v-if="signalPoints.length"
+                            class="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500 ring-2 ring-background"
+                            :style="{
+                                left: `${signalPoints[signalPoints.length - 1].x}%`,
+                                top: `${(signalPoints[signalPoints.length - 1].y / signalHeight) * 100}%`,
+                            }"
+                        >
+                            <span
+                                class="absolute inset-0 animate-ping rounded-full bg-sky-500/60"
+                            />
+                        </span>
+
+                        <span
+                            v-if="hoveredSignalPoint"
+                            class="pointer-events-none absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500 ring-2 ring-background"
+                            :style="{
+                                left: `${hoveredSignalPoint.x}%`,
+                                top: `${(hoveredSignalPoint.y / signalHeight) * 100}%`,
+                            }"
+                        />
+
+                        <div
+                            v-if="hoveredSignalPoint && hoveredSignalRow"
+                            class="border-border bg-popover pointer-events-none absolute top-0 z-10 -translate-x-1/2 -translate-y-full rounded-lg border px-2.5 py-1.5 shadow-lg"
+                            :style="{ left: `${hoveredSignalPoint.x}%` }"
+                        >
+                            <p
+                                class="text-muted-foreground text-[10px] whitespace-nowrap"
+                            >
+                                {{
+                                    formatPeriod(
+                                        hoveredSignalRow.period_start,
+                                        hoveredSignalRow.period_end,
+                                    )
+                                }}
+                            </p>
+
+                            <p
+                                class="text-xs font-semibold whitespace-nowrap tabular-nums"
+                            >
+                                {{ formatNumber(hoveredSignalRow.orders) }}
+                                orders
+                            </p>
+                        </div>
+                    </div>
+
+                    <div
+                        v-else
+                        class="border-border text-muted-foreground flex h-28 items-center justify-center rounded-lg border border-dashed text-xs"
+                    >
+                        Belum ada data tren orders
+                    </div>
+
+                    <div
+                        v-if="signalRows.length >= 2"
+                        class="text-muted-foreground mt-2 flex items-center justify-between text-[10px]"
+                    >
+
+                    </div>
+                    
+
+                    <div
+                        v-if="signalPoints.length > 1"
+                        class="text-muted-foreground mt-2 flex items-center justify-between text-[10px]"
+                    >
                     </div>
                 </div>
             </div>
 
             <!-- Intelligence Scores -->
-            <div class="border-border bg-card rounded-xl border p-5">
-                <div class="mb-4">
-                    <p class="text-sm font-medium">Intelligence Score</p>
+            <div
+                class="dash-enter border-border bg-card relative overflow-hidden rounded-xl border p-5 transition-shadow duration-300 hover:shadow-lg"
+                :style="{ animationDelay: '300ms' }"
+            >
+                <div
+                    class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent"
+                />
 
-                    <p class="text-muted-foreground mt-1 text-xs">
-                        Gambaran kualitas creator dan peluang affiliate.
-                    </p>
+                <div class="flex items-start justify-between gap-4">
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="flex h-9 w-9 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500 ring-1 ring-violet-500/15"
+                        >
+                            <Target class="h-4 w-4" />
+                        </div>
+
+                        <div>
+                            <p class="text-sm font-medium">
+                                Intelligence Score
+                            </p>
+
+                            <p class="text-muted-foreground text-[11px]">
+                                Kualitas creator & peluang affiliate
+                            </p>
+                        </div>
+                    </div>
+
+                    <span
+                        class="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 uppercase dark:text-violet-400"
+                    >
+                        <Zap class="h-3 w-3" />
+                        Live
+                    </span>
                 </div>
 
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="bg-muted/40 rounded-lg p-3">
-                        <p class="text-muted-foreground text-xs">
-                            Avg Creator Score
-                        </p>
-
-                        <p class="mt-2 text-2xl font-semibold">
-                            {{
-                                props.stats.avg_creator_score !== null
-                                    ? props.stats.avg_creator_score.toFixed(1)
-                                    : '-'
-                            }}
-                        </p>
-
-                        <p class="text-muted-foreground mt-1 text-[11px]">
-                            Overall creator
-                        </p>
+                <div class="mt-4 grid grid-cols-2 gap-3">
+                    <div
+                        class="border-border/60 bg-muted/30 hover:bg-muted/50 rounded-xl border p-3 transition-colors duration-300"
+                    >
+                        <ScoreGauge
+                            :value="props.stats.avg_creator_score"
+                            label="Avg Creator Score"
+                            caption="Overall creator"
+                        />
                     </div>
 
-                    <div class="bg-muted/40 rounded-lg p-3">
-                        <p class="text-muted-foreground text-xs">
-                            Avg Opportunity
-                        </p>
-
-                        <p class="mt-2 text-2xl font-semibold">
-                            {{
-                                props.stats.avg_affiliate_opportunity !== null
-                                    ? props.stats.avg_affiliate_opportunity.toFixed(
-                                          1,
-                                      )
-                                    : '-'
-                            }}
-                        </p>
-
-                        <p class="text-muted-foreground mt-1 text-[11px]">
-                            Affiliate opportunity
-                        </p>
+                    <div
+                        class="border-border/60 bg-muted/30 hover:bg-muted/50 rounded-xl border p-3 transition-colors duration-300"
+                    >
+                        <ScoreGauge
+                            :value="props.stats.avg_affiliate_opportunity"
+                            label="Avg Opportunity"
+                            caption="Affiliate opportunity"
+                        />
                     </div>
+                </div>
+
+                <div
+                    class="text-muted-foreground bg-muted/30 mt-3 flex items-center justify-between rounded-lg px-3 py-2 text-[10px]"
+                >
+                    <span>Rentang skor</span>
+
+                    <span class="inline-flex items-center gap-2.5">
+                        <span class="inline-flex items-center gap-1">
+                            <span
+                                class="h-1.5 w-1.5 rounded-full bg-rose-500"
+                            />
+                            Rendah
+                        </span>
+
+                        <span class="inline-flex items-center gap-1">
+                            <span
+                                class="h-1.5 w-1.5 rounded-full bg-amber-500"
+                            />
+                            Sedang
+                        </span>
+
+                        <span class="inline-flex items-center gap-1">
+                            <span
+                                class="h-1.5 w-1.5 rounded-full bg-emerald-500"
+                            />
+                            Tinggi
+                        </span>
+                    </span>
                 </div>
             </div>
         </div>
@@ -883,135 +1536,127 @@ onBeforeUnmount(() => {
             />
 
             <!-- Action Required -->
-            <div class="border-border bg-card rounded-xl border p-5">
-                <div>
-                    <p class="text-base font-medium">Action Center</p>
+            <div
+                class="dash-enter border-border bg-card relative flex flex-col overflow-hidden rounded-xl border p-5"
+                :style="{ animationDelay: '360ms' }"
+            >
+                <div
+                    class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-orange-500/50 to-transparent"
+                />
 
-                    <p class="text-muted-foreground mt-1 text-sm">
-                        Prioritas yang membutuhkan perhatian.
-                    </p>
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="flex h-8 w-8 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500 ring-1 ring-orange-500/15"
+                            >
+                                <Zap class="h-4 w-4" />
+                            </div>
+
+                            <p class="text-base font-medium">Action Center</p>
+                        </div>
+
+                        <p class="text-muted-foreground mt-1 text-xs">
+                            Prioritas yang membutuhkan perhatian.
+                        </p>
+                    </div>
+
+                    <div class="text-right">
+                        <p
+                            class="text-2xl font-semibold tracking-tight tabular-nums"
+                        >
+                            {{ priorityTotal }}
+                        </p>
+
+                        <p
+                            class="text-muted-foreground text-[10px] tracking-wide uppercase"
+                        >
+                            Total aksi
+                        </p>
+                    </div>
                 </div>
 
-                <div class="mt-6 space-y-3">
-                    <!-- Creators -->
-                    <Link
-                        :href="`/creators${selectedPeriodQuery}`"
-                        class="group border-border bg-muted/30 block rounded-lg border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-orange-500/40 hover:bg-orange-500/[0.04]"
+                <div class="mt-4">
+                    <div
+                        class="bg-muted flex h-2 w-full gap-0.5 overflow-hidden rounded-full"
                     >
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
+                        <div
+                            v-for="segment in prioritySegments"
+                            :key="segment.key"
+                            class="h-full rounded-full transition-all duration-700"
+                            :class="segment.class"
+                            :style="{ width: `${segment.width}%` }"
+                            :title="`${segment.value} item`"
+                        />
+                    </div>
+
+                    <div
+                        class="text-muted-foreground mt-2 flex items-center justify-between text-[10px]"
+                    >
+                        <span>Distribusi prioritas</span>
+                        <span class="tabular-nums">
+                            {{ priorityTotal }} item
+                        </span>
+                    </div>
+                </div>
+
+                <div class="mt-4 space-y-2.5">
+                    <Link
+                        v-for="item in actionItems"
+                        :key="item.key"
+                        :href="item.href"
+                        class="group border-border/70 bg-muted/20 relative block overflow-hidden rounded-lg border p-3 transition-all duration-300 hover:-translate-y-0.5"
+                        :class="item.hoverClass"
+                    >
+                        <div class="flex items-center justify-between gap-3">
+                            <div class="flex min-w-0 items-center gap-2.5">
                                 <div
-                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-orange-500/15 group-hover:shadow-[0_0_14px_rgba(249,115,22,0.18)]"
+                                    class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ring-1 transition-transform duration-300 group-hover:scale-110"
+                                    :class="item.iconClass"
                                 >
-                                    <UserSearch
-                                        class="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-3"
+                                    <component
+                                        :is="item.icon"
+                                        class="h-4 w-4"
                                     />
                                 </div>
 
-                                <span
-                                    class="text-sm transition-colors duration-300 group-hover:text-orange-500"
-                                >
-                                    Creators to review
-                                </span>
+                                <div class="min-w-0">
+                                    <p class="truncate text-xs font-medium">
+                                        {{ item.label }}
+                                    </p>
+
+                                    <p
+                                        class="text-muted-foreground truncate text-[10px]"
+                                    >
+                                        {{ item.hint }}
+                                    </p>
+                                </div>
                             </div>
 
-                            <span
-                                class="font-semibold transition-transform duration-300 group-hover:translate-x-1"
-                            >
-                                {{ props.action_required.creators_to_review }}
-                            </span>
+                            <div class="flex shrink-0 items-center gap-1.5">
+                                <span
+                                    class="text-sm font-semibold tabular-nums"
+                                    :class="item.valueClass"
+                                >
+                                    {{ item.count }}
+                                </span>
+
+                                <ArrowUpRight
+                                    class="text-muted-foreground h-3.5 w-3.5 -translate-x-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100"
+                                />
+                            </div>
                         </div>
-                    </Link>
 
-                    <!-- Affiliates -->
-                    <Link
-                        :href="`/affiliates${selectedPeriodQuery}${selectedPeriodQuery ? '&' : '?'}action=SUPPORT`"
-                        class="group border-border bg-muted/30 block rounded-lg border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div
-                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-emerald-500/15 group-hover:shadow-[0_0_14px_rgba(16,185,129,0.18)]"
-                                >
-                                    <Headphones
-                                        class="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
-                                    />
-                                </div>
-
-                                <span
-                                    class="text-sm transition-colors duration-300 group-hover:text-emerald-500"
-                                >
-                                    Affiliates to support
-                                </span>
-                            </div>
-
-                            <span
-                                class="font-semibold transition-transform duration-300 group-hover:translate-x-1"
-                            >
-                                {{
-                                    props.action_required.affiliates_to_support
-                                }}
-                            </span>
-                        </div>
-                    </Link>
-
-                    <!-- Monitoring -->
-                    <Link
-                        :href="`/affiliates${selectedPeriodQuery}${selectedPeriodQuery ? '&' : '?'}action=MONITOR`"
-                        class="group border-border bg-muted/30 block rounded-lg border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-amber-500/40 hover:bg-amber-500/[0.04] hover:shadow-[0_6px_18px_rgba(245,158,11,0.08)]"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div
-                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 transition-all duration-300 group-hover:scale-110 group-hover:bg-amber-500/15 group-hover:shadow-[0_0_14px_rgba(245,158,11,0.18)]"
-                                >
-                                    <Eye
-                                        class="h-4 w-4 transition-transform duration-300 group-hover:scale-110"
-                                    />
-                                </div>
-
-                                <span
-                                    class="text-sm transition-colors duration-300 group-hover:text-amber-500"
-                                >
-                                    Need monitoring
-                                </span>
-                            </div>
-
-                            <span
-                                class="font-semibold transition-transform duration-300 group-hover:translate-x-1"
-                            >
-                                {{ props.action_required.need_monitoring }}
-                            </span>
-                        </div>
-                    </Link>
-
-                    <!-- Deprioritize -->
-                    <Link
-                        :href="`/affiliates${selectedPeriodQuery}${selectedPeriodQuery ? '&' : '?'}action=DEPRIORITIZE`"
-                        class="group border-border bg-muted/30 hover:border-muted-foreground/40 hover:bg-muted/60 block rounded-lg border p-4 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_6px_18px_rgba(100,116,139,0.08)]"
-                    >
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-3">
-                                <div
-                                    class="bg-muted text-muted-foreground group-hover:bg-muted/80 flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-300 group-hover:scale-110 group-hover:shadow-[0_0_14px_rgba(100,116,139,0.15)]"
-                                >
-                                    <CircleSlash
-                                        class="h-4 w-4 transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6"
-                                    />
-                                </div>
-
-                                <span
-                                    class="group-hover:text-foreground text-sm transition-colors duration-300"
-                                >
-                                    Deprioritize
-                                </span>
-                            </div>
-
-                            <span
-                                class="font-semibold transition-transform duration-300 group-hover:translate-x-1"
-                            >
-                                {{ props.action_required.deprioritize }}
-                            </span>
+                        <div
+                            class="bg-muted mt-2.5 h-1 w-full overflow-hidden rounded-full"
+                        >
+                            <div
+                                class="h-full rounded-full transition-all duration-700"
+                                :class="item.barClass"
+                                :style="{
+                                    width: `${priorityProgress(item.count)}%`,
+                                }"
+                            />
                         </div>
                     </Link>
                 </div>
@@ -1019,26 +1664,46 @@ onBeforeUnmount(() => {
         </div>
 
         <!-- Insights Preview -->
-        <div class="border-border bg-card mt-4 rounded-xl border p-5">
+        <div
+            class="dash-enter border-border bg-card relative mt-4 overflow-hidden rounded-xl border p-5"
+            :style="{ animationDelay: '420ms' }"
+        >
+            <div
+                class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-500/50 to-transparent"
+            />
+
+            <div
+                class="pointer-events-none absolute -top-24 right-0 h-48 w-48 rounded-full bg-sky-500/5 blur-3xl"
+            />
+
             <!-- Header -->
             <div
-                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+                class="relative flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <div
+                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-sky-500/10 text-sky-500 ring-1 ring-sky-500/15"
+                        >
+                            <Sparkles class="h-4 w-4" />
+                        </div>
+
                         <p class="text-base font-semibold">
                             Performance Insights
                         </p>
 
                         <span
                             v-if="props.insight_preview"
-                            class="rounded-md bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-600 dark:text-sky-400"
+                            class="inline-flex items-center gap-1 rounded-full border border-sky-500/20 bg-sky-500/10 px-2 py-0.5 text-[10px] font-medium text-sky-600 uppercase dark:text-sky-400"
                         >
-                            LIVE ANALYSIS
+                            <span
+                                class="h-1.5 w-1.5 animate-pulse rounded-full bg-sky-500"
+                            />
+                            Live analysis
                         </span>
                     </div>
 
-                    <p class="text-muted-foreground mt-1 text-sm">
+                    <p class="text-muted-foreground mt-1 text-xs sm:pl-10">
                         {{
                             props.insight_preview
                                 ? `Analisis otomatis · ${insightPeriodLabel()}`
@@ -1049,274 +1714,314 @@ onBeforeUnmount(() => {
 
                 <Link
                     :href="`/insights${selectedPeriodQuery}`"
-                    class="border-border bg-muted/40 hover:bg-muted inline-flex w-fit items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition hover:border-sky-500/40"
+                    class="group border-border bg-muted/40 hover:bg-muted inline-flex w-fit items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition hover:border-sky-500/40"
                 >
                     Lihat semua insights
-                    <span
-                        class="transition-transform group-hover:translate-x-0.5"
-                    >
-                        →
-                    </span>
+
+                    <ArrowUpRight
+                        class="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                    />
                 </Link>
             </div>
 
             <!-- Insight Cards -->
             <div
                 v-if="props.insight_preview"
-                class="mt-5 grid gap-4 lg:grid-cols-3"
+                class="relative mt-5 grid gap-4 lg:grid-cols-3"
             >
                 <!-- Top Performer -->
                 <Link
                     :href="`/insights${selectedPeriodQuery}`"
-                    class="group relative overflow-hidden rounded-xl border border-blue-500/20 bg-blue-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-500/50 hover:bg-blue-500/[0.06] hover:shadow-lg"
+                    class="group relative overflow-hidden rounded-xl border border-blue-500/20 bg-gradient-to-br from-blue-500/[0.07] via-blue-500/[0.02] to-transparent p-5 transition-all duration-300 hover:-translate-y-1 hover:border-blue-500/50 hover:shadow-xl hover:shadow-blue-500/5"
                 >
                     <div
-                        class="pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full bg-blue-500/10 blur-2xl transition-opacity group-hover:opacity-100"
+                        class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                     />
 
-                    <div class="relative">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500"
-                                >
-                                    ↑
-                                </div>
-
-                                <span
-                                    class="text-xs font-semibold tracking-wide text-blue-500 uppercase"
-                                >
-                                    Top Performer
-                                </span>
+                    <div class="relative flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500 ring-1 ring-blue-500/15 transition-transform duration-300 group-hover:scale-110"
+                            >
+                                <Crown class="h-4 w-4" />
                             </div>
 
                             <span
-                                class="text-muted-foreground text-xs transition-transform group-hover:translate-x-1"
+                                class="text-xs font-semibold tracking-wide text-blue-500 uppercase"
                             >
-                                →
+                                Top Performer
                             </span>
                         </div>
 
-                        <template v-if="topPerformer()">
-                            <p class="mt-5 truncate text-lg font-semibold">
-                                {{ topPerformer()?.name ?? '-' }}
-                            </p>
-
-                            <p class="text-muted-foreground mt-1 text-xs">
-                                Kontributor GMV terbesar
-                            </p>
-
-                            <div class="mt-4 grid grid-cols-2 gap-2">
-                                <div class="bg-background/60 rounded-lg p-3">
-                                    <p
-                                        class="text-muted-foreground text-[10px] tracking-wide uppercase"
-                                    >
-                                        GMV
-                                    </p>
-
-                                    <p class="mt-1 text-sm font-semibold">
-                                        {{
-                                            formatGMV(topPerformer()?.gmv ?? 0)
-                                        }}
-                                    </p>
-                                </div>
-
-                                <div class="bg-background/60 rounded-lg p-3">
-                                    <p
-                                        class="text-muted-foreground text-[10px] tracking-wide uppercase"
-                                    >
-                                        Orders
-                                    </p>
-
-                                    <p class="mt-1 text-sm font-semibold">
-                                        {{
-                                            formatNumber(
-                                                topPerformer()?.orders ?? 0,
-                                            )
-                                        }}
-                                    </p>
-                                </div>
-                            </div>
-
-                            <div
-                                class="mt-4 flex items-center justify-between text-xs"
-                            >
-                                <span class="text-muted-foreground">
-                                    Lihat performa lengkap
-                                </span>
-
-                                <span class="font-medium text-blue-500">
-                                    Analisis →
-                                </span>
-                            </div>
-                        </template>
-
-                        <p v-else class="text-muted-foreground mt-5 text-sm">
-                            Belum ada top performer.
-                        </p>
+                        <span
+                            class="text-muted-foreground bg-background/60 rounded-full px-2 py-0.5 text-[10px] font-medium"
+                        >
+                            #1 GMV
+                        </span>
                     </div>
+
+                    <template v-if="topPerformer()">
+                        <div class="relative mt-4 flex items-center gap-3">
+                            <div
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-blue-500/25 to-violet-500/10 text-sm font-semibold text-blue-600 ring-1 ring-blue-500/20 dark:text-blue-300"
+                            >
+                                {{ getInitials(topPerformer()?.name ?? '') }}
+                            </div>
+
+                            <div class="min-w-0">
+                                <p class="truncate text-base font-semibold">
+                                    {{ topPerformer()?.name ?? '-' }}
+                                </p>
+
+                                <p class="text-muted-foreground text-[11px]">
+                                    Kontributor GMV terbesar
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 grid grid-cols-2 gap-2">
+                            <div class="bg-background/60 rounded-lg p-3">
+                                <p
+                                    class="text-muted-foreground text-[10px] tracking-wide uppercase"
+                                >
+                                    GMV
+                                </p>
+
+                                <p
+                                    class="mt-1 text-sm font-semibold tabular-nums"
+                                    :title="formatGMV(topPerformer()?.gmv ?? 0)"
+                                >
+                                    {{
+                                        formatGMVCompact(
+                                            topPerformer()?.gmv ?? 0,
+                                        )
+                                    }}
+                                </p>
+                            </div>
+
+                            <div class="bg-background/60 rounded-lg p-3">
+                                <p
+                                    class="text-muted-foreground text-[10px] tracking-wide uppercase"
+                                >
+                                    Orders
+                                </p>
+
+                                <p
+                                    class="mt-1 text-sm font-semibold tabular-nums"
+                                >
+                                    {{
+                                        formatNumber(
+                                            topPerformer()?.orders ?? 0,
+                                        )
+                                    }}
+                                </p>
+                            </div>
+                        </div>
+
+                        <div
+                            class="mt-4 flex items-center justify-between text-xs"
+                        >
+                            <span class="text-muted-foreground">
+                                Lihat performa lengkap
+                            </span>
+
+                            <span
+                                class="inline-flex items-center gap-1 font-medium text-blue-500"
+                            >
+                                Analisis
+
+                                <ArrowUpRight
+                                    class="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                                />
+                            </span>
+                        </div>
+                    </template>
+
+                    <p v-else class="text-muted-foreground mt-5 text-sm">
+                        Belum ada top performer.
+                    </p>
                 </Link>
 
                 <!-- High GMV / Low Consistency -->
                 <Link
                     :href="`/insights${selectedPeriodQuery}`"
-                    class="group relative overflow-hidden rounded-xl border border-amber-500/20 bg-amber-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-amber-500/50 hover:bg-amber-500/[0.06] hover:shadow-lg"
+                    class="group relative overflow-hidden rounded-xl border border-amber-500/20 bg-gradient-to-br from-amber-500/[0.07] via-amber-500/[0.02] to-transparent p-5 transition-all duration-300 hover:-translate-y-1 hover:border-amber-500/50 hover:shadow-xl hover:shadow-amber-500/5"
                 >
                     <div
-                        class="pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full bg-amber-500/10 blur-2xl"
+                        class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-500/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                     />
 
-                    <div class="relative">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500"
-                                >
-                                    !
-                                </div>
-
-                                <span
-                                    class="text-xs font-semibold tracking-wide text-amber-500 uppercase"
-                                >
-                                    Attention
-                                </span>
+                    <div class="relative flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-500/10 text-amber-500 ring-1 ring-amber-500/15 transition-transform duration-300 group-hover:scale-110"
+                            >
+                                <Target class="h-4 w-4" />
                             </div>
 
                             <span
-                                class="text-muted-foreground text-xs transition-transform group-hover:translate-x-1"
+                                class="text-xs font-semibold tracking-wide text-amber-500 uppercase"
                             >
-                                →
+                                Attention
                             </span>
                         </div>
 
-                        <template v-if="getInsight('monitoring')">
-                            <p class="mt-5 text-2xl font-semibold">
+                        <span
+                            class="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400"
+                        >
+                            Perlu aksi
+                        </span>
+                    </div>
+
+                    <template v-if="getInsight('monitoring')">
+                        <div class="relative mt-4 flex items-end gap-2">
+                            <p
+                                class="text-3xl font-semibold tracking-tight tabular-nums"
+                            >
                                 {{ getInsight('monitoring')?.count ?? 0 }}
                             </p>
 
-                            <p class="mt-1 text-sm font-medium">
-                                High GMV, Low Consistency
-                            </p>
+                            <span class="text-muted-foreground mb-1 text-xs">
+                                affiliate
+                            </span>
+                        </div>
 
-                            <p
-                                class="text-muted-foreground mt-2 text-xs leading-relaxed"
-                            >
-                                Affiliate dengan kontribusi GMV tinggi tetapi
-                                consistency score masih rendah.
-                            </p>
-
-                            <div
-                                class="bg-background/60 mt-4 flex items-center justify-between rounded-lg px-3 py-2.5"
-                            >
-                                <span class="text-muted-foreground text-xs">
-                                    Fokus
-                                </span>
-
-                                <span
-                                    class="text-xs font-medium text-amber-500"
-                                >
-                                    Konsistensi konten
-                                </span>
-                            </div>
-
-                            <div
-                                class="mt-4 flex items-center justify-between text-xs"
-                            >
-                                <span class="text-muted-foreground">
-                                    Buka detail perhatian
-                                </span>
-
-                                <span class="font-medium text-amber-500">
-                                    Analisis →
-                                </span>
-                            </div>
-                        </template>
-
-                        <p v-else class="text-muted-foreground mt-5 text-sm">
-                            Tidak ada pola yang perlu diperhatikan.
+                        <p class="mt-1 text-sm font-medium">
+                            High GMV, Low Consistency
                         </p>
-                    </div>
+
+                        <p
+                            class="text-muted-foreground mt-2 text-xs leading-relaxed"
+                        >
+                            Affiliate dengan kontribusi GMV tinggi tetapi
+                            consistency score masih rendah.
+                        </p>
+
+                        <div
+                            class="bg-background/60 mt-4 flex items-center justify-between rounded-lg px-3 py-2.5"
+                        >
+                            <span class="text-muted-foreground text-xs">
+                                Fokus
+                            </span>
+
+                            <span class="text-xs font-medium text-amber-500">
+                                Konsistensi konten
+                            </span>
+                        </div>
+
+                        <div
+                            class="mt-4 flex items-center justify-between text-xs"
+                        >
+                            <span class="text-muted-foreground">
+                                Buka detail perhatian
+                            </span>
+
+                            <span
+                                class="inline-flex items-center gap-1 font-medium text-amber-500"
+                            >
+                                Analisis
+
+                                <ArrowUpRight
+                                    class="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                                />
+                            </span>
+                        </div>
+                    </template>
+
+                    <p v-else class="text-muted-foreground mt-5 text-sm">
+                        Tidak ada pola yang perlu diperhatikan.
+                    </p>
                 </Link>
 
                 <!-- Potential Opportunity -->
                 <Link
                     :href="`/insights${selectedPeriodQuery}`"
-                    class="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-emerald-500/[0.035] p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/50 hover:bg-emerald-500/[0.06] hover:shadow-lg"
+                    class="group relative overflow-hidden rounded-xl border border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.07] via-emerald-500/[0.02] to-transparent p-5 transition-all duration-300 hover:-translate-y-1 hover:border-emerald-500/50 hover:shadow-xl hover:shadow-emerald-500/5"
                 >
                     <div
-                        class="pointer-events-none absolute -top-10 -right-10 h-24 w-24 rounded-full bg-emerald-500/10 blur-2xl"
+                        class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-emerald-500/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100"
                     />
 
-                    <div class="relative">
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center gap-2">
-                                <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500"
-                                >
-                                    ✦
-                                </div>
-
-                                <span
-                                    class="text-xs font-semibold tracking-wide text-emerald-500 uppercase"
-                                >
-                                    Opportunity
-                                </span>
+                    <div class="relative flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <div
+                                class="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-500 ring-1 ring-emerald-500/15 transition-transform duration-300 group-hover:scale-110"
+                            >
+                                <Sparkles class="h-4 w-4" />
                             </div>
 
                             <span
-                                class="text-muted-foreground text-xs transition-transform group-hover:translate-x-1"
+                                class="text-xs font-semibold tracking-wide text-emerald-500 uppercase"
                             >
-                                →
+                                Opportunity
                             </span>
                         </div>
 
-                        <template v-if="getInsight('potential')">
-                            <p class="mt-5 text-2xl font-semibold">
+                        <span
+                            class="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium text-emerald-600 dark:text-emerald-400"
+                        >
+                            Potensial
+                        </span>
+                    </div>
+
+                    <template v-if="getInsight('potential')">
+                        <div class="relative mt-4 flex items-end gap-2">
+                            <p
+                                class="text-3xl font-semibold tracking-tight tabular-nums"
+                            >
                                 {{ getInsight('potential')?.count ?? 0 }}
                             </p>
 
-                            <p class="mt-1 text-sm font-medium">
-                                Potential Opportunity
-                            </p>
+                            <span class="text-muted-foreground mb-1 text-xs">
+                                affiliate
+                            </span>
+                        </div>
 
-                            <p
-                                class="text-muted-foreground mt-2 text-xs leading-relaxed"
-                            >
-                                Affiliate dengan opportunity score tinggi
-                                meskipun kontribusi GMV masih kecil.
-                            </p>
-
-                            <div
-                                class="bg-background/60 mt-4 flex items-center justify-between rounded-lg px-3 py-2.5"
-                            >
-                                <span class="text-muted-foreground text-xs">
-                                    Fokus
-                                </span>
-
-                                <span
-                                    class="text-xs font-medium text-emerald-500"
-                                >
-                                    Aktivasi & support
-                                </span>
-                            </div>
-
-                            <div
-                                class="mt-4 flex items-center justify-between text-xs"
-                            >
-                                <span class="text-muted-foreground">
-                                    Eksplorasi peluang
-                                </span>
-
-                                <span class="font-medium text-emerald-500">
-                                    Analisis →
-                                </span>
-                            </div>
-                        </template>
-
-                        <p v-else class="text-muted-foreground mt-5 text-sm">
-                            Belum ada potential opportunity.
+                        <p class="mt-1 text-sm font-medium">
+                            Potential Opportunity
                         </p>
-                    </div>
+
+                        <p
+                            class="text-muted-foreground mt-2 text-xs leading-relaxed"
+                        >
+                            Affiliate dengan opportunity score tinggi meskipun
+                            kontribusi GMV masih kecil.
+                        </p>
+
+                        <div
+                            class="bg-background/60 mt-4 flex items-center justify-between rounded-lg px-3 py-2.5"
+                        >
+                            <span class="text-muted-foreground text-xs">
+                                Fokus
+                            </span>
+
+                            <span class="text-xs font-medium text-emerald-500">
+                                Aktivasi & support
+                            </span>
+                        </div>
+
+                        <div
+                            class="mt-4 flex items-center justify-between text-xs"
+                        >
+                            <span class="text-muted-foreground">
+                                Eksplorasi peluang
+                            </span>
+
+                            <span
+                                class="inline-flex items-center gap-1 font-medium text-emerald-500"
+                            >
+                                Analisis
+
+                                <ArrowUpRight
+                                    class="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                                />
+                            </span>
+                        </div>
+                    </template>
+
+                    <p v-else class="text-muted-foreground mt-5 text-sm">
+                        Belum ada potential opportunity.
+                    </p>
                 </Link>
             </div>
 
@@ -1346,51 +2051,99 @@ onBeforeUnmount(() => {
         <!-- Bottom Overview -->
         <div class="mt-4 grid gap-4 md:grid-cols-2">
             <!-- Creator Overview -->
-            <div class="border-border bg-card rounded-xl border p-5">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-base font-medium">Creator Overview</p>
+            <div
+                class="dash-enter border-border bg-card relative overflow-hidden rounded-xl border p-5"
+                :style="{ animationDelay: '480ms' }"
+            >
+                <div
+                    class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-blue-500/50 to-transparent"
+                />
 
-                        <p class="text-muted-foreground mt-1 text-sm">
-                            Latest creator intelligence.
-                        </p>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-500/10 text-blue-500 ring-1 ring-blue-500/15"
+                        >
+                            <Users class="h-4 w-4" />
+                        </div>
+
+                        <div>
+                            <p class="text-base font-medium">
+                                Creator Overview
+                            </p>
+
+                            <p class="text-muted-foreground text-xs">
+                                Latest creator intelligence.
+                            </p>
+                        </div>
                     </div>
 
                     <Link
                         href="/creators"
-                        class="text-sm text-blue-500 transition hover:text-blue-600"
+                        class="group text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs font-medium transition"
                     >
-                        View all →
+                        View all
+
+                        <ArrowUpRight
+                            class="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                        />
                     </Link>
                 </div>
-                <div class="mt-4 space-y-3">
+
+                <div class="mt-4 space-y-2.5">
                     <Link
-                        v-for="creator in props.creator_overview"
+                        v-for="(creator, index) in props.creator_overview"
                         :key="creator.id"
                         :href="`/creators/${creator.id}`"
-                        class="border-border bg-muted/30 hover:bg-muted/60 flex items-center justify-between rounded-lg border p-4 transition hover:border-blue-500/40"
+                        class="group border-border/70 bg-muted/20 hover:bg-muted/40 flex items-center gap-3 rounded-lg border p-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500/40"
                     >
-                        <div class="min-w-0">
-                            <p class="truncate font-medium">
+                        <div
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold ring-1 transition-transform duration-300 group-hover:scale-105"
+                            :class="avatarClass(index)"
+                        >
+                            {{ getInitials(creator.name) }}
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-medium">
                                 {{ creator.name }}
                             </p>
 
-                            <p class="text-muted-foreground mt-1 text-xs">
+                            <p
+                                class="text-muted-foreground mt-0.5 truncate text-[11px]"
+                            >
                                 {{ creator.platform ?? '-' }}
 
                                 <span v-if="creator.category">
                                     · {{ creator.category }}
                                 </span>
                             </p>
+
+                            <div
+                                class="bg-muted mt-2 h-1 w-full overflow-hidden rounded-full"
+                            >
+                                <div
+                                    class="h-full rounded-full transition-all duration-700 group-hover:opacity-90"
+                                    :class="scoreBarClass(creator.score)"
+                                    :style="{
+                                        width: `${Math.min(100, Math.max(4, creator.score))}%`,
+                                    }"
+                                />
+                            </div>
                         </div>
 
-                        <div class="ml-4 shrink-0 text-right">
-                            <p class="text-lg font-semibold">
+                        <div class="shrink-0 text-right">
+                            <p
+                                class="text-sm font-semibold tabular-nums"
+                                :class="scoreToneClass(creator.score)"
+                            >
                                 {{ creator.score.toFixed(1) }}
                             </p>
 
-                            <p class="text-muted-foreground text-[11px]">
-                                Overall Score
+                            <p
+                                class="text-muted-foreground text-[10px] tracking-wide uppercase"
+                            >
+                                Score
                             </p>
                         </div>
                     </Link>
@@ -1412,62 +2165,95 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Affiliate Overview -->
-            <div class="border-border bg-card rounded-xl border p-5">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-base font-medium">Affiliate Overview</p>
+            <div
+                class="dash-enter border-border bg-card relative overflow-hidden rounded-xl border p-5"
+                :style="{ animationDelay: '540ms' }"
+            >
+                <div
+                    class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent"
+                />
 
-                        <p class="text-muted-foreground mt-1 text-sm">
-                            Recent affiliate opportunities.
-                        </p>
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <div
+                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/10 text-violet-500 ring-1 ring-violet-500/15"
+                        >
+                            <UserRound class="h-4 w-4" />
+                        </div>
+
+                        <div>
+                            <p class="text-base font-medium">
+                                Affiliate Overview
+                            </p>
+
+                            <p class="text-muted-foreground text-xs">
+                                Recent affiliate opportunities.
+                            </p>
+                        </div>
                     </div>
 
                     <Link
                         href="/affiliates"
-                        class="text-sm text-violet-500 transition hover:text-violet-600"
+                        class="group text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs font-medium transition"
                     >
-                        View all →
+                        View all
+
+                        <ArrowUpRight
+                            class="h-3 w-3 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+                        />
                     </Link>
                 </div>
 
-                <div class="mt-4 space-y-3">
+                <div class="mt-4 space-y-2.5">
                     <Link
-                        v-for="affiliate in props.affiliate_overview"
+                        v-for="(affiliate, index) in props.affiliate_overview"
                         :key="affiliate.id"
                         :href="affiliateDetailUrl(affiliate.id)"
-                        class="border-border bg-muted/30 hover:bg-muted/60 flex items-center justify-between rounded-lg border p-4 transition hover:border-violet-500/40"
+                        class="group border-border/70 bg-muted/20 hover:bg-muted/40 flex items-center gap-3 rounded-lg border p-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-violet-500/40"
                     >
-                        <div class="min-w-0">
-                            <p class="truncate font-medium">
+                        <div
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold ring-1 transition-transform duration-300 group-hover:scale-105"
+                            :class="avatarClass(index + 1)"
+                        >
+                            {{ getInitials(affiliate.name) }}
+                        </div>
+
+                        <div class="min-w-0 flex-1">
+                            <p class="truncate text-sm font-medium">
                                 {{ affiliate.name }}
                             </p>
 
-                            <p class="text-muted-foreground mt-1 text-xs">
-                                {{ affiliate.platform ?? '-' }}
-                                · GMV {{ formatGMV(affiliate.gmv) }}
+                            <p
+                                class="text-muted-foreground mt-0.5 truncate text-[11px]"
+                            >
+                                {{ affiliate.platform ?? '-' }} · GMV
+                                {{ formatGMVCompact(affiliate.gmv) }}
                             </p>
+
+                            <div
+                                class="bg-muted mt-2 h-1 w-full overflow-hidden rounded-full"
+                            >
+                                <div
+                                    class="h-full rounded-full transition-all duration-700 group-hover:opacity-90"
+                                    :class="scoreBarClass(affiliate.score)"
+                                    :style="{
+                                        width: `${Math.min(100, Math.max(4, affiliate.score))}%`,
+                                    }"
+                                />
+                            </div>
                         </div>
 
-                        <div class="ml-4 shrink-0 text-right">
-                            <p class="text-lg font-semibold">
+                        <div class="shrink-0 text-right">
+                            <p
+                                class="text-sm font-semibold tabular-nums"
+                                :class="scoreToneClass(affiliate.score)"
+                            >
                                 {{ affiliate.score.toFixed(1) }}
                             </p>
 
                             <span
                                 class="mt-1 inline-flex rounded-md px-2 py-0.5 text-[10px] font-medium"
-                                :class="{
-                                    'bg-blue-500/10 text-blue-600 dark:text-blue-400':
-                                        affiliate.action === 'CHASE',
-
-                                    'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400':
-                                        affiliate.action === 'SUPPORT',
-
-                                    'bg-amber-500/10 text-amber-600 dark:text-amber-400':
-                                        affiliate.action === 'MONITOR',
-
-                                    'bg-muted text-muted-foreground':
-                                        affiliate.action === 'DEPRIORITIZE',
-                                }"
+                                :class="actionChipClass(affiliate.action)"
                             >
                                 {{ affiliate.action }}
                             </span>
