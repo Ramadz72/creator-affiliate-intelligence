@@ -559,142 +559,137 @@ const deltaBadgeClass = (value: number) =>
                 </div>
             </div>
 
-            <div class="flex shrink-0 flex-wrap items-center gap-2">
-                <div
-                    class="border-border bg-muted/40 inline-flex rounded-lg border p-0.5"
-                >
-                    <button
-                        type="button"
-                        class="rounded-md px-3 py-1.5 text-xs font-medium transition"
-                        :class="
-                            selectedChartMetric === 'gmv'
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                        "
-                        :aria-pressed="selectedChartMetric === 'gmv'"
-                        @click="selectedChartMetric = 'gmv'"
+            <div class="flex shrink-0 flex-col items-start gap-2 xl:items-end">
+                <div class="flex flex-wrap items-center gap-2">
+                    <div
+                        class="border-border bg-muted/40 inline-flex rounded-lg border p-0.5"
                     >
-                        GMV
-                    </button>
+                        <button
+                            type="button"
+                            class="rounded-md px-3 py-1.5 text-xs font-medium transition"
+                            :class="
+                                selectedChartMetric === 'gmv'
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            "
+                            :aria-pressed="selectedChartMetric === 'gmv'"
+                            @click="selectedChartMetric = 'gmv'"
+                        >
+                            GMV
+                        </button>
 
-                    <button
-                        type="button"
-                        class="rounded-md px-3 py-1.5 text-xs font-medium transition"
-                        :class="
-                            selectedChartMetric === 'orders'
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                        "
-                        :aria-pressed="selectedChartMetric === 'orders'"
-                        @click="selectedChartMetric = 'orders'"
+                        <button
+                            type="button"
+                            class="rounded-md px-3 py-1.5 text-xs font-medium transition"
+                            :class="
+                                selectedChartMetric === 'orders'
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            "
+                            :aria-pressed="selectedChartMetric === 'orders'"
+                            @click="selectedChartMetric = 'orders'"
+                        >
+                            Orders
+                        </button>
+                    </div>
+
+                    <div
+                        class="border-border bg-muted/40 inline-flex rounded-lg border p-0.5"
                     >
-                        Orders
-                    </button>
+                        <button
+                            type="button"
+                            class="flex h-8 w-8 items-center justify-center rounded-md transition"
+                            :class="
+                                selectedChartType === 'bar'
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            "
+                            aria-label="Tampilkan grafik batang"
+                            :aria-pressed="selectedChartType === 'bar'"
+                            @click="selectedChartType = 'bar'"
+                        >
+                            <svg
+                                class="h-4 w-4"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                aria-hidden="true"
+                            >
+                                <path d="M5 20V10M12 20V4M19 20v-7" />
+                            </svg>
+                        </button>
+
+                        <button
+                            type="button"
+                            class="flex h-8 w-8 items-center justify-center rounded-md transition"
+                            :class="
+                                selectedChartType === 'line'
+                                    ? 'bg-background text-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground'
+                            "
+                            aria-label="Tampilkan grafik garis"
+                            :aria-pressed="selectedChartType === 'line'"
+                            @click="selectedChartType = 'line'"
+                        >
+                            <svg
+                                class="h-4 w-4"
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                aria-hidden="true"
+                            >
+                                <path d="m4 17 5-6 4 3 7-8" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
 
-                <div
-                    class="border-border bg-muted/40 inline-flex rounded-lg border p-0.5"
-                >
+                <div class="flex flex-wrap items-center gap-2">
                     <button
                         type="button"
-                        class="flex h-8 w-8 items-center justify-center rounded-md transition"
+                        class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition"
                         :class="
-                            selectedChartType === 'bar'
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
+                            showCurrent
+                                ? 'text-foreground border-blue-500/30 bg-blue-500/[0.06]'
+                                : 'border-border text-muted-foreground opacity-60 hover:opacity-100'
                         "
-                        aria-label="Tampilkan grafik batang"
-                        :aria-pressed="selectedChartType === 'bar'"
-                        @click="selectedChartType = 'bar'"
+                        :aria-pressed="showCurrent"
+                        @click="toggleSeries('current')"
                     >
-                        <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M5 20V10M12 20V4M19 20v-7" />
-                        </svg>
+                        <span
+                            class="h-2 w-2 rounded-full bg-blue-500 transition-opacity"
+                            :class="{ 'opacity-40': !showCurrent }"
+                        />
+
+                        Current
                     </button>
 
                     <button
+                        v-if="hasComparison"
                         type="button"
-                        class="flex h-8 w-8 items-center justify-center rounded-md transition"
+                        class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition"
                         :class="
-                            selectedChartType === 'line'
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
+                            showPrevious
+                                ? 'text-foreground border-slate-400/30 bg-slate-400/[0.06]'
+                                : 'border-border text-muted-foreground opacity-60 hover:opacity-100'
                         "
-                        aria-label="Tampilkan grafik garis"
-                        :aria-pressed="selectedChartType === 'line'"
-                        @click="selectedChartType = 'line'"
+                        :aria-pressed="showPrevious"
+                        @click="toggleSeries('previous')"
                     >
-                        <svg
-                            class="h-4 w-4"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
-                            aria-hidden="true"
-                        >
-                            <path d="m4 17 5-6 4 3 7-8" />
-                        </svg>
+                        <span
+                            class="h-2 w-2 rounded-full bg-slate-400 transition-opacity"
+                            :class="{ 'opacity-40': !showPrevious }"
+                        />
+
+                        Previous
                     </button>
                 </div>
             </div>
-        </div>
-
-        <div class="mt-5 flex flex-wrap items-center gap-2">
-            <button
-                type="button"
-                class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition"
-                :class="
-                    showCurrent
-                        ? 'text-foreground border-blue-500/30 bg-blue-500/[0.06]'
-                        : 'border-border text-muted-foreground opacity-60 hover:opacity-100'
-                "
-                :aria-pressed="showCurrent"
-                @click="toggleSeries('current')"
-            >
-                <span
-                    class="h-2 w-2 rounded-full bg-blue-500 transition-opacity"
-                    :class="{ 'opacity-40': !showCurrent }"
-                />
-
-                Current
-            </button>
-
-            <button
-                v-if="hasComparison"
-                type="button"
-                class="inline-flex items-center gap-2 rounded-lg border px-3 py-1.5 text-xs font-medium transition"
-                :class="
-                    showPrevious
-                        ? 'text-foreground border-slate-400/30 bg-slate-400/[0.06]'
-                        : 'border-border text-muted-foreground opacity-60 hover:opacity-100'
-                "
-                :aria-pressed="showPrevious"
-                @click="toggleSeries('previous')"
-            >
-                <span
-                    class="h-2 w-2 rounded-full bg-slate-400 transition-opacity"
-                    :class="{ 'opacity-40': !showPrevious }"
-                />
-
-                Previous
-            </button>
-
-            <span
-                v-if="hasComparison"
-                class="text-muted-foreground ml-auto hidden text-[10px] sm:block"
-            >
-                Klik legenda untuk memfilter
-            </span>
         </div>
 
         <div v-if="chartHasData" class="mt-5 flex gap-3">
