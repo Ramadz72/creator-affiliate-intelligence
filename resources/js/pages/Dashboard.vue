@@ -159,21 +159,24 @@ const gmvSparkValues = computed(() => {
     const current = (props.affiliate_performance ?? []).map(
         (row) => Number(row.gmv) || 0,
     );
-
-    if (current.length > 1) {
-        return current;
-    }
-
     const previous = (props.comparison_affiliate_performance ?? [])
         .slice()
         .reverse()
         .map((row) => Number(row.gmv) || 0);
 
-    if (current.length === 1 && previous.length >= 1) {
-        return [previous[0] ?? 0, current[0]];
+    if (current.length > 0 && previous.length > 0) {
+        return [...previous, ...current];
     }
 
-    if (previous.length > 1) {
+    if (current.length > 1) {
+        return current;
+    }
+
+    if (current.length === 1 && previous.length >= 1) {
+        return [...previous, current[0]];
+    }
+
+    if (previous.length > 0) {
         return previous;
     }
 
@@ -181,24 +184,37 @@ const gmvSparkValues = computed(() => {
 });
 
 const ordersSparkValues = computed(() => {
+    if (Array.isArray(props.orders_trend) && props.orders_trend.length > 0) {
+        const trend = props.orders_trend.map((row) =>
+            Number(row.orders) || 0,
+        );
+
+        if (trend.some((v) => v > 0) || trend.length > 1) {
+            return trend;
+        }
+    }
+
     const current = (props.affiliate_performance ?? []).map(
         (row) => Number(row.orders) || 0,
     );
-
-    if (current.length > 1) {
-        return current;
-    }
-
     const previous = (props.comparison_affiliate_performance ?? [])
         .slice()
         .reverse()
         .map((row) => Number(row.orders) || 0);
 
-    if (current.length === 1 && previous.length >= 1) {
-        return [previous[0] ?? 0, current[0]];
+    if (current.length > 0 && previous.length > 0) {
+        return [...previous, ...current];
     }
 
-    if (previous.length > 1) {
+    if (current.length > 1) {
+        return current;
+    }
+
+    if (current.length === 1 && previous.length >= 1) {
+        return [...previous, current[0]];
+    }
+
+    if (previous.length > 0) {
         return previous;
     }
 
@@ -207,19 +223,26 @@ const ordersSparkValues = computed(() => {
 
 const signalRows = computed(() => {
     const current = props.affiliate_performance ?? [];
-    const previous = props.comparison_affiliate_performance ?? [];
+    const previous = [...(props.comparison_affiliate_performance ?? [])].reverse();
+
+    if (current.length > 0 && previous.length > 0) {
+        return [...previous, ...current];
+    }
 
     if (current.length > 1) {
         return current;
     }
 
     if (current.length === 1 && previous.length >= 1) {
-        const reversed = [...previous].reverse();
-        return [reversed[0], current[0]];
+        return [...previous, current[0]];
+    }
+
+    if (previous.length > 1) {
+        return previous;
     }
 
     if (current.length === 0 && previous.length > 1) {
-        return [...previous].reverse();
+        return previous;
     }
 
     return current;
@@ -693,7 +716,7 @@ onBeforeUnmount(() => {
                     </div>
 
                     <h1
-                        class="dash-gradient-text from-foreground via-foreground mt-3 inline-block bg-gradient-to-r to-sky-500 bg-clip-text text-2xl font-semibold tracking-tight text-transparent md:text-3xl"
+                        class="dash-gradient-text from-foreground via-foreground mt-1 inline-block bg-gradient-to-r to-sky-500 bg-clip-text text-2xl font-semibold tracking-tight text-transparent md:text-3xl"
                     >
                         {{ props.business_name || 'Nama Bisnis' }}
                     </h1>
@@ -1147,12 +1170,12 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <div class="relative mt-3 h-10">
+                <div class="relative mt-2 h-8">
                     <MiniSparkline
                         v-if="gmvSparkValues.length >= 2"
                         :values="gmvSparkValues"
-                        class="h-10 w-full text-emerald-500"
-                        :stroke-width="2"
+                        class="h-8 w-full text-emerald-500"
+                        :stroke-width="1.8"
                     />
 
                     <p
@@ -1289,10 +1312,10 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <div class="relative mt-4">
+                <div class="relative mt-3">
                     <div
                         v-if="signalPoints.length >= 2"
-                        class="relative h-28 w-full touch-pan-y"
+                        class="relative h-20 w-full touch-pan-y"
                         role="img"
                         aria-label="Tren attributed orders pada periode terpilih"
                         @pointermove="updateSignalHover"
@@ -1470,7 +1493,7 @@ onBeforeUnmount(() => {
                         class="inline-flex items-center gap-1 rounded-full border border-violet-500/20 bg-violet-500/10 px-2 py-0.5 text-[10px] font-medium text-violet-600 uppercase dark:text-violet-400"
                     >
                         <Zap class="h-3 w-3" />
-                        Live
+                        tipis tipis
                     </span>
                 </div>
 
