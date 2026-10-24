@@ -12,6 +12,7 @@ import {
     Sparkles,
     Tag,
     User,
+    ChevronLeft,
     X,
 } from '@lucide/vue'
 
@@ -176,8 +177,8 @@ const submit = () => {
 <template>
     <Head :title="`Tambah Rate Card - ${creator.name}`" />
 
-    <div class="app-textured-bg min-h-full">
-        <div class="mx-auto max-w-7xl space-y-6 px-6 py-6">
+    <div class="app-textured-bg min-h-full p-4 text-foreground md:p-6">
+        <div class="space-y-6">
 
             <!-- Header -->
             <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -203,7 +204,7 @@ const submit = () => {
                 <div class="flex items-center gap-2">
                     <Link
                         :href="`/creators/${creator.id}`"
-                        class="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted"
+                        class="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted"
                     >
                         <X class="h-4 w-4" />
                         Batal
@@ -212,7 +213,7 @@ const submit = () => {
                     <button
                         type="button"
                         :disabled="form.processing || !isReady"
-                        class="inline-flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
+                        class="inline-flex h-9 items-center gap-2 rounded-lg bg-sky-600 px-4 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
                         @click="submit"
                     >
                         <Save class="h-4 w-4" />
@@ -768,15 +769,16 @@ const submit = () => {
             <div class="flex items-center justify-between border-t border-border pt-5">
                 <Link
                     :href="`/creators/${creator.id}`"
-                    class="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                    class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium transition hover:bg-muted"
                 >
-                    ← Kembali ke creator
+                    <ChevronLeft class="h-4 w-4" />
+                    Kembali
                 </Link>
 
                 <button
                     type="button"
                     :disabled="form.processing || !isReady"
-                    class="inline-flex h-10 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
+                    class="inline-flex h-10 items-center gap-2 rounded-lg bg-sky-600 px-5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
                     @click="submit"
                 >
                     <Save class="h-4 w-4" />

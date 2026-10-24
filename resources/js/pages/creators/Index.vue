@@ -669,7 +669,7 @@ const platformClass = (platform: string) => {
                             class="inline-flex h-9 min-w-9 items-center justify-center rounded-lg border px-3 text-sm font-medium transition"
                             :class="
                                 page === creators.current_page
-                                    ? 'border-primary bg-primary text-primary-foreground'
+                                    ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
                                     : 'border-border hover:bg-muted'
                             "
                         >

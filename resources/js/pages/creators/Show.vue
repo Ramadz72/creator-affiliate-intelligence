@@ -810,10 +810,10 @@ const deleteRateCard = (id: number) => {
 
                 <Link
                     :href="`/creators/${creator.id}/contents/create`"
-                    class="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                    class="mt-5 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-primary-foreground"
                 >
                     <Plus class="h-4 w-4" />
-                    Tambah Content
+                    
                 </Link>
             </div>
 
@@ -977,10 +977,10 @@ const deleteRateCard = (id: number) => {
 
                 <Link
                     :href="`/creators/${creator.id}/rate-cards/create`"
-                    class="mt-5 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+                    class="mt-5 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-primary-foreground"
                 >
                     <Plus class="h-4 w-4" />
-                    Tambah Rate Card
+                    
                 </Link>
             </div>
 
