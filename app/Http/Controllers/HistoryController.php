@@ -12,12 +12,27 @@ class HistoryController extends Controller
 {
     public function index(Request $request): Response
     {
-        $batches = ImportBatch::query()
+        $query = ImportBatch::query()
             ->where('uploaded_by', Auth::id())
             ->with('uploader:id,name')
-            ->withCount('performances')
+            ->withCount('performances');
+
+        if ($request->filled('status') && in_array($request->string('status')->toString(), ['queued', 'processing', 'scoring', 'completed', 'failed'], true)) {
+            $query->where('status', $request->string('status')->toString());
+        }
+
+        if ($request->filled('start_date')) {
+            $query->whereDate('period_start', '>=', $request->date('start_date'));
+        }
+
+        if ($request->filled('end_date')) {
+            $query->whereDate('period_end', '<=', $request->date('end_date'));
+        }
+
+        $batches = $query
             ->latest('id')
-            ->paginate(20);
+            ->paginate(20)
+            ->withQueryString();
 
         $batches->through(function ($batch) {
             return [
@@ -35,6 +50,7 @@ class HistoryController extends Controller
 
         return Inertia::render('history/Index', [
             'batches' => $batches,
+            'filters' => $request->only(['start_date', 'end_date', 'status']),
         ]);
     }
         public function show(int $batch): Response
