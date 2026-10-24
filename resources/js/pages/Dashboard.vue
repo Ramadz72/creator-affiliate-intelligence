@@ -689,7 +689,7 @@ onBeforeUnmount(() => {
 <template>
     <Head title="Dashboard" />
 
-    <div class="app-textured-bg text-foreground min-h-full p-4 md:p-6">
+    <div class="app-textured-bg text-foreground min-h-full p-4 text-[15px] md:p-6">
         <!-- Header -->
         <section
             class="border-border/70 bg-card/70 relative z-30 mb-5 rounded-2xl border p-5 shadow-sm backdrop-blur md:p-6"
@@ -716,12 +716,12 @@ onBeforeUnmount(() => {
                     </div>
 
                     <h1
-                        class="dash-gradient-text from-foreground via-foreground mt-1 inline-block bg-gradient-to-r to-sky-500 bg-clip-text text-2xl font-semibold tracking-tight text-transparent md:text-3xl"
+                        class="dash-gradient-text from-foreground via-foreground mt-1 inline-block bg-gradient-to-r to-sky-500 bg-clip-text text-[1.9rem] font-semibold tracking-tight text-transparent md:text-[2.1rem]"
                     >
                         {{ props.business_name || 'Nama Bisnis' }}
                     </h1>
 
-                    <p class="text-muted-foreground mt-1.5 max-w-xl text-sm">
+                    <p class="text-muted-foreground mt-1.5 max-w-xl text-[0.95rem]">
                         Pantau performa creator dan affiliate tokomu di satu
                         tempat, lengkap dengan prioritas tindakan.
                     </p>
@@ -1164,7 +1164,7 @@ onBeforeUnmount(() => {
                     </div>
 
                     <div
-                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 text-emerald-500 ring-1 ring-emerald-500/20 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/5 text-emerald-500 ring-1 ring-emerald-500/20 transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-3"
                     >
                         <Wallet class="h-5 w-5" />
                     </div>
@@ -1269,11 +1269,11 @@ onBeforeUnmount(() => {
                             </div>
 
                             <div>
-                                <p class="text-sm font-medium">
+                                <p class="text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase">
                                     Attributed Orders
                                 </p>
 
-                                <p class="text-muted-foreground text-[11px]">
+                                <p class="text-muted-foreground text-xs">
                                     Order yang teratribusi ke affiliate
                                 </p>
                             </div>
@@ -1281,7 +1281,7 @@ onBeforeUnmount(() => {
 
                         <div class="mt-3 flex flex-wrap items-end gap-2.5">
                             <p
-                                class="text-3xl font-semibold tracking-tight tabular-nums"
+                                class="text-[2.2rem] font-semibold tracking-tight tabular-nums"
                             >
                                 {{ formatNumber(Math.round(ordersDisplay)) }}
                             </p>
@@ -1579,7 +1579,7 @@ onBeforeUnmount(() => {
                             <p class="text-base font-medium">Action Center</p>
                         </div>
 
-                        <p class="text-muted-foreground mt-1 text-xs">
+                        <p class="text-muted-foreground mt-1 text-sm">
                             Prioritas yang membutuhkan perhatian.
                         </p>
                     </div>
@@ -1592,7 +1592,7 @@ onBeforeUnmount(() => {
                         </p>
 
                         <p
-                            class="text-muted-foreground text-[10px] tracking-wide uppercase"
+                            class="text-muted-foreground text-xs tracking-wide uppercase"
                         >
                             Total aksi
                         </p>
@@ -1614,7 +1614,7 @@ onBeforeUnmount(() => {
                     </div>
 
                     <div
-                        class="text-muted-foreground mt-2 flex items-center justify-between text-[10px]"
+                        class="text-muted-foreground mt-2 flex items-center justify-between text-xs"
                     >
                         <span>Distribusi prioritas</span>
                         <span class="tabular-nums">
@@ -1648,10 +1648,10 @@ onBeforeUnmount(() => {
                                         {{ item.label }}
                                     </p>
 
-                                    <p
-                                        class="text-muted-foreground truncate text-[10px]"
-                                    >
-                                        {{ item.hint }}
+                                <p
+                                    class="text-muted-foreground mt-0.5 truncate text-xs"
+                                >
+                                    {{ item.hint }}
                                     </p>
                                 </div>
                             </div>

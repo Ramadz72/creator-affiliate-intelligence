@@ -595,7 +595,7 @@ onUnmounted(() => {
 
 <template>
     <header
-        class="sticky top-0 z-40 flex h-13 shrink-0 border-b app-textured-bg bg-background"
+        class="sticky top-0 z-40 flex h-13 shrink-0 border-b border-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
     >
         <!-- SIDEBAR TOGGLE -->
         <div
@@ -625,11 +625,11 @@ onUnmounted(() => {
                     :key="tab.id"
                     type="button"
                     @click="handleTabClick(tab)"
-                    class="group relative flex h-11 min-w-[130px] max-w-[200px] items-center gap-2 rounded-t-xl border px-3 text-sm transition-all duration-200"
+                    class="group relative flex h-10 min-w-[130px] max-w-[200px] items-center gap-2 rounded-t-lg border border-b-0 px-3 text-sm transition-all duration-200"
                     :class="
                         activeTabId === tab.id
-                            ? 'border-border border-b-background bg-background text-foreground shadow-sm'
-                            : 'border-transparent bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground'
+                            ? 'border-border bg-background text-foreground shadow-[0_-1px_0_hsl(var(--border))] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-sky-400/40 before:to-transparent'
+                            : 'border-transparent bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground'
                     "
                 >
                     <!-- ACTIVE INDICATOR -->
@@ -638,7 +638,7 @@ onUnmounted(() => {
                             activeTabId ===
                             tab.id
                         "
-                        class="absolute inset-x-3 -bottom-px h-[2px] rounded-full bg-sky-500"
+                        class="absolute inset-x-2 bottom-0 h-[1px] bg-background"
                     />
 
                     <!-- ICON -->

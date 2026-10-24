@@ -205,8 +205,11 @@ const openAppTab = (href: any, title: string) => {
 </script>
 
 <template>
-    <SidebarGroup class="px-2 py-0">
-        <SidebarGroupLabel>
+    <SidebarGroup class="px-1 py-0">
+        <SidebarGroupLabel
+            v-if="label"
+            class="mb-1.5 px-2.5 text-[11px] font-medium tracking-[0.16em] text-sidebar-foreground/50 uppercase"
+        >
             {{ label }}
         </SidebarGroupLabel>
 
@@ -231,7 +234,7 @@ const openAppTab = (href: any, title: string) => {
                         )
                     "
                     :tooltip="item.title"
-                    class="data-[active=true]:bg-transparent data-[active=true]:text-sky-600 hover:data-[active=true]:bg-transparent hover:data-[active=true]:text-sky-600"
+                    class="relative h-9 rounded-lg px-2.5 transition-all duration-200 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground data-[active=true]:bg-transparent data-[active=true]:font-medium data-[active=true]:text-sky-600 data-[active=true]:[&>svg]:text-sky-600"
                 >
                     <Link
                         :href="item.href"

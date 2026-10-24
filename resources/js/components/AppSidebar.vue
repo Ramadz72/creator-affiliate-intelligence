@@ -124,19 +124,19 @@ const footerNavItems: NavItem[] = [];
 </script>
 
 <template>
-    <Sidebar collapsible="icon" variant="inset">
+    <Sidebar collapsible="icon" variant="inset" class="border-sidebar-border/80 bg-sidebar">
 
        <!-- Logo -->
-        <SidebarHeader class="overflow-visible">
+        <SidebarHeader class="overflow-visible border-b border-sidebar-border/70 px-3 py-3">
             <SidebarMenu class="overflow-visible">
                 <SidebarMenuItem class="overflow-visible">
                     <SidebarMenuButton
                         as-child
-                        class="h-10 w-full justify-center bg-transparent p-0 hover:bg-transparent focus:bg-transparent"
+                        class="h-10 w-full justify-center bg-transparent p-0 hover:bg-transparent focus:bg-transparent group-data-[collapsible=icon]:h-9"
                     >
                         <Link
                             :href="dashboard()"
-                            class="flex h-6 w-full items-center justify-center overflow-visible"
+                            class="flex h-7 w-full items-center justify-center overflow-visible transition-opacity hover:opacity-90 group-data-[collapsible=icon]:justify-center"
                         >
                             <AppLogo />
                         </Link>
@@ -147,7 +147,7 @@ const footerNavItems: NavItem[] = [];
 
 
         <!-- Navigation -->
-        <SidebarContent>
+        <SidebarContent class="gap-1 px-2 py-2">
 
             <!-- Dashboard -->
             <NavMain
