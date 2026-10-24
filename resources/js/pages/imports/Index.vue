@@ -183,14 +183,15 @@ const checkProgress = async (batchId: number) => {
             data.status === 'failed'
         ) {
             stopProgressPolling()
-        }
-          if (dismissTimer) {
-        clearTimeout(dismissTimer)
-        }
 
-        dismissTimer = setTimeout(() => {
-            dismissProgress()
-        }, 1500)
+            if (dismissTimer) {
+                clearTimeout(dismissTimer)
+            }
+
+            dismissTimer = setTimeout(() => {
+                dismissProgress()
+            }, 2000)
+        }
     } catch (error) {
         console.error(error)
         progressError.value =
@@ -281,6 +282,19 @@ const ACTIVE_IMPORT_KEY = 'creator_affiliate_active_batch'
 const submit = () => {
     progressError.value = ''
 
+    stopProgressPolling()
+
+    if (dismissTimer) {
+        clearTimeout(dismissTimer)
+        dismissTimer = null
+    }
+
+    showProgress.value = false
+    importProgress.value = null
+    elapsedSeconds.value = 0
+    localStorage.removeItem(ACTIVE_IMPORT_KEY)
+    form.clearErrors()
+
     form.post('/imports/affiliate', {
         forceFormData: true,
         preserveScroll: true,
@@ -291,10 +305,21 @@ const submit = () => {
             if (batchId) {
                 const id = Number(batchId)
 
-                // Simpan ID agar bisa dipulihkan setelah halaman dibuka lagi.
                 localStorage.setItem(ACTIVE_IMPORT_KEY, String(id))
-
                 startProgressPolling(id)
+            }
+
+            form.file = null
+            const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]')
+            if (fileInput) {
+                fileInput.value = ''
+            }
+        },
+        onError: () => {
+            form.file = null
+            const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]')
+            if (fileInput) {
+                fileInput.value = ''
             }
         },
     })
