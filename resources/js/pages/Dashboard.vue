@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { Head, Link, router } from '@inertiajs/vue3';
 import { dashboard } from '@/routes';
-import { computed, markRaw, onBeforeUnmount, onMounted, ref } from 'vue';
+import { computed, markRaw, ref } from 'vue';
 import {
     Activity,
     ArrowDownRight,
@@ -297,7 +297,6 @@ const clearSignalHover = () => {
     hoveredSignalIndex.value = null;
 };
 
-const showPeriodPicker = ref(false);
 
 const startDate = ref(props.selected_period?.start ?? '');
 
@@ -323,28 +322,92 @@ const getDaysAgo = (days: number) => {
     return formatDateInput(date);
 };
 
-const selectPreset = (preset: '7days' | '30days' | 'today') => {
-    periodPreset.value = preset;
 
-    if (preset === 'today') {
-        startDate.value = getToday();
-        endDate.value = getToday();
-    }
+const calendarMonth = ref(
+    new Date(`${props.selected_period?.start || getToday()}T00:00:00`),
+);
 
-    if (preset === '7days') {
-        startDate.value = getDaysAgo(6);
-        endDate.value = getToday();
-    }
+const calendarMonthLabel = computed(() =>
+    new Intl.DateTimeFormat('id-ID', {
+        month: 'long',
+        year: 'numeric',
+    }).format(calendarMonth.value),
+);
 
-    if (preset === '30days') {
-        startDate.value = getDaysAgo(29);
-        endDate.value = getToday();
-    }
+
+const calendarDays = computed<string[]>(() => {
+    const year = calendarMonth.value.getFullYear();
+    const month = calendarMonth.value.getMonth();
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+
+    return Array.from({ length: totalCells }, (_, index) =>
+        formatDateInput(
+            new Date(year, month, index - firstDay + 1),
+        ),
+    );
+});
+
+const isCurrentCalendarMonth = (date: string) => {
+    const value = new Date(`${date}T00:00:00`);
+
+    return (
+        value.getMonth() === calendarMonth.value.getMonth() &&
+        value.getFullYear() === calendarMonth.value.getFullYear()
+    );
 };
 
-const selectCustom = () => {
+const isComparisonDate = (date: string) =>
+    date >= props.comparison_period.start &&
+    date <= props.comparison_period.end;
+
+const isSelectedDate = (date: string) =>
+    date === startDate.value || date === endDate.value;
+
+
+const changeCalendarMonth = (amount: number) => {
+    calendarMonth.value = new Date(
+        calendarMonth.value.getFullYear(),
+        calendarMonth.value.getMonth() + amount,
+        1,
+    );
+};
+
+const isDateInRange = (date: string) =>
+    !!startDate.value &&
+    !!endDate.value &&
+    date >= startDate.value &&
+    date <= endDate.value;
+
+const isRangeEndpoint = (date: string) =>
+    date === startDate.value || date === endDate.value;
+
+
+const selectCalendarDate = (date: string) => {
+    if (!isCurrentCalendarMonth(date)) {
+        const selectedDate = new Date(`${date}T00:00:00`);
+
+        calendarMonth.value = new Date(
+            selectedDate.getFullYear(),
+            selectedDate.getMonth(),
+            1,
+        );
+    }
+
     periodPreset.value = 'custom';
+
+    if (!startDate.value || endDate.value || date < startDate.value) {
+        startDate.value = date;
+        endDate.value = '';
+        return;
+    }
+
+    endDate.value = date;
+    applyPeriod();
 };
+
 
 const formatDate = (date: string | null) => {
     if (!date) return '-';
@@ -386,14 +449,6 @@ const insightDetailUrl = (insightId: number) => {
     return `/insights/${insightId}?start_date=${encodeURIComponent(props.selected_period.start)}&end_date=${encodeURIComponent(props.selected_period.end)}&from=dashboard`;
 };
 
-const selectedPeriodLabel = () => {
-    if (!startDate.value || !endDate.value) {
-        return 'Pilih Periode';
-    }
-
-    return `${formatDate(startDate.value)} — ${formatDate(endDate.value)}`;
-};
-
 const applyPeriod = () => {
     if (!startDate.value || !endDate.value) {
         return;
@@ -403,7 +458,6 @@ const applyPeriod = () => {
         return;
     }
 
-    showPeriodPicker.value = false;
 
     router.get(
         '/dashboard',
@@ -669,21 +723,6 @@ const insightPeriodLabel = () => {
     );
 };
 
-const handleOutsideClick = (event: MouseEvent) => {
-    const target = event.target as HTMLElement;
-
-    if (!target.closest('[data-period-dropdown]')) {
-        showPeriodPicker.value = false;
-    }
-};
-
-onMounted(() => {
-    document.addEventListener('click', handleOutsideClick);
-});
-
-onBeforeUnmount(() => {
-    document.removeEventListener('click', handleOutsideClick);
-});
 </script>
 
 <template>
@@ -692,7 +731,7 @@ onBeforeUnmount(() => {
     <div class="app-textured-bg text-foreground min-h-full p-4 text-[15px] md:p-6">
         <!-- Header -->
         <section
-            class="border-border/70 bg-card/70 relative z-30 mb-5 rounded-2xl border p-5 shadow-sm backdrop-blur md:p-6"
+            class="border-border/70 bg-card/70 relative z-30 mb-5 rounded-2xl border p-4 shadow-sm backdrop-blur md:p-5"
         >
             <div
                 class="pointer-events-none absolute inset-0 overflow-hidden rounded-2xl"
@@ -709,7 +748,7 @@ onBeforeUnmount(() => {
             </div>
 
             <div
-                class="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"
+                class="relative flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
             >
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -754,248 +793,98 @@ onBeforeUnmount(() => {
                     </div>
                 </div>
 
-                <!-- Periode Data -->
-                <div class="relative ml-auto shrink-0" data-period-dropdown>
-                    <button
-                        type="button"
-                        @click="showPeriodPicker = !showPeriodPicker"
-                        class="border-border bg-background text-foreground hover:bg-muted/40 flex h-10 min-w-[285px] items-center justify-between gap-3 rounded-lg border px-3.5 text-sm shadow-sm transition-all hover:border-sky-300 focus:ring-2 focus:ring-sky-500/20 focus:outline-none"
-                    >
-                        <span class="flex min-w-0 items-center gap-2">
-                            <svg
-                                class="text-muted-foreground h-4 w-4 shrink-0"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <rect
-                                    x="3"
-                                    y="4"
-                                    width="18"
-                                    height="18"
-                                    rx="2"
-                                />
-                                <line x1="16" y1="2" x2="16" y2="6" />
-                                <line x1="8" y1="2" x2="8" y2="6" />
-                                <line x1="3" y1="10" x2="21" y2="10" />
+                
+                <!-- Periode Data: Kalender Permanen -->
+                <section class="w-full self-start sm:w-[280px]">
+                    <!-- Navigasi bulan -->
+                    <div class="mb-0 flex items-center justify-between">
+                        <button
+                            type="button"
+                            aria-label="Bulan sebelumnya"
+                            @click="changeCalendarMonth(-1)"
+                            class="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-lg transition"
+                        >
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="m15 18-6-6 6-6" />
                             </svg>
+                        </button>
 
-                            <span class="truncate">
-                                {{ selectedPeriodLabel() }}
-                            </span>
-                        </span>
+                        <h3 class="text-sm font-semibold">
+                            {{ calendarMonthLabel }}
+                        </h3>
 
-                        <svg
-                            class="text-muted-foreground h-4 w-4 shrink-0 transition-transform duration-200"
-                            :class="{ 'rotate-180': showPeriodPicker }"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
+                        <button
+                            type="button"
+                            aria-label="Bulan berikutnya"
+                            @click="changeCalendarMonth(1)"
+                            class="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-lg transition"
                         >
-                            <path d="m6 9 6 6 6-6" />
-                        </svg>
-                    </button>
+                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none"
+                                stroke="currentColor" stroke-width="2">
+                                <path d="m9 18 6-6-6-6" />
+                            </svg>
+                        </button>
+                    </div>
 
-                    <Transition
-                        enter-active-class="transition duration-150 ease-out"
-                        enter-from-class="translate-y-1 opacity-0"
-                        enter-to-class="translate-y-0 opacity-100"
-                        leave-active-class="transition duration-100 ease-in"
-                        leave-from-class="translate-y-0 opacity-100"
-                        leave-to-class="translate-y-1 opacity-0"
-                    >
+                    <!-- Nama hari -->
+                    <div class="mb-1 grid grid-cols-7 gap-0">
                         <div
-                            v-if="showPeriodPicker"
-                            class="border-border bg-popover absolute right-0 z-50 mt-2 w-[min(92vw,420px)] overflow-hidden rounded-xl border shadow-xl shadow-black/10"
+                            v-for="day in ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']"
+                            :key="day"
+                            class="text-muted-foreground py-1 text-center text-[10px] font-medium"
                         >
-                            <div
-                                class="grid grid-cols-[140px_minmax(0,1fr)] sm:grid-cols-[150px_minmax(0,1fr)]"
-                            >
-                                <!-- Preset -->
-                                <div class="border-border border-r p-2">
-                                    <p
-                                        class="text-muted-foreground px-3 py-2 text-xs font-medium"
-                                    >
-                                        Periode
-                                    </p>
-
-                                    <button
-                                        type="button"
-                                        @click="selectPreset('7days')"
-                                        class="hover:bg-muted flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition"
-                                        :class="{
-                                            'bg-muted font-medium':
-                                                periodPreset === '7days',
-                                        }"
-                                    >
-                                        7 hari terakhir
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        @click="selectPreset('30days')"
-                                        class="hover:bg-muted flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition"
-                                        :class="{
-                                            'bg-muted font-medium':
-                                                periodPreset === '30days',
-                                        }"
-                                    >
-                                        30 hari terakhir
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        @click="selectPreset('today')"
-                                        class="hover:bg-muted flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition"
-                                        :class="{
-                                            'bg-muted font-medium':
-                                                periodPreset === 'today',
-                                        }"
-                                    >
-                                        Hari ini
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        @click="selectCustom"
-                                        class="hover:bg-muted flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition"
-                                        :class="{
-                                            'bg-muted font-medium':
-                                                periodPreset === 'custom',
-                                        }"
-                                    >
-                                        <span>Kustom</span>
-                                        <span class="text-muted-foreground"
-                                            >›</span
-                                        >
-                                    </button>
-                                </div>
-
-                                <!-- Rentang tanggal -->
-                                <div class="min-w-0 p-3 sm:p-4">
-                                    <div class="mb-4">
-                                        <p class="text-sm font-medium">
-                                            Pilih rentang tanggal
-                                        </p>
-                                        <p
-                                            class="text-muted-foreground mt-1 text-xs leading-relaxed"
-                                        >
-                                            Data dibandingkan dengan periode
-                                            sebelumnya.
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <label
-                                            class="text-muted-foreground mb-1.5 block text-xs font-medium"
-                                        >
-                                            Tanggal mulai
-                                        </label>
-                                        <input
-                                            v-model="startDate"
-                                            type="date"
-                                            @focus="selectCustom"
-                                            class="border-border bg-background h-10 w-full min-w-0 rounded-lg border px-2 text-sm transition outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
-                                        />
-                                    </div>
-
-                                    <div class="mt-3">
-                                        <label
-                                            class="text-muted-foreground mb-1.5 block text-xs font-medium"
-                                        >
-                                            Tanggal akhir
-                                        </label>
-                                        <input
-                                            v-model="endDate"
-                                            type="date"
-                                            :min="startDate || undefined"
-                                            @focus="selectCustom"
-                                            class="border-border bg-background h-10 w-full min-w-0 rounded-lg border px-2 text-sm transition outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
-                                        />
-                                    </div>
-
-                                    <p
-                                        v-if="
-                                            startDate &&
-                                            endDate &&
-                                            startDate > endDate
-                                        "
-                                        class="mt-2 text-xs text-red-500"
-                                    >
-                                        Tanggal akhir tidak boleh sebelum
-                                        tanggal mulai.
-                                    </p>
-
-                                    <!-- Preview -->
-                                    <div
-                                        class="border-border bg-muted/30 mt-4 rounded-lg border p-3"
-                                    >
-                                        <p
-                                            class="text-muted-foreground text-xs"
-                                        >
-                                            Periode terpilih
-                                        </p>
-
-                                        <p
-                                            v-if="startDate && endDate"
-                                            class="mt-1.5 text-sm font-semibold"
-                                        >
-                                            {{ formatDate(startDate) }} —
-                                            {{ formatDate(endDate) }}
-                                        </p>
-                                        <p
-                                            v-else
-                                            class="text-muted-foreground mt-1.5 text-sm"
-                                        >
-                                            Pilih rentang tanggal
-                                        </p>
-
-                                        <div
-                                            v-if="props.comparison_period"
-                                            class="border-border mt-3 border-t pt-3"
-                                        >
-                                            <p
-                                                class="text-muted-foreground text-xs"
-                                            >
-                                                Periode pembanding
-                                            </p>
-                                            <p class="mt-1 text-sm font-medium">
-                                                {{
-                                                    formatDate(
-                                                        props.comparison_period
-                                                            .start,
-                                                    )
-                                                }}
-                                                —
-                                                {{
-                                                    formatDate(
-                                                        props.comparison_period
-                                                            .end,
-                                                    )
-                                                }}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        @click="applyPeriod"
-                                        :disabled="
-                                            !startDate ||
-                                            !endDate ||
-                                            startDate > endDate
-                                        "
-                                        class="mt-4 flex h-10 w-full items-center justify-center rounded-lg bg-sky-600 px-4 text-sm font-medium text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        Terapkan Periode
-                                    </button>
-                                </div>
-                            </div>
+                            {{ day }}
                         </div>
-                    </Transition>
-                </div>
+                    </div>
+
+                    <!-- Tanggal kalender -->
+                    <div class="grid grid-cols-7 gap-0">
+                        <button
+                            v-for="date in calendarDays"
+                            :key="date"
+                            type="button"
+                            @click="selectCalendarDate(date)"
+                            :aria-label="formatDate(date)"
+                            :aria-pressed="isRangeEndpoint(date)"
+                            class="relative mx-auto flex h-7 w-7 items-center justify-center rounded-full text-[11px] transition-colors"
+                            :class="{
+                                'bg-sky-600 font-semibold text-white hover:bg-sky-700':
+                                    isSelectedDate(date),
+
+                                'bg-sky-500/10 text-sky-700 dark:text-sky-300':
+                                    isDateInRange(date) && !isSelectedDate(date),
+
+                                'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300':
+                                    isComparisonDate(date) &&
+                                    !isDateInRange(date) &&
+                                    !isSelectedDate(date) &&
+                                    isCurrentCalendarMonth(date),
+
+                                'text-foreground hover:bg-muted':
+                                    !isDateInRange(date) &&
+                                    !isComparisonDate(date) &&
+                                    !isSelectedDate(date) &&
+                                    isCurrentCalendarMonth(date),
+
+                                'text-muted-foreground/35':
+                                    !isCurrentCalendarMonth(date) &&
+                                    !isDateInRange(date) &&
+                                    !isComparisonDate(date) &&
+                                    !isSelectedDate(date),
+
+                                'bg-gray-200/60 text-gray-500 dark:bg-gray-700/40 dark:text-gray-400':
+                                    !isCurrentCalendarMonth(date) &&
+                                    isComparisonDate(date) &&
+                                    !isDateInRange(date) &&
+                                    !isSelectedDate(date),
+                            }"
+                        >
+                            {{ Number(date.slice(-2)) }}
+                        </button>
+                    </div>
+
+                </section>
             </div>
         </section>
 
