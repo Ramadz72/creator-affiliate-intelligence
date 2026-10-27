@@ -604,7 +604,7 @@ const priorityTotal = computed(
         props.action_required.creators_to_review +
         props.action_required.affiliates_to_support +
         props.action_required.need_monitoring +
-        props.action_required.deprioritize,
+        (showDeprioritize.value ? props.action_required.deprioritize : 0),
 );
 
 const priorityMax = computed(() =>
@@ -626,9 +626,7 @@ const priorityProgress = (count: number) => {
 };
 
 const prioritySegments = computed(() => {
-    const total = priorityTotal.value || 1;
-
-    return [
+    const segments = [
         {
             key: 'creators',
             value: props.action_required.creators_to_review,
@@ -644,12 +642,19 @@ const prioritySegments = computed(() => {
             value: props.action_required.need_monitoring,
             class: 'bg-amber-500',
         },
-        {
+    ];
+
+    if (showDeprioritize.value) {
+        segments.push({
             key: 'deprioritize',
             value: props.action_required.deprioritize,
             class: 'bg-slate-400',
-        },
-    ]
+        });
+    }
+
+    const total = segments.reduce((sum, s) => sum + s.value, 0) || 1;
+
+    return segments
         .filter((segment) => segment.value > 0)
         .map((segment) => ({
             ...segment,
@@ -657,56 +662,70 @@ const prioritySegments = computed(() => {
         }));
 });
 
-const actionItems = computed(() => [
-    {
-        key: 'creators',
-        label: 'Creators to review',
-        hint: 'Skor creator perlu ditinjau ulang',
-        count: props.action_required.creators_to_review,
-        href: `/creators${selectedPeriodQuery.value}`,
-        icon: markRaw(UserSearch),
-        iconClass: 'bg-orange-500/10 text-orange-500 ring-orange-500/15',
-        hoverClass: 'hover:border-orange-500/40 hover:bg-orange-500/[0.04]',
-        barClass: 'bg-orange-500',
-        valueClass: 'text-orange-500',
-    },
-    {
-        key: 'support',
-        label: 'Affiliates to support',
-        hint: 'Butuh dukungan aktivasi konten',
-        count: props.action_required.affiliates_to_support,
-        href: `/affiliates${selectedPeriodQuery.value}${selectedPeriodQuery.value ? '&' : '?'}action=SUPPORT`,
-        icon: markRaw(Headphones),
-        iconClass: 'bg-emerald-500/10 text-emerald-500 ring-emerald-500/15',
-        hoverClass: 'hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]',
-        barClass: 'bg-emerald-500',
-        valueClass: 'text-emerald-500',
-    },
-    {
-        key: 'monitoring',
-        label: 'Need monitoring',
-        hint: 'GMV tinggi, konsistensi rendah',
-        count: props.action_required.need_monitoring,
-        href: `/affiliates${selectedPeriodQuery.value}${selectedPeriodQuery.value ? '&' : '?'}action=MONITOR`,
-        icon: markRaw(Eye),
-        iconClass: 'bg-amber-500/10 text-amber-500 ring-amber-500/15',
-        hoverClass: 'hover:border-amber-500/40 hover:bg-amber-500/[0.04]',
-        barClass: 'bg-amber-500',
-        valueClass: 'text-amber-500',
-    },
-    {
-        key: 'deprioritize',
-        label: 'Deprioritize',
-        hint: 'Prioritas rendah periode ini',
-        count: props.action_required.deprioritize,
-        href: `/affiliates${selectedPeriodQuery.value}${selectedPeriodQuery.value ? '&' : '?'}action=DEPRIORITIZE`,
-        icon: markRaw(CircleSlash),
-        iconClass: 'bg-slate-500/10 text-slate-500 ring-slate-500/15',
-        hoverClass: 'hover:border-slate-400/40 hover:bg-slate-500/[0.04]',
-        barClass: 'bg-slate-400',
-        valueClass: 'text-slate-500',
-    },
-]);
+const showDeprioritize = ref(false);
+
+const actionItems = computed(() => {
+    const items = [
+        {
+            key: 'creators',
+            label: 'Creators to review',
+            hint: 'Skor creator perlu ditinjau ulang',
+            count: props.action_required.creators_to_review,
+            href: `/creators${selectedPeriodQuery.value}`,
+            icon: markRaw(UserSearch),
+            iconClass: 'bg-orange-500/10 text-orange-500 ring-orange-500/15',
+            hoverClass: 'hover:border-orange-500/40 hover:bg-orange-500/[0.04]',
+            barClass: 'bg-orange-500',
+            valueClass: 'text-orange-500',
+            priority: true,
+        },
+        {
+            key: 'support',
+            label: 'Affiliates to support',
+            hint: 'Butuh dukungan aktivasi konten',
+            count: props.action_required.affiliates_to_support,
+            href: `/affiliates${selectedPeriodQuery.value}${selectedPeriodQuery.value ? '&' : '?'}action=SUPPORT`,
+            icon: markRaw(Headphones),
+            iconClass: 'bg-emerald-500/10 text-emerald-500 ring-emerald-500/15',
+            hoverClass: 'hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]',
+            barClass: 'bg-emerald-500',
+            valueClass: 'text-emerald-500',
+            priority: true,
+        },
+        {
+            key: 'monitoring',
+            label: 'Need monitoring',
+            hint: 'GMV tinggi, konsistensi rendah',
+            count: props.action_required.need_monitoring,
+            href: `/affiliates${selectedPeriodQuery.value}${selectedPeriodQuery.value ? '&' : '?'}action=MONITOR`,
+            icon: markRaw(Eye),
+            iconClass: 'bg-amber-500/10 text-amber-500 ring-amber-500/15',
+            hoverClass: 'hover:border-amber-500/40 hover:bg-amber-500/[0.04]',
+            barClass: 'bg-amber-500',
+            valueClass: 'text-amber-500',
+            priority: true,
+        },
+        {
+            key: 'deprioritize',
+            label: 'Deprioritize',
+            hint: 'Prioritas rendah periode ini',
+            count: props.action_required.deprioritize,
+            href: `/affiliates${selectedPeriodQuery.value}${selectedPeriodQuery.value ? '&' : '?'}action=DEPRIORITIZE`,
+            icon: markRaw(CircleSlash),
+            iconClass: 'bg-slate-500/10 text-slate-500 ring-slate-500/15',
+            hoverClass: 'hover:border-slate-400/40 hover:bg-slate-500/[0.04]',
+            barClass: 'bg-slate-400',
+            valueClass: 'text-slate-500',
+            priority: false,
+        },
+    ];
+
+    return showDeprioritize.value
+        ? items
+        : items.filter((item) => item.priority || item.count === 0);
+});
+
+const deprioritizeCount = computed(() => props.action_required.deprioritize);
 
 const getInsight = (type: string) => {
     return (
@@ -1500,6 +1519,7 @@ const insightPeriodLabel = () => {
 
                 <div class="mt-4">
                     <div
+                        v-if="prioritySegments.length > 0"
                         class="bg-muted flex h-2 w-full gap-0.5 overflow-hidden rounded-full"
                     >
                         <div
@@ -1581,6 +1601,16 @@ const insightPeriodLabel = () => {
                             />
                         </div>
                     </Link>
+
+                    <button
+                        v-if="deprioritizeCount > 0"
+                        type="button"
+                        @click="showDeprioritize = !showDeprioritize"
+                        class="w-full flex items-center justify-between rounded-lg border border-border/70 bg-muted/10 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 transition"
+                    >
+                        <span>{{ showDeprioritize ? 'Sembunyikan' : 'Tampilkan' }} {{ deprioritizeCount }} Deprioritize</span>
+                        <svg class="h-3.5 w-3.5 transition-transform" :class="{ 'rotate-180': showDeprioritize }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
                 </div>
             </div>
         </div>
