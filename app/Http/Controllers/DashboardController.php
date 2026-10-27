@@ -326,7 +326,7 @@ class DashboardController extends Controller
 
         /*
         |--------------------------------------------------------------------------
-        | Attributed Orders Trend
+        | Attributed Orders & GMV Trend
         |--------------------------------------------------------------------------
         */
 
@@ -349,6 +349,27 @@ class DashboardController extends Controller
             ...$currentTrendOrders->all(),
         ])->map(fn ($orders) => [
             'orders' => $orders,
+        ]);
+
+        $currentTrendGmv = $currentPerformances
+            ->groupBy('import_batch_id')
+            ->map(fn ($rows) => (float) $rows->sum(
+                fn ($row) => (float) $row->gmv
+            ))
+            ->values();
+
+        $comparisonTrendGmv = $comparisonPerformances
+            ->groupBy('import_batch_id')
+            ->map(fn ($rows) => (float) $rows->sum(
+                fn ($row) => (float) $row->gmv
+            ))
+            ->values();
+
+        $gmvTrend = collect([
+            ...$comparisonTrendGmv->all(),
+            ...$currentTrendGmv->all(),
+        ])->map(fn ($gmv) => [
+            'gmv' => $gmv,
         ]);
 
 
@@ -427,7 +448,7 @@ class DashboardController extends Controller
         | Average Creator Score
         |--------------------------------------------------------------------------
         |
-        | Creator masih menggunakan score terakhir dalam selected period.
+        | Ambil score terbaru per creator (berdasarkan id tertinggi).
         |
         */
 
@@ -435,8 +456,6 @@ class DashboardController extends Controller
             ->whereHas('creator', function ($query) use ($user) {
                 $query->where('user_id', $user->id);
             })
-            ->where('period_start', '>=', $startDate->toDateString())
-            ->where('period_end', '<=', $endDate->toDateString())
             ->selectRaw('MAX(id) as id')
             ->groupBy('creator_id')
             ->pluck('id');
@@ -1038,6 +1057,7 @@ class DashboardController extends Controller
             ],
 
             'orders_trend' => $ordersTrend,
+            'gmv_trend' => $gmvTrend,
 
             /*
             |--------------------------------------------------------------------------

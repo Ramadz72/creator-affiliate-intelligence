@@ -91,6 +91,9 @@ const props = defineProps<{
     orders_trend?: Array<{
         orders: number;
     }>;
+    gmv_trend?: Array<{
+        gmv: number;
+    }>;
 
     selected_period: {
         start: string;
@@ -156,6 +159,13 @@ const gmvDisplay = useCountUp(() => props.stats.gmv);
 const ordersDisplay = useCountUp(() => props.stats.orders);
 
 const gmvSparkValues = computed(() => {
+    if (Array.isArray(props.gmv_trend) && props.gmv_trend.length > 0) {
+        const trend = props.gmv_trend.map((row) => Number(row.gmv) || 0);
+        if (trend.some((v) => v > 0) || trend.length > 1) {
+            return trend;
+        }
+    }
+
     const current = (props.affiliate_performance ?? []).map(
         (row) => Number(row.gmv) || 0,
     );
