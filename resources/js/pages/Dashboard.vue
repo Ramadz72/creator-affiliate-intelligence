@@ -979,7 +979,7 @@ const insightPeriodLabel = () => {
 
             <!-- Total Affiliates -->
             <Link
-                href="/affiliates"
+                :href="`/affiliates${selectedPeriodQuery}`"
                 class="dash-enter group border-border bg-card relative min-h-[172px] overflow-hidden rounded-xl border p-5 transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/40 hover:shadow-xl hover:shadow-violet-500/5"
                 :style="{ animationDelay: '60ms' }"
             >
