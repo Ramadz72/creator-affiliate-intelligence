@@ -77,7 +77,7 @@ class CreatorController extends Controller
         return redirect()
             ->route('creators.index')
             ->with('success', 'Creator berhasil ditambahkan.');}
-    public function show(Creator $creator)
+    public function show(Request $request, Creator $creator)
     {
         abort_unless($creator->user_id === Auth::id(), 404);
 
@@ -95,6 +95,7 @@ class CreatorController extends Controller
             'creator' => $creator,
             'contents' => $contents,
             'rateCards' => $rateCards,
+            'fromDashboard' => $request->query('from') === 'dashboard',
         ]);
     }
 

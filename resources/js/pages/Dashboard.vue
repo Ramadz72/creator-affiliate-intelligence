@@ -2046,7 +2046,7 @@ const insightPeriodLabel = () => {
                     <Link
                         v-for="(creator, index) in props.creator_overview"
                         :key="creator.id"
-                        :href="`/creators/${creator.id}`"
+                        :href="`/creators/${creator.id}?from=dashboard`"
                         class="group border-border/70 bg-muted/20 hover:bg-muted/40 flex items-center gap-3 rounded-lg border p-3.5 transition-all duration-300 hover:-translate-y-0.5 hover:border-blue-500/40"
                     >
                         <div
@@ -2145,7 +2145,7 @@ const insightPeriodLabel = () => {
                     </div>
 
                     <Link
-                        href="/affiliates"
+                        :href="`/affiliates${selectedPeriodQuery}`"
                         class="group text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs font-medium transition"
                     >
                         View all

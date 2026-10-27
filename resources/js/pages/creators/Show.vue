@@ -199,7 +199,7 @@ const deleteRateCard = (id: number) => {
                 <!-- Left -->
                 <div class="flex min-w-0 items-center gap-3">
                     <Link
-                        href="/creators"
+                        :href="$page.props.fromDashboard ? '/dashboard' : '/creators'"
                         class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:bg-muted hover:text-foreground"
                     >
                         <ArrowLeft class="h-4 w-4" />
