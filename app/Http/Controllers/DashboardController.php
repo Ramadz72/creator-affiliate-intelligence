@@ -707,9 +707,6 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         | Affiliate Performance Chart
         |--------------------------------------------------------------------------
-        |
-        | Maksimal 7 batch/snapshot terakhir dalam selected range.
-        |
         */
 
         $affiliatePerformance = collect();
@@ -745,11 +742,9 @@ class DashboardController extends Controller
                     'import_batches.period_start',
                     'import_batches.period_end'
                 )
-                ->orderByDesc('affiliate_performances.import_batch_id')
-                ->limit(7)
+                ->orderBy('import_batches.period_start')
+                ->orderBy('affiliate_performances.import_batch_id')
                 ->get()
-                ->sortBy('batch_id')
-                ->values()
                 ->map(function ($row) {
                     return [
                         'batch_id' => (int) $row->batch_id,
@@ -762,34 +757,53 @@ class DashboardController extends Controller
                         'gmv' => (float) $row->gmv,
                         'orders' => (int) $row->orders,
                     ];
-                });
+                })
+                ->values();
         }
 
-        $comparisonAffiliatePerformance = DB::table('affiliate_performances')
-            ->join(
-                'import_batches',
-                'import_batches.id',
-                '=',
-                'affiliate_performances.import_batch_id'
-            )
-            ->whereIn(
-                'affiliate_performances.import_batch_id',
-                $comparisonBatchIds
-            )
-            ->select(
-                'affiliate_performances.import_batch_id as batch_id',
-                'import_batches.period_start',
-                'import_batches.period_end',
-            )
-            ->selectRaw('SUM(affiliate_performances.gmv) as gmv')
-            ->selectRaw('SUM(affiliate_performances.attributed_orders) as orders')
-            ->groupBy(
-                'affiliate_performances.import_batch_id',
-                'import_batches.period_start',
-                'import_batches.period_end',
-            )
-            ->orderBy('import_batches.period_start')
-            ->get();
+        $comparisonAffiliatePerformance = collect();
+        if ($comparisonBatchIds->isNotEmpty()) {
+            $comparisonAffiliatePerformance = DB::table('affiliate_performances')
+                ->join(
+                    'import_batches',
+                    'import_batches.id',
+                    '=',
+                    'affiliate_performances.import_batch_id'
+                )
+                ->whereIn(
+                    'affiliate_performances.import_batch_id',
+                    $comparisonBatchIds
+                )
+                ->select(
+                    'affiliate_performances.import_batch_id as batch_id',
+                    'import_batches.period_start',
+                    'import_batches.period_end',
+                )
+                ->selectRaw('SUM(affiliate_performances.gmv) as gmv')
+                ->selectRaw('SUM(affiliate_performances.attributed_orders) as orders')
+                ->groupBy(
+                    'affiliate_performances.import_batch_id',
+                    'import_batches.period_start',
+                    'import_batches.period_end',
+                )
+                ->orderBy('import_batches.period_start')
+                ->orderBy('affiliate_performances.import_batch_id')
+                ->get()
+                ->map(function ($row) {
+                    return [
+                        'batch_id' => (int) $row->batch_id,
+                        'period_start' => $row->period_start
+                            ? Carbon::parse($row->period_start)->format('Y-m-d')
+                            : null,
+                        'period_end' => $row->period_end
+                            ? Carbon::parse($row->period_end)->format('Y-m-d')
+                            : null,
+                        'gmv' => (float) $row->gmv,
+                        'orders' => (int) $row->orders,
+                    ];
+                })
+                ->values();
+        }
 
         /*
         |--------------------------------------------------------------------------
