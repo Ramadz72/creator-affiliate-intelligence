@@ -540,6 +540,10 @@ const getPageTitle = (url: string) => {
 const toggleNotifications = () => {
     notificationOpen.value = !notificationOpen.value
     profileOpen.value = false
+
+    if (notificationOpen.value) {
+        void loadNotifications()
+    }
 }
 
 const toggleProfile = () => {

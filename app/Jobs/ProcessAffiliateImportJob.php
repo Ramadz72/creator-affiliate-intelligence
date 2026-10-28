@@ -4,9 +4,13 @@ namespace App\Jobs;
 
 use App\Imports\SellerCenterImport;
 use App\Models\ImportBatch;
+use App\Models\User;
+use App\Notifications\ImportCompletedNotification;
+use App\Notifications\ImportFailedNotification;
 use App\Services\AffiliateScoreService;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Notifications\Notification;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
@@ -22,8 +26,7 @@ class ProcessAffiliateImportJob implements ShouldQueue
     public function __construct(
         public int $batchId,
         public string $filePath,
-    ) {
-    }
+    ) {}
 
     public function handle(AffiliateScoreService $scoreService): void
     {
@@ -62,12 +65,24 @@ class ProcessAffiliateImportJob implements ShouldQueue
                     $totalRows
                 ),
             ]);
+
+            $batch->refresh();
+
+            $this->notifyUploader(
+                $batch,
+                new ImportCompletedNotification($batch)
+            );
         } catch (Throwable $e) {
             $batch->update([
                 'status' => 'failed',
                 'error_message' => $e->getMessage(),
                 'completed_at' => now(),
             ]);
+
+            $this->notifyUploader(
+                $batch,
+                new ImportFailedNotification($batch)
+            );
 
             report($e);
 
@@ -76,6 +91,21 @@ class ProcessAffiliateImportJob implements ShouldQueue
             if (Storage::disk('local')->exists($this->filePath)) {
                 Storage::disk('local')->delete($this->filePath);
             }
+        }
+    }
+
+    private function notifyUploader(
+        ImportBatch $batch,
+        Notification $notification,
+    ): void {
+        try {
+            $uploader = $batch->uploader;
+
+            if ($uploader instanceof User) {
+                $uploader->notify($notification);
+            }
+        } catch (Throwable $e) {
+            report($e);
         }
     }
 }
