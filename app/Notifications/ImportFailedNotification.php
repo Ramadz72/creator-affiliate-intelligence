@@ -39,6 +39,15 @@ class ImportFailedNotification extends Notification
             'href' => $this->batch->id
                 ? route('history.show', $this->batch->id, false)
                 : route('history.index', absolute: false),
+            'category' => 'import',
+            'severity' => 'error',
+            'action' => 'Lihat detail',
+            'meta' => [
+                'import_batch_id' => $this->batch->id,
+                'successful_rows' => (int) $this->batch->successful_rows,
+                'skipped_rows' => (int) $this->batch->skipped_rows,
+                'error_rows' => (int) $this->batch->error_rows,
+            ],
         ];
     }
 }

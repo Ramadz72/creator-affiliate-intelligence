@@ -1,9 +1,9 @@
 <?php
 
+use App\Http\Controllers\Auth\GoogleAuthController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-use App\Http\Controllers\Auth\GoogleAuthController;
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])
     ->name('auth.google.redirect');
 
@@ -58,13 +58,13 @@ Route::get(
 )
     ->middleware(['auth'])
     ->name('creators.contents.create');
-    
+
 Route::post(
     '/creators/{creator}/contents',
     [CreatorContentController::class, 'store']
 )
-    ->middleware(['auth'])
-    ->name('creators.contents.store');
+        ->middleware(['auth'])
+        ->name('creators.contents.store');
 
 Route::delete(
     '/creators/{creator}/contents/{content}',
@@ -137,7 +137,7 @@ Route::post(
     ->middleware(['auth'])
     ->name('campaigns.performance.store');
 
-    Route::get(
+Route::get(
     '/campaigns/{campaign}/performance/{performance}/edit',
     [CreatorCampaignPerformanceController::class, 'edit']
 )
@@ -217,4 +217,6 @@ Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->gr
     Route::get('/', [NotificationController::class, 'index'])->name('index');
     Route::patch('/read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
     Route::patch('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
+    Route::delete('/', [NotificationController::class, 'destroyAll'])->name('destroy-all');
+    Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('destroy');
 });

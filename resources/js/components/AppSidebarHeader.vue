@@ -11,16 +11,25 @@ import { router, usePage  } from '@inertiajs/vue3';
 
 import {
     Bell,
+    CheckCheck,
+    CheckCircle2,
     ChevronDown,
+    Inbox,
+    Info,
     LayoutGrid,
+    Loader2,
     Moon,
+    OctagonX,
     PanelLeft,
     Plus,
     Search,
     Sun,
+    Trash2,
+    TriangleAlert,
     UserCircle,
     X,
 } from '@lucide/vue';
+import { toast } from 'vue-sonner';
 
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
@@ -145,51 +154,167 @@ const user = computed(() => page.props.auth?.user as {
     profile_photo?: string | null;
 });
 
+type NotificationSeverity = 'success' | 'info' | 'warning' | 'error';
+type NotificationFilter = 'all' | 'unread';
+
 type AppNotification = {
     id: string;
     title: string;
     message: string;
     time: string;
+    created_at: string | null;
     href: string | null;
+    category: string;
+    severity: NotificationSeverity;
+    action: string | null;
+    meta: Record<string, unknown>;
     read: boolean;
 };
 
 const notifications = ref<AppNotification[]>([]);
 const unreadCount = ref(0);
 const notificationsLoading = ref(false);
+const notificationsLoadingMore = ref(false);
 const notificationError = ref(false);
+const notificationFilter = ref<NotificationFilter>('all');
+const notificationHasMore = ref(false);
+const notificationNextPage = ref<number | null>(null);
+const clearConfirm = ref(false);
 
 let notificationPoll: ReturnType<typeof setInterval> | undefined;
+let clearConfirmTimer: ReturnType<typeof setTimeout> | undefined;
+let hasLoadedNotifications = false;
 
-const loadNotifications = async () => {
-    if (notificationsLoading.value) return;
+const knownNotificationIds = new Set<string>();
 
-    notificationsLoading.value = true;
+const notifyToast = (notification: AppNotification) => {
+    const options = {
+        description: notification.message,
+    };
+
+    switch (notification.severity) {
+        case 'success':
+            toast.success(notification.title, options);
+            break;
+        case 'warning':
+            toast.warning(notification.title, options);
+            break;
+        case 'error':
+            toast.error(notification.title, options);
+            break;
+        default:
+            toast.info(notification.title, options);
+    }
+};
+
+const fetchNotifications = async (
+    page = 1,
+    append = false,
+) => {
+    const loading = append
+        ? notificationsLoadingMore
+        : notificationsLoading;
+
+    if (loading.value) return;
+
+    loading.value = true;
 
     try {
-        const response = await fetch('/notifications', {
-            headers: {
-                Accept: 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-            },
-            credentials: 'same-origin',
+        const params = new URLSearchParams({
+            filter: notificationFilter.value,
+            page: String(page),
+            per_page: '10',
         });
+
+        const response = await fetch(
+            `/notifications?${params.toString()}`,
+            {
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                },
+                credentials: 'same-origin',
+            },
+        );
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
+        const incoming: AppNotification[] =
+            data.notifications ?? [];
 
-        notifications.value = data.notifications ?? [];
+        if (append) {
+            notifications.value = [
+                ...notifications.value,
+                ...incoming,
+            ];
+        } else {
+            notifications.value = incoming;
+        }
+
         unreadCount.value = data.unread_count ?? 0;
+        notificationHasMore.value = data.has_more ?? false;
+        notificationNextPage.value = data.next_page ?? null;
         notificationError.value = false;
+
+        if (!hasLoadedNotifications) {
+            incoming.forEach((notification) =>
+                knownNotificationIds.add(notification.id),
+            );
+            hasLoadedNotifications = true;
+        } else {
+            const newUnread = incoming.filter(
+                (notification) =>
+                    !knownNotificationIds.has(notification.id) &&
+                    !notification.read,
+            );
+
+            incoming.forEach((notification) =>
+                knownNotificationIds.add(notification.id),
+            );
+
+            if (
+                !notificationOpen.value &&
+                newUnread.length > 0
+            ) {
+                notifyToast(newUnread[0]);
+            }
+        }
     } catch (error) {
         notificationError.value = true;
         console.error('Gagal memuat notifikasi:', error);
     } finally {
-        notificationsLoading.value = false;
+        loading.value = false;
     }
+};
+
+const loadNotifications = () => fetchNotifications(1, false);
+
+const loadMoreNotifications = () => {
+    if (
+        !notificationHasMore.value ||
+        !notificationNextPage.value
+    ) {
+        return;
+    }
+
+    void fetchNotifications(
+        notificationNextPage.value,
+        true,
+    );
+};
+
+const setNotificationFilter = (filter: NotificationFilter) => {
+    if (notificationFilter.value === filter) return;
+
+    notificationFilter.value = filter;
+    notifications.value = [];
+    notificationHasMore.value = false;
+    notificationNextPage.value = null;
+
+    void loadNotifications();
 };
 
 const getCsrfToken = () =>
@@ -234,6 +359,40 @@ const markNotificationRead = async (
     }
 };
 
+const deleteNotification = async (
+    notification: AppNotification,
+) => {
+    try {
+        const response = await fetch(
+            `/notifications/${encodeURIComponent(notification.id)}`,
+            {
+                method: 'DELETE',
+                headers: {
+                    Accept: 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': getCsrfToken(),
+                },
+                credentials: 'same-origin',
+            },
+        );
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        notifications.value = notifications.value.filter(
+            (item) => item.id !== notification.id,
+        );
+        knownNotificationIds.delete(notification.id);
+        unreadCount.value =
+            data.unread_count ?? unreadCount.value;
+    } catch (error) {
+        console.error('Gagal menghapus notifikasi:', error);
+    }
+};
+
 const markAllNotificationsAsRead = async () => {
     try {
         const response = await fetch('/notifications/read-all', {
@@ -254,6 +413,124 @@ const markAllNotificationsAsRead = async () => {
     } catch (error) {
         console.error('Gagal menandai semua notifikasi:', error);
     }
+};
+
+const clearAllNotifications = async () => {
+    if (!clearConfirm.value) {
+        clearConfirm.value = true;
+
+        clearConfirmTimer = setTimeout(() => {
+            clearConfirm.value = false;
+        }, 3000);
+
+        return;
+    }
+
+    if (clearConfirmTimer) {
+        clearTimeout(clearConfirmTimer);
+        clearConfirmTimer = undefined;
+    }
+
+    clearConfirm.value = false;
+
+    try {
+        const response = await fetch('/notifications', {
+            method: 'DELETE',
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': getCsrfToken(),
+            },
+            credentials: 'same-origin',
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        notifications.value = [];
+        unreadCount.value = 0;
+        notificationHasMore.value = false;
+        notificationNextPage.value = null;
+        knownNotificationIds.clear();
+    } catch (error) {
+        console.error('Gagal menghapus semua notifikasi:', error);
+    }
+};
+
+const startOfDay = (date: Date) =>
+    new Date(
+        date.getFullYear(),
+        date.getMonth(),
+        date.getDate(),
+    ).getTime();
+
+const notificationDateLabel = (iso: string | null) => {
+    if (!iso) return 'Lebih lama';
+
+    const date = new Date(iso);
+    const today = startOfDay(new Date());
+    const day = startOfDay(date);
+    const diffDays = Math.round(
+        (today - day) / 86_400_000,
+    );
+
+    if (diffDays === 0) return 'Hari ini';
+    if (diffDays === 1) return 'Kemarin';
+
+    return new Intl.DateTimeFormat('id-ID', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric',
+    }).format(date);
+};
+
+const groupedNotifications = computed(() => {
+    const groups: {
+        label: string;
+        items: AppNotification[];
+    }[] = [];
+
+    const index = new Map<string, number>();
+
+    for (const notification of notifications.value) {
+        const label = notificationDateLabel(
+            notification.created_at,
+        );
+
+        if (!index.has(label)) {
+            index.set(label, groups.length);
+            groups.push({ label, items: [] });
+        }
+
+        groups[index.get(label)!].items.push(notification);
+    }
+
+    return groups;
+});
+
+const severityIconClass = (severity: NotificationSeverity) => {
+    switch (severity) {
+        case 'success':
+            return 'bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400';
+        case 'warning':
+            return 'bg-amber-100 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400';
+        case 'error':
+            return 'bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400';
+        default:
+            return 'bg-sky-100 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400';
+    }
+};
+
+const metaNumber = (
+    notification: AppNotification,
+    key: string,
+) => {
+    const value = notification.meta?.[key];
+
+    return typeof value === 'number'
+        ? new Intl.NumberFormat('id-ID').format(value)
+        : '0';
 };
 
 
@@ -594,6 +871,10 @@ onUnmounted(() => {
     if (notificationPoll) {
         clearInterval(notificationPoll);
     }
+
+    if (clearConfirmTimer) {
+        clearTimeout(clearConfirmTimer);
+    }
 });
 </script>
 
@@ -817,40 +1098,95 @@ onUnmounted(() => {
                 <!-- DROPDOWN -->
                 <div
                     v-if="notificationOpen"
-                    class="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-xl border bg-background shadow-xl"
+                    class="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-xl border bg-background shadow-xl sm:w-96"
                 >
                     <!-- HEADER -->
-                    <div
-                        class="flex items-center justify-between border-b px-4 py-3"
-                    >
-                        <div>
-                            <h3
-                                class="text-sm font-semibold"
-                            >
-                                Notifications
-                            </h3>
+                    <div class="border-b px-4 pb-0 pt-3">
+                        <div class="flex items-start justify-between gap-3">
+                            <div>
+                                <h3 class="text-sm font-semibold">
+                                    Notifications
+                                </h3>
 
-                            
-                            <p class="mt-0.5 text-[11px] text-muted-foreground">
-                                {{ unreadCount }} belum dibaca
-                            </p>
+                                <p class="mt-0.5 text-[11px] text-muted-foreground">
+                                    {{ unreadCount }} belum dibaca
+                                </p>
+                            </div>
 
+                            <div class="flex items-center gap-1">
+                                <button
+                                    v-if="unreadCount > 0"
+                                    type="button"
+                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                                    title="Tandai semua dibaca"
+                                    @click="markAllNotificationsAsRead()"
+                                >
+                                    <CheckCheck class="h-4 w-4" />
+                                </button>
+
+                                <button
+                                    v-if="notifications.length"
+                                    type="button"
+                                    class="flex h-7 w-7 items-center justify-center rounded-md transition"
+                                    :class="
+                                        clearConfirm
+                                            ? 'bg-red-100 text-red-600 dark:bg-red-950/50 dark:text-red-400'
+                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                    "
+                                    :title="
+                                        clearConfirm
+                                            ? 'Klik lagi untuk hapus semua'
+                                            : 'Hapus semua notifikasi'
+                                    "
+                                    @click="clearAllNotifications()"
+                                >
+                                    <Trash2 class="h-4 w-4" />
+                                </button>
+                            </div>
                         </div>
 
-                        <button
-                            v-if="
-                                unreadCount > 0
-                            "
-                            type="button"
-                            class="text-[11px] font-medium text-sky-600 transition hover:text-sky-700"
-                            @click="
-                                markAllNotificationsAsRead()
-                            "
+                        <p
+                            v-if="clearConfirm"
+                            class="mt-1 text-right text-[10px] text-red-500"
                         >
-                            Tandai dibaca
-                        </button>
-                    </div>
+                            Klik lagi untuk menghapus semua
+                        </p>
 
+                        <div class="mt-3 flex gap-1">
+                            <button
+                                type="button"
+                                class="rounded-t-md px-2.5 pb-2 pt-1 text-xs font-medium transition"
+                                :class="
+                                    notificationFilter === 'all'
+                                        ? 'border-b-2 border-sky-500 text-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                "
+                                @click="setNotificationFilter('all')"
+                            >
+                                Semua
+                            </button>
+
+                            <button
+                                type="button"
+                                class="inline-flex items-center rounded-t-md px-2.5 pb-2 pt-1 text-xs font-medium transition"
+                                :class="
+                                    notificationFilter === 'unread'
+                                        ? 'border-b-2 border-sky-500 text-foreground'
+                                        : 'text-muted-foreground hover:text-foreground'
+                                "
+                                @click="setNotificationFilter('unread')"
+                            >
+                                Belum dibaca
+
+                                <span
+                                    v-if="unreadCount > 0"
+                                    class="ml-1.5 rounded-full bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-sky-600"
+                                >
+                                    {{ unreadCount }}
+                                </span>
+                            </button>
+                        </div>
+                    </div>
 
                     <!-- LOADING -->
                     <div
@@ -881,51 +1217,203 @@ onUnmounted(() => {
                     <!-- NOTIFICATION LIST -->
                     <div
                         v-else-if="notifications.length"
-                        class="max-h-80 overflow-y-auto"
+                        class="max-h-[28rem] overflow-y-auto"
                     >
-                        <button
-                            v-for="notification in notifications"
-                            :key="notification.id"
-                            type="button"
-                            class="flex w-full gap-3 border-b px-4 py-3 text-left transition last:border-b-0 hover:bg-muted/60"
-                            :class="!notification.read ? 'bg-sky-500/5' : ''"
-                            @click="markNotificationRead(notification)"
+                        <div
+                            v-for="group in groupedNotifications"
+                            :key="group.label"
                         >
+                            <p
+                                class="sticky top-0 z-10 bg-background/95 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur"
+                            >
+                                {{ group.label }}
+                            </p>
+
                             <div
-                                class="mt-1.5 h-2 w-2 shrink-0 rounded-full"
-                                :class="!notification.read ? 'bg-sky-500' : 'bg-transparent'"
+                                v-for="notification in group.items"
+                                :key="notification.id"
+                                class="group flex items-stretch border-b last:border-b-0"
+                                :class="
+                                    !notification.read
+                                        ? 'bg-sky-500/5'
+                                        : ''
+                                "
+                            >
+                                <button
+                                    type="button"
+                                    class="flex min-w-0 flex-1 gap-3 px-4 py-3 text-left transition hover:bg-muted/60"
+                                    @click="markNotificationRead(notification)"
+                                >
+                                    <div
+                                        class="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                                        :class="
+                                            severityIconClass(
+                                                notification.severity,
+                                            )
+                                        "
+                                    >
+                                        <CheckCircle2
+                                            v-if="
+                                                notification.severity ===
+                                                'success'
+                                            "
+                                            class="h-4 w-4"
+                                        />
+
+                                        <TriangleAlert
+                                            v-else-if="
+                                                notification.severity ===
+                                                'warning'
+                                            "
+                                            class="h-4 w-4"
+                                        />
+
+                                        <OctagonX
+                                            v-else-if="
+                                                notification.severity ===
+                                                'error'
+                                            "
+                                            class="h-4 w-4"
+                                        />
+
+                                        <Info
+                                            v-else
+                                            class="h-4 w-4"
+                                        />
+                                    </div>
+
+                                    <div class="min-w-0 flex-1">
+                                        <div
+                                            class="flex items-start justify-between gap-2"
+                                        >
+                                            <span
+                                                class="text-xs font-semibold"
+                                                :class="
+                                                    !notification.read
+                                                        ? 'text-foreground'
+                                                        : 'text-muted-foreground'
+                                                "
+                                            >
+                                                {{ notification.title }}
+                                            </span>
+
+                                            <span
+                                                class="shrink-0 text-[10px] text-muted-foreground"
+                                            >
+                                                {{ notification.time }}
+                                            </span>
+                                        </div>
+
+                                        <p
+                                            class="mt-1 text-[11px] leading-relaxed text-muted-foreground"
+                                        >
+                                            {{ notification.message }}
+                                        </p>
+
+                                        <div
+                                            v-if="
+                                                notification.category ===
+                                                    'import' &&
+                                                notification.meta
+                                            "
+                                            class="mt-1.5 flex flex-wrap gap-1"
+                                        >
+                                            <span
+                                                class="rounded bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                            >
+                                                {{
+                                                    metaNumber(
+                                                        notification,
+                                                        'successful_rows',
+                                                    )
+                                                }}
+                                                berhasil
+                                            </span>
+
+                                            <span
+                                                class="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-medium text-slate-600 dark:bg-slate-800 dark:text-slate-300"
+                                            >
+                                                {{
+                                                    metaNumber(
+                                                        notification,
+                                                        'skipped_rows',
+                                                    )
+                                                }}
+                                                dilewati
+                                            </span>
+
+                                            <span
+                                                class="rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                                            >
+                                                {{
+                                                    metaNumber(
+                                                        notification,
+                                                        'error_rows',
+                                                    )
+                                                }}
+                                                error
+                                            </span>
+                                        </div>
+
+                                        <span
+                                            v-if="notification.href"
+                                            class="mt-1.5 inline-flex text-[10px] font-medium text-sky-600"
+                                        >
+                                            {{
+                                                notification.action ??
+                                                'Lihat detail'
+                                            }}
+                                        </span>
+                                    </div>
+                                </button>
+
+                                <button
+                                    type="button"
+                                    class="flex w-9 shrink-0 items-center justify-center text-muted-foreground opacity-0 transition hover:text-red-500 group-hover:opacity-100"
+                                    title="Hapus notifikasi"
+                                    @click.stop="
+                                        deleteNotification(notification)
+                                    "
+                                >
+                                    <Trash2 class="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                        </div>
+
+                        <button
+                            v-if="notificationHasMore"
+                            type="button"
+                            class="flex w-full items-center justify-center gap-2 border-t px-4 py-2.5 text-xs font-medium text-sky-600 transition hover:bg-muted/60 disabled:opacity-60"
+                            :disabled="notificationsLoadingMore"
+                            @click="loadMoreNotifications()"
+                        >
+                            <Loader2
+                                v-if="notificationsLoadingMore"
+                                class="h-3.5 w-3.5 animate-spin"
                             />
 
-                            <div class="min-w-0 flex-1">
-                                <div class="flex items-start justify-between gap-2">
-                                    <span
-                                        class="text-xs font-semibold"
-                                        :class="!notification.read ? 'text-foreground' : 'text-muted-foreground'"
-                                    >
-                                        {{ notification.title }}
-                                    </span>
-
-                                    <span class="shrink-0 text-[10px] text-muted-foreground">
-                                        {{ notification.time }}
-                                    </span>
-                                </div>
-
-                                <p class="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                                    {{ notification.message }}
-                                </p>
-                            </div>
+                            {{
+                                notificationsLoadingMore
+                                    ? 'Memuat...'
+                                    : 'Muat lebih banyak'
+                            }}
                         </button>
                     </div>
 
                     <!-- EMPTY -->
-                    <div v-else class="px-4 py-8 text-center">
-                        <Bell class="mx-auto h-6 w-6 text-muted-foreground/40" />
+                    <div v-else class="px-4 py-10 text-center">
+                        <Inbox
+                            class="mx-auto h-8 w-8 text-muted-foreground/40"
+                        />
 
                         <p class="mt-2 text-xs text-muted-foreground">
-                            Belum ada notifikasi.
+                            {{
+                                notificationFilter === 'unread'
+                                    ? 'Tidak ada notifikasi yang belum dibaca.'
+                                    : 'Belum ada notifikasi.'
+                            }}
                         </p>
                     </div>
-
                 </div>
             </div>
 
