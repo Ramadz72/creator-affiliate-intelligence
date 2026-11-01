@@ -152,7 +152,7 @@ const averageScore = computed(() => {
     if (!props.history.length) return 0
 
     const total = props.history.reduce(
-        (sum, item) => sum + item.overall_score,
+        (sum, item) => sum + Number(item.overall_score || 0),
         0,
     )
 
@@ -165,7 +165,7 @@ const highestScore = computed(() => {
     if (!props.history.length) return 0
 
     return Math.max(
-        ...props.history.map((item) => item.overall_score),
+        ...props.history.map((item) => Number(item.overall_score || 0)),
     )
 })
 
@@ -173,7 +173,7 @@ const lowestScore = computed(() => {
     if (!props.history.length) return 0
 
     return Math.min(
-        ...props.history.map((item) => item.overall_score),
+        ...props.history.map((item) => Number(item.overall_score || 0)),
     )
 })
 
