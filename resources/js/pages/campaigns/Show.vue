@@ -394,6 +394,120 @@ const engagementStatusClass = computed(() => {
     return 'text-amber-600 dark:text-amber-400'
 })
 
+const salesTrend = computed(() => {
+    const histories = [
+        ...(props.campaign.performance_histories ?? []),
+    ].sort((a, b) =>
+        a.performance_date.localeCompare(b.performance_date),
+    )
+
+    if (histories.length < 3) return null
+
+    const recent = histories.slice(-4)
+    const first = recent[0]
+    const last = recent[recent.length - 1]
+
+    const deltas = recent.slice(1).map((item, index) => {
+        const previous = recent[index]
+
+        return {
+            orders:
+                Number(item.orders || 0) -
+                Number(previous.orders || 0),
+            gmv:
+                Number(item.gmv || 0) -
+                Number(previous.gmv || 0),
+        }
+    })
+
+    const latest = deltas[deltas.length - 1]
+    const noImprovement = deltas.map((delta, index) => {
+        const previous = deltas[index - 1]
+
+        return previous
+            ? delta.orders <= previous.orders
+            : delta.orders <= 0
+    })
+
+    let noImprovementDays = 0
+
+    for (
+        let index = deltas.length - 1;
+        index >= 0;
+        index -= 1
+    ) {
+        if (noImprovement[index]) {
+            noImprovementDays += 1
+        } else {
+            break
+        }
+    }
+
+    let lowSalesDays = 0
+
+    for (
+        let index = deltas.length - 1;
+        index >= 0;
+        index -= 1
+    ) {
+        if (
+            deltas[index].orders >= 0 &&
+            deltas[index].orders <= 2
+        ) {
+            lowSalesDays += 1
+        } else {
+            break
+        }
+    }
+
+    const previousOrders = deltas
+        .slice(0, -1)
+        .map((delta) => delta.orders)
+    const trafficValue = (item: PerformanceHistory) =>
+        Number(item.views || 0) +
+        Number(item.likes || 0) +
+        Number(item.comments || 0) +
+        Number(item.shares || 0) +
+        Number(item.saves || 0)
+
+    return {
+        noImprovementDays,
+        lowSalesDays,
+        latestNewOrders: latest.orders,
+        declining: previousOrders.some(
+            (orders) => latest.orders < orders,
+        ),
+        trafficIncreased:
+            trafficValue(last) > trafficValue(first),
+        viewsGrowth: Number(last.views || 0) - Number(first.views || 0),
+        engagementGrowth:
+            Number(last.likes || 0) +
+            Number(last.comments || 0) +
+            Number(last.shares || 0) +
+            Number(last.saves || 0) -
+            (Number(first.likes || 0) +
+                Number(first.comments || 0) +
+                Number(first.shares || 0) +
+                Number(first.saves || 0)),
+    }
+})
+
+const salesHealthPenalty = computed(() => {
+    const trend = salesTrend.value
+
+    if (!trend) return 0
+    if (
+        trend.lowSalesDays >= 2 &&
+        trend.noImprovementDays >= 2
+    ) {
+        return 20
+    }
+    if (trend.lowSalesDays >= 1) return 10
+    if (trend.declining) return 12
+
+    return 0
+})
+
 const performanceHealth = computed(() => {
     if (!hasPerformance.value) return 0
 
@@ -417,7 +531,10 @@ const performanceHealth = computed(() => {
     else if (conversionRate.value >= 2) score += 10
     else score += 5
 
-    return Math.min(score, 100)
+    return Math.max(
+        0,
+        Math.min(score, 100) - salesHealthPenalty.value,
+    )
 })
 
 const performanceHealthLabel = computed(() => {
@@ -459,6 +576,66 @@ const campaignAction = computed(() => {
             cta: 'Add Performance',
             class: 'bg-muted text-muted-foreground',
             iconClass: 'bg-muted text-muted-foreground',
+        }
+    }
+
+    const trend = salesTrend.value
+
+    if (
+        trend &&
+        trend.trafficIncreased &&
+        trend.lowSalesDays >= 2 &&
+        trend.noImprovementDays >= 2
+    ) {
+        return {
+            status: 'Stop Campaign',
+            eyebrow: 'Recommended Action',
+            title: 'Hentikan Campaign',
+            description: `Traffic naik ${formatNumber(trend.viewsGrowth)} views${
+                trend.engagementGrowth > 0
+                    ? ` dan ${formatNumber(
+                          trend.engagementGrowth,
+                      )} interaksi`
+                    : ''
+            }, tetapi penjualan harian tidak mengalami peningkatan selama ${trend.noImprovementDays} hari terakhir (orders dan GMV stagnan atau menurun). Campaign hanya menghasilkan traffic tanpa hasil penjualan, sehingga sebaiknya dihentikan.`,
+            actions: [
+                'Hentikan campaign karena penjualan hanya 0-2 order per hari dan tidak meningkat selama 2 hari meski traffic naik',
+                'Evaluasi kualitas konten, CTA, dan product offer',
+                'Alihkan budget ke campaign yang menghasilkan penjualan',
+                'Dokumentasikan insight sebelum menutup campaign',
+            ],
+            cta: 'Review & Stop Campaign',
+            class: 'bg-red-500/10 text-red-600 dark:text-red-400',
+            iconClass:
+                'bg-red-500/10 text-red-600 dark:text-red-400',
+        }
+    }
+
+    if (
+        trend &&
+        trend.trafficIncreased &&
+        (trend.lowSalesDays >= 1 || trend.declining)
+    ) {
+        return {
+            status: 'Watch',
+            eyebrow: 'Recommended Action',
+            title: 'Pantau Penjualan',
+            description: `Traffic naik ${formatNumber(trend.viewsGrowth)} views, tetapi penjualan harian masih ${
+                trend.declining ? 'menurun' : 'rendah'
+            } (${formatNumber(
+                trend.latestNewOrders,
+            )} order baru pada data terakhir). Pantau 1-2 hari ke depan; jika penjualan tidak meningkat, hentikan campaign.`,
+            actions: [
+                'Pantau penjualan harian minimal 2 hari sebelum mengambil keputusan',
+                'Pastikan kenaikan traffic benar-benar menghasilkan order dan GMV',
+                'Evaluasi CTA, kualitas konten, dan product offer',
+                'Siapkan opsi penghentian jika penjualan tidak membaik',
+            ],
+            cta: 'Review Performance',
+            class:
+                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+            iconClass:
+                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
         }
     }
 
@@ -1717,8 +1894,9 @@ const confirmDelete = () => {
 
                                     <p class="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
                                         Ringkasan kondisi campaign berdasarkan
-                                        ROAS, ROI, engagement, dan conversion
-                                        rate dari data performance yang tersedia.
+                                        ROAS, ROI, engagement, conversion
+                                        rate, dan tren penjualan harian dari
+                                        data performance yang tersedia.
                                     </p>
                                 </div>
 
@@ -1764,6 +1942,15 @@ const confirmDelete = () => {
                                         }"
                                     />
                                 </div>
+
+                                <p
+                                    v-if="salesHealthPenalty > 0"
+                                    class="mt-2 text-xs text-amber-600 dark:text-amber-400"
+                                >
+                                    Health score dikurangi
+                                    {{ salesHealthPenalty }} poin karena
+                                    penjualan harian rendah atau menurun.
+                                </p>
                             </div>
                         </div>
 
