@@ -94,6 +94,17 @@ class AffiliateDetailController extends Controller
 
         $from = $request->input('from', 'affiliates');
 
+        $backQuery = array_filter([
+            'start_date' => $startDate->format('Y-m-d'),
+            'end_date' => $endDate->format('Y-m-d'),
+            'search' => trim((string) $request->input('search', '')),
+            'sort' => (string) $request->input('sort', 'opportunity'),
+            'direction' => strtolower(
+                (string) $request->input('direction', 'desc')
+            ),
+            'action' => trim((string) $request->input('action', '')),
+        ], fn ($value) => $value !== null && $value !== '');
+
         $backUrl = match ($from) {
             'dashboard' => route('dashboard', [
                 'start_date' => $startDate->format('Y-m-d'),
@@ -105,15 +116,9 @@ class AffiliateDetailController extends Controller
                 'end_date' => $endDate->format('Y-m-d'),
             ]),
 
-            'affiliates' => route('affiliates.index', [
-                'start_date' => $startDate->format('Y-m-d'),
-                'end_date' => $endDate->format('Y-m-d'),
-            ]),
+            'affiliates' => route('affiliates.index', $backQuery),
 
-            default => route('affiliates.index', [
-                'start_date' => $startDate->format('Y-m-d'),
-                'end_date' => $endDate->format('Y-m-d'),
-            ]),
+            default => route('affiliates.index', $backQuery),
         };
 
         $request->session()->put(

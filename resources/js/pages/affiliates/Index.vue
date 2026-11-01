@@ -466,6 +466,21 @@ const affiliatePageUrl = (page: number) => {
     return `/affiliates?${params.toString()}`
 }
 
+const affiliateDetailUrl = (id: number) => {
+    const params = new URLSearchParams()
+
+    if (startDate.value) params.set('start_date', startDate.value)
+    if (endDate.value) params.set('end_date', endDate.value)
+    if (search.value.trim()) params.set('search', search.value.trim())
+    if (sort.value) params.set('sort', sort.value)
+    if (direction.value) params.set('direction', direction.value)
+    if (action.value) params.set('action', action.value)
+
+    params.set('from', 'affiliates')
+
+    return `/affiliates/${id}?${params.toString()}`
+}
+
 /*
 |--------------------------------------------------------------------------
 | Helpers
@@ -899,9 +914,7 @@ const opportunityTone = (value: number | null | undefined) => {
                                 <!-- Detail -->
                                 <td class="px-5 py-3.5 text-right">
                                     <Link
-                                        :href="selectedPeriod
-                                            ? `/affiliates/${affiliate.id}?start_date=${selectedPeriod.start}&end_date=${selectedPeriod.end}&from=affiliates`
-                                            : `/affiliates/${affiliate.id}?from=affiliates`"
+                                        :href="affiliateDetailUrl(affiliate.id)"
                                         class="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium transition hover:bg-muted"
                                     >
                                         Lihat Detail
