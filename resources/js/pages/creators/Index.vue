@@ -42,10 +42,20 @@ interface PaginatedCreators {
 const props = defineProps<{
     creators: PaginatedCreators
     search: string
+    tier: string
 }>()
 
 const search = ref(props.search ?? '')
+const tier = ref(props.tier ?? '')
 const openMenu = ref<number | null>(null)
+
+const tierOptions = [
+    { value: '', label: 'Semua Tier' },
+    { value: 'nano', label: 'Nano (<10K)' },
+    { value: 'micro', label: 'Micro (10K-100K)' },
+    { value: 'macro', label: 'Macro (100K-1M)' },
+    { value: 'mega', label: 'Mega (1M+)' },
+]
 
 watch(
     () => props.search,
@@ -54,11 +64,19 @@ watch(
     },
 )
 
-const submitSearch = () => {
+watch(
+    () => props.tier,
+    (value) => {
+        tier.value = value ?? ''
+    },
+)
+
+const applyFilters = () => {
     router.get(
         '/creators',
         {
             search: search.value.trim() || undefined,
+            tier: tier.value || undefined,
         },
         {
             preserveState: true,
@@ -67,10 +85,26 @@ const submitSearch = () => {
     )
 }
 
+const submitSearch = () => {
+    applyFilters()
+}
+
+const applyTier = () => {
+    applyFilters()
+}
+
 const clearSearch = () => {
     if (!search.value) return
     search.value = ''
     submitSearch()
+}
+
+const clearFilters = () => {
+    if (!search.value && !tier.value) return
+
+    search.value = ''
+    tier.value = ''
+    applyFilters()
 }
 
 const deleteCreator = (id: number, name: string) => {
@@ -128,6 +162,10 @@ const creatorPageUrl = (page: number) => {
         params.set('search', search.value.trim())
     }
 
+    if (tier.value) {
+        params.set('tier', tier.value)
+    }
+
     params.set('page', String(page))
 
     return `/creators?${params.toString()}`
@@ -155,6 +193,30 @@ const formatFollowers = (value: number) => {
     }
 
     return value.toLocaleString('id-ID')
+}
+
+const creatorTier = (followers: number) => {
+    if (followers >= 1_000_000) return 'Mega'
+    if (followers >= 100_000) return 'Macro'
+    if (followers >= 10_000) return 'Micro'
+
+    return 'Nano'
+}
+
+const tierClass = (followers: number) => {
+    if (followers >= 1_000_000) {
+        return 'bg-violet-500/10 text-violet-600 ring-1 ring-violet-500/20 dark:text-violet-400'
+    }
+
+    if (followers >= 100_000) {
+        return 'bg-blue-500/10 text-blue-600 ring-1 ring-blue-500/20 dark:text-blue-400'
+    }
+
+    if (followers >= 10_000) {
+        return 'bg-emerald-500/10 text-emerald-600 ring-1 ring-emerald-500/20 dark:text-emerald-400'
+    }
+
+    return 'bg-amber-500/10 text-amber-600 ring-1 ring-amber-500/20 dark:text-amber-400'
 }
 
 const platformClass = (platform: string) => {
@@ -328,6 +390,19 @@ const getInitials = (name: string) => {
                                 <X class="h-3.5 w-3.5" />
                             </button>
                         </form>
+                        <select
+                            v-model="tier"
+                            class="h-9 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10 sm:w-44"
+                            @change="applyTier"
+                        >
+                            <option
+                                v-for="option in tierOptions"
+                                :key="option.value"
+                                :value="option.value"
+                            >
+                                {{ option.label }}
+                            </option>
+                        </select>
                         <div class="inline-flex items-center gap-2 rounded-lg border border-border px-2.5 py-1.5 text-xs text-muted-foreground">
                             <Filter class="h-3.5 w-3.5" />
                             <span>{{ creators.total.toLocaleString('id-ID') }} hasil</span>
@@ -344,15 +419,22 @@ const getInitials = (name: string) => {
                     leave-from-class="translate-y-0 opacity-100"
                     leave-to-class="-translate-y-1 opacity-0"
                 >
-                    <div v-if="search && props.search" class="flex items-center justify-between gap-3 border-b border-border px-5 py-2 text-sm">
-                        <div class="flex items-center gap-2 text-muted-foreground">
-                            <span>Hasil pencarian:</span>
-                            <span class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
+                    <div v-if="(search && props.search) || (tier && props.tier)" class="flex items-center justify-between gap-3 border-b border-border px-5 py-2 text-sm">
+                        <div class="flex flex-wrap items-center gap-2 text-muted-foreground">
+                            <span v-if="search && props.search">Hasil pencarian:</span>
+                            <span v-if="search && props.search" class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
                                 <Search class="h-3 w-3" />
                                 {{ props.search }}
                             </span>
+                            <span v-if="tier && props.tier" class="inline-flex items-center gap-1.5 rounded-full bg-muted px-2 py-0.5 text-xs text-foreground">
+                                <Filter class="h-3 w-3" />
+                                {{ tierOptions.find((option) => option.value === props.tier)?.label }}
+                            </span>
                         </div>
-                        <button @click="clearSearch" class="inline-flex items-center gap-1 text-xs text-muted-foreground transition hover:text-foreground">
+                        <button
+                            @click="clearFilters"
+                            class="inline-flex items-center gap-1 text-xs text-muted-foreground transition hover:text-foreground"
+                        >
                             <X class="h-3.5 w-3.5" />
                             Bersihkan
                         </button>
@@ -364,16 +446,16 @@ const getInitials = (name: string) => {
                     <div class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted">
                         <UserRound class="h-6 w-6 text-muted-foreground" />
                     </div>
-                    <h3 class="text-base font-semibold">{{ search ? 'Creator tidak ditemukan' : 'Belum ada creator' }}</h3>
+                    <h3 class="text-base font-semibold">{{ search || props.tier ? 'Creator tidak ditemukan' : 'Belum ada creator' }}</h3>
                     <p class="mt-1 max-w-md text-sm text-muted-foreground">
-                        {{ search ? 'Coba kata kunci lain untuk menemukan creator.' : 'Tambahkan creator pertama untuk mulai melakukan analisis KOL.' }}
+                        {{ search || props.tier ? 'Coba kata kunci atau filter tier lain untuk menemukan creator.' : 'Tambahkan creator pertama untuk mulai melakukan analisis KOL.' }}
                     </p>
                     <div class="mt-5 flex flex-wrap items-center justify-center gap-2">
-                        <button v-if="search" @click="clearSearch" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm transition hover:bg-muted">
+                        <button v-if="search || props.tier" @click="clearFilters" class="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-sm transition hover:bg-muted">
                             <X class="h-4 w-4" />
-                            Hapus Pencarian
+                            Hapus Filter
                         </button>
-                        <Link v-if="!search" href="/creators/create" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-sky-700">
+                        <Link v-if="!search && !props.tier" href="/creators/create" class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-sky-700">
                             <Plus class="h-4 w-4" />
                             Tambah Creator
                         </Link>
@@ -434,6 +516,12 @@ const getInitials = (name: string) => {
                                 </td>
                                 <td class="px-5 py-3.5">
                                     <p class="font-medium tabular-nums">{{ formatFollowers(creator.followers) }}</p>
+                                    <span
+                                        class="mt-1 inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium"
+                                        :class="tierClass(creator.followers)"
+                                    >
+                                        {{ creatorTier(creator.followers) }}
+                                    </span>
                                 </td>
                                 <td class="px-5 py-3.5">
                                     <span

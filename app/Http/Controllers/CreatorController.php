@@ -17,6 +17,13 @@ class CreatorController extends Controller
     public function index(Request $request): Response
     {
         $search = trim((string) $request->input('search', ''));
+        $tier = trim((string) $request->input('tier', ''));
+
+        $allowedTiers = ['nano', 'micro', 'macro', 'mega'];
+
+        if (!in_array($tier, $allowedTiers, true)) {
+            $tier = '';
+        }
 
         $creators = Creator::query()
             ->where('user_id', Auth::id())
@@ -26,6 +33,14 @@ class CreatorController extends Controller
                         ->orWhere('username', 'like', "%{$search}%");
                 });
             })
+            ->when($tier !== '', function ($query) use ($tier) {
+                match ($tier) {
+                    'nano' => $query->where('followers', '<', 10000),
+                    'micro' => $query->whereBetween('followers', [10000, 99999]),
+                    'macro' => $query->whereBetween('followers', [100000, 999999]),
+                    'mega' => $query->where('followers', '>=', 1000000),
+                };
+            })
             ->latest()
             ->paginate(6)
             ->withQueryString();
@@ -33,6 +48,7 @@ class CreatorController extends Controller
         return Inertia::render('creators/Index', [
             'creators' => $creators,
             'search' => $search,
+            'tier' => $tier,
         ]);
     }
 
