@@ -8,6 +8,10 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (! Schema::hasTable('creator_analysis_snapshots') || Schema::hasColumn('creator_analysis_snapshots', 'average_roas')) {
+            return;
+        }
+
         Schema::table('creator_analysis_snapshots', function (Blueprint $table) {
             $table->decimal('average_roas', 12, 2)->nullable();
         });
@@ -15,6 +19,10 @@ return new class extends Migration
 
     public function down(): void
     {
+        if (! Schema::hasTable('creator_analysis_snapshots') || ! Schema::hasColumn('creator_analysis_snapshots', 'average_roas')) {
+            return;
+        }
+
         Schema::table('creator_analysis_snapshots', function (Blueprint $table) {
             $table->dropColumn('average_roas');
         });

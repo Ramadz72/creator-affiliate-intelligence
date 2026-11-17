@@ -6,8 +6,9 @@ use App\Models\ImportBatch;
 use App\Services\InsightEngine;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
 use Illuminate\Support\Facades\Log;
+use Inertia\Inertia;
+use Throwable;
 
 class InsightsController extends Controller
 {
@@ -61,24 +62,30 @@ class InsightsController extends Controller
         $startInput = $request->input('start_date');
         $endInput = $request->input('end_date');
 
+        $startDate = null;
+        $endDate = null;
+
         if ($startInput && $endInput) {
             // Request dari date picker punya prioritas tertinggi
-            $startDate = Carbon::parse($startInput)->startOfDay();
-            $endDate = Carbon::parse($endInput)->startOfDay();
+            $startDate = $this->parseDate($startInput);
+            $endDate = $this->parseDate($endInput);
+        }
 
-        } elseif (
-            is_array($savedPeriod)
+        if (
+            (! $startDate || ! $endDate)
+            && is_array($savedPeriod)
             && !empty($savedPeriod['start'])
             && !empty($savedPeriod['end'])
         ) {
             // Gunakan periode terakhir yang dipilih
-            $startDate = Carbon::parse($savedPeriod['start'])->startOfDay();
-            $endDate = Carbon::parse($savedPeriod['end'])->startOfDay();
+            $startDate = $this->parseDate($savedPeriod['start']);
+            $endDate = $this->parseDate($savedPeriod['end']);
+        }
 
-        } else {
+        if (! $startDate || ! $endDate) {
             // Pertama kali membuka Insights
-            $startDate = $latestBatch->period_start->copy()->startOfDay();
-            $endDate = $latestBatch->period_end->copy()->startOfDay();
+            $startDate = $this->parseDate($latestBatch->period_start);
+            $endDate = $this->parseDate($latestBatch->period_end);
         }
 
         if ($startDate->gt($endDate)) {
@@ -219,5 +226,18 @@ class InsightsController extends Controller
                 'end' => $previousEndDate->format('Y-m-d'),
             ],
         ]);
+    }
+
+    private function parseDate(mixed $value): ?Carbon
+    {
+        if ($value === null || $value === '' || (is_string($value) && trim($value) === '')) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->startOfDay();
+        } catch (Throwable) {
+            return null;
+        }
     }
 }

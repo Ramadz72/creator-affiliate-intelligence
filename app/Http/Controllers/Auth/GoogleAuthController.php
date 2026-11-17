@@ -7,6 +7,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use Throwable;
 
 class GoogleAuthController extends Controller
 {
@@ -17,12 +18,26 @@ class GoogleAuthController extends Controller
 
     public function callback()
     {
-        $googleUser = Socialite::driver('google')->user();
+        try {
+            $googleUser = Socialite::driver('google')->user();
+        } catch (Throwable) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['email' => 'Autentikasi Google gagal. Silakan coba lagi.']);
+        }
+
+        $email = $googleUser->getEmail();
+
+        if (! $email || ! ($googleUser->user['email_verified'] ?? false)) {
+            return redirect()
+                ->route('login')
+                ->withErrors(['email' => 'Email Google belum terverifikasi.']);
+        }
 
         $user = User::where('google_id', $googleUser->getId())->first();
 
-        if (!$user) {
-            $user = User::where('email', $googleUser->getEmail())->first();
+        if (! $user) {
+            $user = User::where('email', $email)->first();
 
             if ($user) {
                 $user->update([
@@ -33,12 +48,12 @@ class GoogleAuthController extends Controller
             }
         }
 
-        if (!$user) {
+        if (! $user) {
             $user = User::create([
                 'name' => $googleUser->getName()
                     ?: $googleUser->getNickname()
                     ?: 'Google User',
-                'email' => $googleUser->getEmail(),
+                'email' => $email,
                 'google_id' => $googleUser->getId(),
                 'profile_photo' => $googleUser->getAvatar(),
                 'password' => Str::random(40),

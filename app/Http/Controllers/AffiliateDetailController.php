@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class AffiliateDetailController extends Controller
 {
@@ -59,28 +60,30 @@ class AffiliateDetailController extends Controller
         $startInput = $request->input('start_date');
         $endInput = $request->input('end_date');
 
+        $startDate = null;
+        $endDate = null;
+
         if ($startInput && $endInput) {
             // URL/request punya prioritas tertinggi
-            $startDate = Carbon::parse($startInput)->startOfDay();
-            $endDate = Carbon::parse($endInput)->startOfDay();
-        } elseif (
-            is_array($savedPeriod)
+            $startDate = $this->parseDate($startInput);
+            $endDate = $this->parseDate($endInput);
+        }
+
+        if (
+            (! $startDate || ! $endDate)
+            && is_array($savedPeriod)
             && !empty($savedPeriod['start'])
             && !empty($savedPeriod['end'])
         ) {
             // Gunakan periode terakhir yang dipilih
-            $startDate = Carbon::parse(
-                $savedPeriod['start']
-            )->startOfDay();
+            $startDate = $this->parseDate($savedPeriod['start']);
+            $endDate = $this->parseDate($savedPeriod['end']);
+        }
 
-            $endDate = Carbon::parse(
-                $savedPeriod['end']
-            )->startOfDay();
-        } else {
+        if (! $startDate || ! $endDate) {
             // Fallback ke tanggal terbaru
-            $startDate = $latestDate
-                ? Carbon::parse($latestDate)->startOfDay()
-                : now()->startOfDay();
+            $startDate = $latestDate ? $this->parseDate($latestDate) : null;
+            $startDate ??= now()->startOfDay();
 
             $endDate = $startDate->copy();
         }
@@ -932,5 +935,18 @@ class AffiliateDetailController extends Controller
             'from' =>
                 $from,
         ]);
+    }
+
+    private function parseDate(mixed $value): ?Carbon
+    {
+        if ($value === null || $value === '' || (is_string($value) && trim($value) === '')) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->startOfDay();
+        } catch (Throwable) {
+            return null;
+        }
     }
 }

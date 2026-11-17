@@ -22,6 +22,11 @@ class ResetPasswordNotification extends Notification
         return ['mail'];
     }
 
+    public function token(): string
+    {
+        return $this->token;
+    }
+
     /**
      * Build the password reset email.
      */

@@ -15,7 +15,7 @@ use App\Http\Controllers\DashboardController;
 Route::inertia('/', 'Welcome')->name('home');
 
 Route::get('dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('dashboard');
 
 require __DIR__.'/settings.php';
@@ -164,11 +164,11 @@ Route::post('/imports/affiliate', [AffiliateImportController::class, 'store'])
     ->name('imports.affiliate.store');
 
 Route::get('/imports/active', [AffiliateImportController::class, 'active'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('imports.active');
 
 Route::get('/imports/{batch}/progress', [AffiliateImportController::class, 'progress'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('imports.progress');
 
 use App\Http\Controllers\AffiliateController;
@@ -200,7 +200,7 @@ Route::delete('/history/{batch}', [HistoryController::class, 'destroy'])
 use App\Http\Controllers\InsightsController;
 
 Route::get('insights', [InsightsController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('insights.index');
 
 use App\Http\Controllers\FaqController;
