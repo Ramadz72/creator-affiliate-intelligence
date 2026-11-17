@@ -4,8 +4,11 @@ namespace App\Providers;
 
 use App\Support\Seo;
 use Carbon\CarbonImmutable;
+use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -29,7 +32,21 @@ class AppServiceProvider extends ServiceProvider
             URL::forceScheme('https');
         }
 
+        $this->configureRateLimiting();
         $this->configureDefaults();
+    }
+
+    protected function configureRateLimiting(): void
+    {
+        $key = fn (Request $request): string => $request->user()?->id
+            ? 'user:'.$request->user()->id
+            : 'ip:'.$request->ip();
+
+        RateLimiter::for('web', fn (Request $request): Limit => Limit::perMinute(120)->by($key($request)));
+
+        RateLimiter::for('imports.upload', fn (Request $request): Limit => Limit::perMinute(10)->by($key($request)));
+
+        RateLimiter::for('ai', fn (Request $request): Limit => Limit::perMinute(10)->by($key($request)));
     }
 
     /**

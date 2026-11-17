@@ -5,9 +5,11 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
 Route::get('/auth/google/redirect', [GoogleAuthController::class, 'redirect'])
+    ->middleware('throttle:web')
     ->name('auth.google.redirect');
 
 Route::get('/auth/google/callback', [GoogleAuthController::class, 'callback'])
+    ->middleware('throttle:web')
     ->name('auth.google.callback');
 
 use App\Http\Controllers\DashboardController;
@@ -15,7 +17,7 @@ use App\Http\Controllers\DashboardController;
 Route::inertia('/', 'Welcome')->name('home');
 
 Route::get('dashboard', [DashboardController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'throttle:web'])
     ->name('dashboard');
 
 require __DIR__.'/settings.php';
@@ -23,31 +25,31 @@ require __DIR__.'/settings.php';
 use App\Http\Controllers\CreatorController;
 
 Route::get('/creators', [CreatorController::class, 'index'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.index');
 
 Route::get('/creators/create', [CreatorController::class, 'create'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.create');
 
 Route::post('/creators', [CreatorController::class, 'store'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.store');
 
 Route::get('/creators/{creator}', [CreatorController::class, 'show'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.show');
 
 Route::get('/creators/{creator}/edit', [CreatorController::class, 'edit'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.edit');
 
 Route::put('/creators/{creator}', [CreatorController::class, 'update'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.update');
 
 Route::delete('/creators/{creator}', [CreatorController::class, 'destroy'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.destroy');
 
 use App\Http\Controllers\CreatorContentController;
@@ -56,21 +58,21 @@ Route::get(
     '/creators/{creator}/contents/create',
     [CreatorContentController::class, 'create']
 )
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.contents.create');
 
 Route::post(
     '/creators/{creator}/contents',
     [CreatorContentController::class, 'store']
 )
-        ->middleware(['auth'])
-        ->name('creators.contents.store');
+    ->middleware(['auth', 'throttle:web'])
+    ->name('creators.contents.store');
 
 Route::delete(
     '/creators/{creator}/contents/{content}',
     [CreatorContentController::class, 'destroy']
 )
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.contents.destroy');
 
 use App\Http\Controllers\CreatorRateCardController;
@@ -79,47 +81,47 @@ Route::get(
     '/creators/{creator}/rate-cards/create',
     [CreatorRateCardController::class, 'create']
 )
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.rate-cards.create');
 
 Route::post(
     '/creators/{creator}/rate-cards',
     [CreatorRateCardController::class, 'store']
 )
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.rate-cards.store');
 
 Route::delete(
     '/creators/{creator}/rate-cards/{rateCard}',
     [CreatorRateCardController::class, 'destroy']
 )
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.rate-cards.destroy');
 
 use App\Http\Controllers\CreatorAnalysisController;
 
 Route::get('/creators/{creator}/analysis', [CreatorAnalysisController::class, 'show'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.analysis');
 
 Route::post(
     '/creators/{creator}/analysis/run',
     [CreatorAnalysisController::class, 'run'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web', 'throttle:ai'])
     ->name('creators.analysis.run');
 
 Route::get('/creators/{creator}/analysis/history', [CreatorAnalysisController::class, 'history'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.analysis.history');
 
 Route::get('/creators/{creator}/analysis/history/{score}', [CreatorAnalysisController::class, 'historyDetail'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('creators.analysis.history.detail');
 
 use App\Http\Controllers\CampaignController;
 
 Route::resource('campaigns', CampaignController::class)
-    ->middleware(['auth']);
+    ->middleware(['auth', 'throttle:web']);
 
 use App\Http\Controllers\CreatorCampaignPerformanceController;
 
@@ -127,28 +129,28 @@ Route::get(
     '/campaigns/{campaign}/performance/create',
     [CreatorCampaignPerformanceController::class, 'create']
 )
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('campaigns.performance.create');
 
 Route::post(
     '/campaigns/{campaign}/performance',
     [CreatorCampaignPerformanceController::class, 'store']
 )
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('campaigns.performance.store');
 
 Route::get(
     '/campaigns/{campaign}/performance/{performance}/edit',
     [CreatorCampaignPerformanceController::class, 'edit']
 )
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('campaigns.performance.edit');
 
 Route::put(
     '/campaigns/{campaign}/performance/{performance}',
     [CreatorCampaignPerformanceController::class, 'update']
 )
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('campaigns.performance.update');
 
 use App\Http\Controllers\AffiliateImportController;
@@ -156,51 +158,51 @@ use App\Http\Controllers\AffiliateImportController;
 Route::get('/imports', function () {
     return Inertia::render('imports/Index');
 })
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('imports.index');
 
 Route::post('/imports/affiliate', [AffiliateImportController::class, 'store'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web', 'throttle:imports.upload'])
     ->name('imports.affiliate.store');
 
 Route::get('/imports/active', [AffiliateImportController::class, 'active'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'throttle:web'])
     ->name('imports.active');
 
 Route::get('/imports/{batch}/progress', [AffiliateImportController::class, 'progress'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'throttle:web'])
     ->name('imports.progress');
 
 use App\Http\Controllers\AffiliateController;
 
 Route::get('/affiliates', [AffiliateController::class, 'index'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('affiliates.index');
 
 use App\Http\Controllers\AffiliateDetailController;
 
 Route::get('/affiliates/{affiliate}', [AffiliateDetailController::class, 'show'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('affiliates.show');
 
 use App\Http\Controllers\HistoryController;
 
 Route::get('/history', [HistoryController::class, 'index'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('history.index');
 
 Route::get('/history/{batch}', [HistoryController::class, 'show'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('history.show');
 
 Route::delete('/history/{batch}', [HistoryController::class, 'destroy'])
-    ->middleware(['auth'])
+    ->middleware(['auth', 'throttle:web'])
     ->name('history.destroy');
 
 use App\Http\Controllers\InsightsController;
 
 Route::get('insights', [InsightsController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth', 'verified', 'throttle:web', 'throttle:ai'])
     ->name('insights.index');
 
 use App\Http\Controllers\FaqController;
@@ -213,7 +215,7 @@ Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 use App\Http\Controllers\NotificationController;
 
-Route::middleware(['auth'])->prefix('notifications')->name('notifications.')->group(function () {
+Route::middleware(['auth', 'throttle:web'])->prefix('notifications')->name('notifications.')->group(function () {
     Route::get('/', [NotificationController::class, 'index'])->name('index');
     Route::patch('/read-all', [NotificationController::class, 'markAllAsRead'])->name('read-all');
     Route::patch('/{id}/read', [NotificationController::class, 'markAsRead'])->name('read');
