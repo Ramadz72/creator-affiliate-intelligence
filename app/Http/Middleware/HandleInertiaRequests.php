@@ -48,6 +48,8 @@ class HandleInertiaRequests extends Middleware
                 'error' => fn () => $request->session()->get('error'),
                 'import_batch_id' => fn () => $request->session()->get('import_batch_id'),
             ],
+
+            'status' => fn () => $request->session()->get('status'),
             ];
     }
 }

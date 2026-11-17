@@ -9,6 +9,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Validation\Rules\Password;
 use Inertia\Inertia;
 use Inertia\Response;
+use Laravel\Fortify\Features;
 
 class SecurityController extends Controller
 {
@@ -17,9 +18,28 @@ class SecurityController extends Controller
      */
     public function edit(TwoFactorAuthenticationRequest $request): Response
     {
+        $user = $request->user();
+        $twoFactorSecret = $user->two_factor_secret;
+        $twoFactorPending = $twoFactorSecret !== null && $user->two_factor_confirmed_at === null;
+
         $props = [
             'passwordRules' => Password::defaults()->toPasswordRulesString(),
+            'twoFactor' => [
+                'enabled' => $twoFactorSecret !== null,
+                'confirmed' => $user->two_factor_confirmed_at !== null,
+                'qrSvg' => $twoFactorPending ? $user->twoFactorQrCodeSvg() : null,
+                'secretKey' => $twoFactorPending && $twoFactorSecret !== null ? decrypt($twoFactorSecret) : null,
+                'recoveryCodes' => $twoFactorSecret !== null && ! $twoFactorPending ? $user->recoveryCodes() : [],
+            ],
         ];
+
+        if (Features::enabled(Features::twoFactorAuthentication())) {
+            $props['canManageTwoFactor'] = true;
+            $props['twoFactorEnabled'] = $user->hasEnabledTwoFactorAuthentication();
+            $props['requiresConfirmation'] = Features::optionEnabled(Features::twoFactorAuthentication(), 'confirm');
+        } else {
+            $props['canManageTwoFactor'] = false;
+        }
 
         return Inertia::render('settings/Security', $props);
     }

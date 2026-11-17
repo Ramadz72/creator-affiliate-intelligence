@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Form, Head } from '@inertiajs/vue3'
+import { computed, ref } from 'vue';
+import { Form, Head, router } from '@inertiajs/vue3';
 import {
     Check,
     CircleAlert,
@@ -9,21 +9,32 @@ import {
     LockKeyhole,
     ShieldCheck,
     X,
-} from '@lucide/vue'
+} from '@lucide/vue';
 
-import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController'
-import Heading from '@/components/Heading.vue'
-import InputError from '@/components/InputError.vue'
-import PasswordInput from '@/components/PasswordInput.vue'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { edit } from '@/routes/security'
+import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
+import Heading from '@/components/Heading.vue';
+import InputError from '@/components/InputError.vue';
+import PasswordInput from '@/components/PasswordInput.vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { edit } from '@/routes/security';
+
+type TwoFactorState = {
+    enabled: boolean;
+    confirmed: boolean;
+    qrSvg: string | null;
+    secretKey: string | null;
+    recoveryCodes: string[];
+};
 
 type Props = {
-    passwordRules: string
-}
+    passwordRules: string;
+    twoFactor: TwoFactorState;
+    status?: string | null;
+};
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 defineOptions({
     layout: {
@@ -34,13 +45,32 @@ defineOptions({
             },
         ],
     },
-})
+});
 
-const newPassword = ref('')
-const confirmPassword = ref('')
-const currentPassword = ref('')
+const newPassword = ref('');
+const confirmPassword = ref('');
+const currentPassword = ref('');
 
-const passwordFocused = ref(false)
+const passwordFocused = ref(false);
+
+const twoFactorCode = ref('');
+const showRecoveryCodes = ref(false);
+const twoFactorBusy = ref(false);
+
+const requestOptions = {
+    preserveScroll: true,
+    onStart: () => (twoFactorBusy.value = true),
+    onFinish: () => (twoFactorBusy.value = false),
+};
+
+const enableTwoFactor = () =>
+    router.post('/user/two-factor-authentication', {}, requestOptions);
+
+const disableTwoFactor = () =>
+    router.delete('/user/two-factor-authentication', {}, requestOptions);
+
+const regenerateRecoveryCodes = () =>
+    router.post('/user/two-factor-recovery-codes', {}, requestOptions);
 
 const passwordChecks = computed(() => ({
     length: newPassword.value.length >= 8,
@@ -48,60 +78,60 @@ const passwordChecks = computed(() => ({
     uppercase: /[A-Z]/.test(newPassword.value),
     number: /\d/.test(newPassword.value),
     special: /[^A-Za-z0-9]/.test(newPassword.value),
-}))
+}));
 
 const passwordScore = computed(() => {
-    return Object.values(passwordChecks.value).filter(Boolean).length
-})
+    return Object.values(passwordChecks.value).filter(Boolean).length;
+});
 
 const passwordStrength = computed(() => {
     if (!newPassword.value) {
         return {
             label: 'Belum diisi',
             width: '0%',
-        }
+        };
     }
 
     if (passwordScore.value <= 2) {
         return {
             label: 'Lemah',
             width: '35%',
-        }
+        };
     }
 
     if (passwordScore.value === 3) {
         return {
             label: 'Cukup',
             width: '55%',
-        }
+        };
     }
 
     if (passwordScore.value === 4) {
         return {
             label: 'Kuat',
             width: '75%',
-        }
+        };
     }
 
     return {
         label: 'Sangat kuat',
         width: '100%',
-    }
-})
+    };
+});
 
 const passwordsMatch = computed(() => {
-    if (!confirmPassword.value) return null
+    if (!confirmPassword.value) return null;
 
-    return newPassword.value === confirmPassword.value
-})
+    return newPassword.value === confirmPassword.value;
+});
 
 const sameAsCurrent = computed(() => {
     if (!currentPassword.value || !newPassword.value) {
-        return false
+        return false;
     }
 
-    return currentPassword.value === newPassword.value
-})
+    return currentPassword.value === newPassword.value;
+});
 </script>
 
 <template>
@@ -110,7 +140,6 @@ const sameAsCurrent = computed(() => {
     <h1 class="sr-only">Security settings</h1>
 
     <div class="space-y-8">
-
         <!-- Header -->
         <Heading
             variant="small"
@@ -120,10 +149,10 @@ const sameAsCurrent = computed(() => {
 
         <!-- Security Status -->
         <div
-            class="relative overflow-hidden rounded-2xl border border-border bg-card"
+            class="border-border bg-card relative overflow-hidden rounded-2xl border"
         >
             <div
-                class="absolute right-0 top-0 h-40 w-40 rounded-full bg-emerald-500/10 blur-3xl"
+                class="absolute top-0 right-0 h-40 w-40 rounded-full bg-emerald-500/10 blur-3xl"
             />
 
             <div class="relative flex items-start gap-4 p-5 sm:p-6">
@@ -135,7 +164,7 @@ const sameAsCurrent = computed(() => {
 
                 <div class="min-w-0">
                     <div class="flex flex-wrap items-center gap-2">
-                        <h2 class="font-semibold text-foreground">
+                        <h2 class="text-foreground font-semibold">
                             Account security
                         </h2>
 
@@ -149,11 +178,182 @@ const sameAsCurrent = computed(() => {
                         </span>
                     </div>
 
-                    <p class="mt-1 text-sm leading-6 text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-sm leading-6">
                         Gunakan password yang unik dan sulit ditebak. Hindari
                         menggunakan password yang sama untuk akun lain.
                     </p>
                 </div>
+            </div>
+        </div>
+
+        <!-- Two Factor Authentication -->
+        <div class="border-border bg-card overflow-hidden rounded-2xl border">
+            <div class="border-border border-b px-5 py-4 sm:px-6">
+                <div class="flex items-center justify-between gap-3">
+                    <div class="flex items-center gap-3">
+                        <div
+                            class="bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-lg"
+                        >
+                            <ShieldCheck class="h-4 w-4" />
+                        </div>
+
+                        <div>
+                            <h2 class="text-foreground text-sm font-semibold">
+                                Two-factor authentication
+                            </h2>
+
+                            <p class="text-muted-foreground text-xs">
+                                Lindungi akun dengan kode dari aplikasi
+                                autentikator.
+                            </p>
+                        </div>
+                    </div>
+
+                    <span
+                        v-if="props.twoFactor.confirmed"
+                        class="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400"
+                    >
+                        <CircleCheck class="h-3 w-3" />
+                        Aktif
+                    </span>
+                </div>
+            </div>
+
+            <div class="space-y-5 p-5 sm:p-6">
+                <p
+                    v-if="props.status"
+                    class="rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-3 text-xs text-emerald-700 dark:text-emerald-400"
+                >
+                    {{ props.status }}
+                </p>
+
+                <template v-if="!props.twoFactor.enabled">
+                    <p class="text-muted-foreground text-sm leading-6">
+                        Saat 2FA aktif, setiap login memerlukan kode 6 digit
+                        dari Google Authenticator, Authy, atau aplikasi serupa.
+                    </p>
+
+                    <Button
+                        :disabled="twoFactorBusy"
+                        variant="outline"
+                        @click="enableTwoFactor"
+                    >
+                        Aktifkan 2FA
+                    </Button>
+                </template>
+
+                <template v-else-if="!props.twoFactor.confirmed">
+                    <div class="grid gap-5 sm:grid-cols-2">
+                        <div
+                            v-if="props.twoFactor.qrSvg"
+                            class="border-border flex items-center justify-center rounded-xl border bg-white p-4"
+                            v-html="props.twoFactor.qrSvg"
+                        />
+
+                        <div class="text-muted-foreground space-y-3 text-sm">
+                            <p>
+                                Pindai QR di atas dengan aplikasi autentikator,
+                                lalu masukkan kode 6 digit untuk mengaktifkan.
+                            </p>
+
+                            <p
+                                v-if="props.twoFactor.secretKey"
+                                class="bg-muted/50 text-foreground rounded-lg p-3 font-mono text-xs tracking-wider"
+                            >
+                                {{ props.twoFactor.secretKey }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <Form
+                        action="/user/confirmed-two-factor-authentication"
+                        method="post"
+                        :options="requestOptions"
+                        class="grid gap-3 sm:max-w-sm"
+                        v-slot="{ errors, processing }"
+                    >
+                        <div class="grid gap-2">
+                            <Label for="two_factor_code"
+                                >Kode autentikator</Label
+                            >
+
+                            <Input
+                                id="two_factor_code"
+                                v-model="twoFactorCode"
+                                name="code"
+                                inputmode="numeric"
+                                autocomplete="one-time-code"
+                                placeholder="000000"
+                            />
+
+                            <InputError :message="errors.code" />
+                        </div>
+
+                        <div class="flex gap-2">
+                            <Button
+                                type="submit"
+                                :disabled="processing || !twoFactorCode"
+                            >
+                                Konfirmasi
+                            </Button>
+
+                            <Button
+                                type="button"
+                                variant="outline"
+                                :disabled="twoFactorBusy"
+                                @click="disableTwoFactor"
+                            >
+                                Batalkan
+                            </Button>
+                        </div>
+                    </Form>
+                </template>
+
+                <template v-else>
+                    <p class="text-muted-foreground text-sm leading-6">
+                        2FA aktif. Simpan recovery codes di tempat aman untuk
+                        cadangan jika perangkat autentikator hilang.
+                    </p>
+
+                    <div class="flex flex-wrap gap-2">
+                        <Button
+                            variant="outline"
+                            @click="showRecoveryCodes = !showRecoveryCodes"
+                        >
+                            {{ showRecoveryCodes ? 'Sembunyikan' : 'Lihat' }}
+                            recovery codes
+                        </Button>
+
+                        <Button
+                            variant="outline"
+                            :disabled="twoFactorBusy"
+                            @click="regenerateRecoveryCodes"
+                        >
+                            Buat ulang kode
+                        </Button>
+
+                        <Button
+                            variant="destructive"
+                            :disabled="twoFactorBusy"
+                            @click="disableTwoFactor"
+                        >
+                            Nonaktifkan 2FA
+                        </Button>
+                    </div>
+
+                    <div
+                        v-if="showRecoveryCodes"
+                        class="border-border bg-muted/30 grid gap-2 rounded-xl border p-4 sm:grid-cols-2"
+                    >
+                        <code
+                            v-for="code in props.twoFactor.recoveryCodes"
+                            :key="code"
+                            class="text-foreground font-mono text-xs"
+                        >
+                            {{ code }}
+                        </code>
+                    </div>
+                </template>
             </div>
         </div>
 
@@ -174,22 +374,22 @@ const sameAsCurrent = computed(() => {
         >
             <!-- Password Card -->
             <div
-                class="overflow-hidden rounded-2xl border border-border bg-card"
+                class="border-border bg-card overflow-hidden rounded-2xl border"
             >
-                <div class="border-b border-border px-5 py-4 sm:px-6">
+                <div class="border-border border-b px-5 py-4 sm:px-6">
                     <div class="flex items-center gap-3">
                         <div
-                            class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                            class="bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-lg"
                         >
                             <LockKeyhole class="h-4 w-4" />
                         </div>
 
                         <div>
-                            <h2 class="text-sm font-semibold text-foreground">
+                            <h2 class="text-foreground text-sm font-semibold">
                                 Password credentials
                             </h2>
 
-                            <p class="text-xs text-muted-foreground">
+                            <p class="text-muted-foreground text-xs">
                                 Perbarui password login akun Anda.
                             </p>
                         </div>
@@ -197,12 +397,9 @@ const sameAsCurrent = computed(() => {
                 </div>
 
                 <div class="space-y-6 p-5 sm:p-6">
-
                     <!-- Current Password -->
                     <div class="grid gap-2">
-                        <Label for="current_password">
-                            Current password
-                        </Label>
+                        <Label for="current_password"> Current password </Label>
 
                         <PasswordInput
                             id="current_password"
@@ -216,14 +413,12 @@ const sameAsCurrent = computed(() => {
                         <InputError :message="errors.current_password" />
                     </div>
 
-                    <div class="h-px bg-border" />
+                    <div class="bg-border h-px" />
 
                     <!-- New Password -->
                     <div class="grid gap-2">
                         <div class="flex items-center justify-between gap-4">
-                            <Label for="password">
-                                New password
-                            </Label>
+                            <Label for="password"> New password </Label>
 
                             <span
                                 v-if="newPassword"
@@ -256,24 +451,24 @@ const sameAsCurrent = computed(() => {
                         <!-- Strength -->
                         <div
                             v-if="newPassword"
-                            class="space-y-3 rounded-xl border border-border bg-muted/30 p-4"
+                            class="border-border bg-muted/30 space-y-3 rounded-xl border p-4"
                         >
                             <div class="flex items-center justify-between">
                                 <span
-                                    class="text-xs font-medium text-muted-foreground"
+                                    class="text-muted-foreground text-xs font-medium"
                                 >
                                     Password strength
                                 </span>
 
                                 <span
-                                    class="text-xs font-medium text-foreground"
+                                    class="text-foreground text-xs font-medium"
                                 >
                                     {{ passwordScore }}/5
                                 </span>
                             </div>
 
                             <div
-                                class="h-1.5 overflow-hidden rounded-full bg-muted"
+                                class="bg-muted h-1.5 overflow-hidden rounded-full"
                             >
                                 <div
                                     class="h-full rounded-full transition-all duration-300"
@@ -328,10 +523,7 @@ const sameAsCurrent = computed(() => {
                                         class="h-3.5 w-3.5"
                                     />
 
-                                    <X
-                                        v-else
-                                        class="h-3.5 w-3.5"
-                                    />
+                                    <X v-else class="h-3.5 w-3.5" />
 
                                     {{ item.label }}
                                 </div>
@@ -368,9 +560,7 @@ const sameAsCurrent = computed(() => {
                             :passwordrules="props.passwordRules"
                         />
 
-                        <InputError
-                            :message="errors.password_confirmation"
-                        />
+                        <InputError :message="errors.password_confirmation" />
 
                         <div
                             v-if="passwordsMatch !== null"
@@ -386,10 +576,7 @@ const sameAsCurrent = computed(() => {
                                 class="h-3.5 w-3.5"
                             />
 
-                            <CircleAlert
-                                v-else
-                                class="h-3.5 w-3.5"
-                            />
+                            <CircleAlert v-else class="h-3.5 w-3.5" />
 
                             <span>
                                 {{
@@ -415,16 +602,14 @@ const sameAsCurrent = computed(() => {
                     </div>
 
                     <div>
-                        <h3 class="text-sm font-semibold text-foreground">
+                        <h3 class="text-foreground text-sm font-semibold">
                             Tips membuat password yang aman
                         </h3>
 
                         <ul
-                            class="mt-2 space-y-1.5 text-xs leading-5 text-muted-foreground"
+                            class="text-muted-foreground mt-2 space-y-1.5 text-xs leading-5"
                         >
-                            <li>
-                                • Gunakan password unik untuk akun ini.
-                            </li>
+                            <li>• Gunakan password unik untuk akun ini.</li>
                             <li>
                                 • Hindari nama, tanggal lahir, atau informasi
                                 yang mudah ditebak.
@@ -445,7 +630,7 @@ const sameAsCurrent = computed(() => {
             <div
                 class="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between"
             >
-                <p class="text-xs text-muted-foreground">
+                <p class="text-muted-foreground text-xs">
                     Pastikan password baru sudah benar sebelum menyimpan.
                 </p>
 
@@ -459,9 +644,7 @@ const sameAsCurrent = computed(() => {
                     data-test="update-password-button"
                     class="min-w-[150px]"
                 >
-                    <span v-if="processing">
-                        Updating...
-                    </span>
+                    <span v-if="processing"> Updating... </span>
 
                     <span v-else class="flex items-center gap-2">
                         <LockKeyhole class="h-4 w-4" />

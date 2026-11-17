@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ImportBatch;
+use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -11,6 +12,7 @@ class ImportHistoryController extends Controller
     public function index(): Response
     {
         $batches = ImportBatch::query()
+            ->where('uploaded_by', Auth::id())
             ->with('uploader:id,name')
             ->withCount('performances')
             ->latest('created_at')
