@@ -32,6 +32,8 @@ void createInertiaApp({
             case name === 'auth/Login':
             case name === 'auth/Register':
             case name === 'auth/ForgotPassword':
+            case name === 'auth/VerifyEmail':
+            case name === 'auth/TwoFactorChallenge':
                 return null;
 
             case name === 'errors/404':
