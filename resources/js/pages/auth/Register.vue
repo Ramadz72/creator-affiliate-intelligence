@@ -344,7 +344,7 @@ const canSubmit = computed(() => {
                                 <Input
                                     id="name"
                                     type="text"
-                                    name="nama"
+                                    name="name"
                                     required
                                     autofocus
                                     :tabindex="1"
