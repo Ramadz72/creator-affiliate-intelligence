@@ -105,7 +105,6 @@ const canSubmit = computed(() => {
 
     <div class="min-h-screen bg-slate-950">
         <div class="grid min-h-screen lg:grid-cols-2">
-
             <!-- ================================================= -->
             <!-- LEFT SIDE -->
             <!-- ================================================= -->
@@ -114,14 +113,12 @@ const canSubmit = computed(() => {
             >
                 <!-- Glow -->
                 <div
-                    class="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"
-                >
-                </div>
+                    class="absolute top-1/4 -left-32 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"
+                ></div>
 
                 <div
                     class="absolute -right-32 bottom-0 h-96 w-96 rounded-full bg-cyan-400/10 blur-3xl"
-                >
-                </div>
+                ></div>
 
                 <!-- Decorative dots -->
                 <div
@@ -133,8 +130,7 @@ const canSubmit = computed(() => {
                         );
                         background-size: 28px 28px;
                     "
-                >
-                </div>
+                ></div>
 
                 <!-- Logo -->
                 <div class="relative z-10">
@@ -148,18 +144,16 @@ const canSubmit = computed(() => {
                 <!-- Content -->
                 <div class="relative z-10 max-w-xl">
                     <p
-                        class="mb-5 text-sm font-bold uppercase tracking-[0.25em] text-sky-400"
+                        class="mb-5 text-sm font-bold tracking-[0.25em] text-sky-400 uppercase"
                     >
                         Creator Intelligence
                     </p>
 
                     <h1
-                        class="font-heading text-5xl font-extrabold leading-[1.08] tracking-tight text-white xl:text-6xl"
+                        class="font-heading text-5xl leading-[1.08] font-extrabold tracking-tight text-white xl:text-6xl"
                     >
                         Mulai kelola
-                        <span class="text-sky-400">
-                            Creator &
-                        </span>
+                        <span class="text-sky-400"> Creator & </span>
                         Affiliate lebih cerdas.
                     </h1>
 
@@ -167,8 +161,7 @@ const canSubmit = computed(() => {
                         class="mt-7 max-w-lg text-lg leading-relaxed text-slate-400"
                     >
                         Buat akun dan mulai analisis performa creator,
-                        affiliate, serta peluang kolaborasi dalam satu
-                        platform.
+                        affiliate, serta peluang kolaborasi dalam satu platform.
                     </p>
 
                     <!-- Feature cards -->
@@ -200,21 +193,15 @@ const canSubmit = computed(() => {
                         <div
                             class="rounded-2xl border border-white/10 bg-white/5 p-5 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:bg-white/10"
                         >
-                            <p class="text-base font-bold text-white">
-                                ROI
-                            </p>
+                            <p class="text-base font-bold text-white">ROI</p>
 
-                            <p class="mt-1 text-sm text-slate-400">
-                                Analysis
-                            </p>
+                            <p class="mt-1 text-sm text-slate-400">Analysis</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Footer -->
-                <div
-                    class="relative z-10 text-sm text-slate-500"
-                >
+                <div class="relative z-10 text-sm text-slate-500">
                     Creator & Affiliate Intelligence
                 </div>
             </div>
@@ -226,7 +213,6 @@ const canSubmit = computed(() => {
                 class="relative flex min-h-screen items-center justify-center overflow-y-auto bg-white px-6 py-8 sm:px-10 lg:px-14 xl:px-20"
             >
                 <div class="w-full max-w-lg">
-
                     <!-- BACK TO WELCOME -->
                     <div class="mb-8">
                         <Link
@@ -237,9 +223,7 @@ const canSubmit = computed(() => {
                                 class="size-4 transition-transform duration-200 group-hover:-translate-x-1"
                             />
 
-                            <span>
-                                Kembali ke Welcome
-                            </span>
+                            <span> Kembali ke Welcome </span>
                         </Link>
                     </div>
 
@@ -271,8 +255,8 @@ const canSubmit = computed(() => {
                         <p
                             class="mt-3 text-base leading-relaxed text-slate-500"
                         >
-                            Daftar untuk mulai menggunakan Creator &
-                            Affiliate Intelligence.
+                            Daftar untuk mulai menggunakan Creator & Affiliate
+                            Intelligence.
                         </p>
                     </div>
 
@@ -280,14 +264,12 @@ const canSubmit = computed(() => {
                     <div class="mb-7">
                         <div class="mb-2 flex items-center justify-between">
                             <span
-                                class="text-xs font-semibold uppercase tracking-wider text-slate-400"
+                                class="text-xs font-semibold tracking-wider text-slate-400 uppercase"
                             >
                                 Account setup
                             </span>
 
-                            <span
-                                class="text-xs font-semibold text-sky-500"
-                            >
+                            <span class="text-xs font-semibold text-sky-500">
                                 {{ canSubmit ? '100%' : 'Progress' }}
                             </span>
                         </div>
@@ -302,14 +284,12 @@ const canSubmit = computed(() => {
                                         ? '100%'
                                         : passwordScore >= 3
                                           ? '75%'
-                                            : password
+                                          : password
                                             ? '50%'
                                             : '25%',
                                 }"
-                            >
+                            ></div>
                         </div>
-                    </div>
-
                     </div>
 
                     <!-- Status -->
@@ -331,7 +311,6 @@ const canSubmit = computed(() => {
                         class="flex flex-col gap-6"
                     >
                         <div class="grid gap-5">
-
                             <!-- NAME -->
                             <div class="grid gap-2.5">
                                 <Label
@@ -353,9 +332,7 @@ const canSubmit = computed(() => {
                                     class="h-12 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10"
                                 />
 
-                                <InputError
-                                    :message="errors.name"
-                                />
+                                <InputError :message="errors.name" />
                             </div>
 
                             <!-- EMAIL -->
@@ -378,9 +355,7 @@ const canSubmit = computed(() => {
                                     class="h-12 rounded-xl border-slate-200 bg-slate-50 px-4 text-sm transition focus:border-sky-400 focus:bg-white focus:ring-4 focus:ring-sky-400/10"
                                 />
 
-                                <InputError
-                                    :message="errors.email"
-                                />
+                                <InputError :message="errors.email" />
                             </div>
 
                             <!-- PASSWORD -->
@@ -397,9 +372,7 @@ const canSubmit = computed(() => {
                                         id="password"
                                         v-model="password"
                                         :type="
-                                            showPassword
-                                                ? 'text'
-                                                : 'password'
+                                            showPassword ? 'text' : 'password'
                                         "
                                         name="password"
                                         required
@@ -411,25 +384,20 @@ const canSubmit = computed(() => {
 
                                     <button
                                         type="button"
-                                        class="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                                        class="absolute top-1/2 right-3 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
                                         :aria-label="
                                             showPassword
                                                 ? 'Sembunyikan password'
                                                 : 'Tampilkan password'
                                         "
-                                        @click="
-                                            showPassword = !showPassword
-                                        "
+                                        @click="showPassword = !showPassword"
                                     >
                                         <EyeOff
                                             v-if="showPassword"
                                             class="size-4"
                                         />
 
-                                        <Eye
-                                            v-else
-                                            class="size-4"
-                                        />
+                                        <Eye v-else class="size-4" />
                                     </button>
                                 </div>
 
@@ -459,9 +427,7 @@ const canSubmit = computed(() => {
                                                         : 'text-emerald-500'
                                             "
                                         >
-                                            {{
-                                                passwordStrength.label
-                                            }}
+                                            {{ passwordStrength.label }}
                                         </span>
                                     </div>
 
@@ -470,19 +436,14 @@ const canSubmit = computed(() => {
                                     >
                                         <div
                                             class="h-full rounded-full transition-all duration-300"
-                                            :class="
-                                                passwordStrength.class
-                                            "
+                                            :class="passwordStrength.class"
                                             :style="{
-                                                width:
-                                                    passwordStrength.width,
+                                                width: passwordStrength.width,
                                             }"
                                         />
                                     </div>
 
-                                    <div
-                                        class="mt-3 grid grid-cols-2 gap-2"
-                                    >
+                                    <div class="mt-3 grid grid-cols-2 gap-2">
                                         <div
                                             class="flex items-center gap-1.5 text-xs"
                                             :class="
@@ -492,16 +453,11 @@ const canSubmit = computed(() => {
                                             "
                                         >
                                             <CheckCircle2
-                                                v-if="
-                                                    passwordRules.length
-                                                "
+                                                v-if="passwordRules.length"
                                                 class="size-3.5"
                                             />
 
-                                            <X
-                                                v-else
-                                                class="size-3.5"
-                                            />
+                                            <X v-else class="size-3.5" />
 
                                             Minimal 8 karakter
                                         </div>
@@ -515,16 +471,11 @@ const canSubmit = computed(() => {
                                             "
                                         >
                                             <CheckCircle2
-                                                v-if="
-                                                    passwordRules.lowercase
-                                                "
+                                                v-if="passwordRules.lowercase"
                                                 class="size-3.5"
                                             />
 
-                                            <X
-                                                v-else
-                                                class="size-3.5"
-                                            />
+                                            <X v-else class="size-3.5" />
 
                                             Huruf kecil
                                         </div>
@@ -538,16 +489,11 @@ const canSubmit = computed(() => {
                                             "
                                         >
                                             <CheckCircle2
-                                                v-if="
-                                                    passwordRules.uppercase
-                                                "
+                                                v-if="passwordRules.uppercase"
                                                 class="size-3.5"
                                             />
 
-                                            <X
-                                                v-else
-                                                class="size-3.5"
-                                            />
+                                            <X v-else class="size-3.5" />
 
                                             Huruf besar
                                         </div>
@@ -561,25 +507,18 @@ const canSubmit = computed(() => {
                                             "
                                         >
                                             <CheckCircle2
-                                                v-if="
-                                                    passwordRules.number
-                                                "
+                                                v-if="passwordRules.number"
                                                 class="size-3.5"
                                             />
 
-                                            <X
-                                                v-else
-                                                class="size-3.5"
-                                            />
+                                            <X v-else class="size-3.5" />
 
                                             Angka
                                         </div>
                                     </div>
                                 </div>
 
-                                <InputError
-                                    :message="errors.password"
-                                />
+                                <InputError :message="errors.password" />
                             </div>
 
                             <!-- CONFIRM PASSWORD -->
@@ -616,7 +555,7 @@ const canSubmit = computed(() => {
 
                                     <button
                                         type="button"
-                                        class="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
+                                        class="absolute top-1/2 right-3 -translate-y-1/2 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-200 hover:text-slate-700"
                                         :aria-label="
                                             showPasswordConfirmation
                                                 ? 'Sembunyikan password'
@@ -628,16 +567,11 @@ const canSubmit = computed(() => {
                                         "
                                     >
                                         <EyeOff
-                                            v-if="
-                                                showPasswordConfirmation
-                                            "
+                                            v-if="showPasswordConfirmation"
                                             class="size-4"
                                         />
 
-                                        <Eye
-                                            v-else
-                                            class="size-4"
-                                        />
+                                        <Eye v-else class="size-4" />
                                     </button>
                                 </div>
 
@@ -655,10 +589,7 @@ const canSubmit = computed(() => {
                                         class="size-3.5"
                                     />
 
-                                    <X
-                                        v-else
-                                        class="size-3.5"
-                                    />
+                                    <X v-else class="size-3.5" />
 
                                     {{
                                         passwordsMatch
@@ -668,9 +599,7 @@ const canSubmit = computed(() => {
                                 </div>
 
                                 <InputError
-                                    :message="
-                                        errors.password_confirmation
-                                    "
+                                    :message="errors.password_confirmation"
                                 />
                             </div>
 
@@ -694,8 +623,8 @@ const canSubmit = computed(() => {
                                     <p
                                         class="mt-1 text-xs leading-relaxed text-slate-500"
                                     >
-                                        Gunakan password yang unik dan
-                                        jangan bagikan kepada orang lain.
+                                        Gunakan password yang unik dan jangan
+                                        bagikan kepada orang lain.
                                     </p>
                                 </div>
                             </div>

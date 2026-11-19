@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Head, Link, useForm } from '@inertiajs/vue3'
+import { computed, ref } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
     ArrowLeft,
     BarChart3,
@@ -21,21 +21,21 @@ import {
     Video,
     ChevronLeft,
     X,
-} from '@lucide/vue'
+} from '@lucide/vue';
 
 interface Creator {
-    id: number
-    name: string
-    username: string
-    platform: string
-    category: string
-    followers: number
-    profile_image?: string | null
+    id: number;
+    name: string;
+    username: string;
+    platform: string;
+    category: string;
+    followers: number;
+    profile_image?: string | null;
 }
 
 const props = defineProps<{
-    creator: Creator
-}>()
+    creator: Creator;
+}>();
 
 const form = useForm({
     content_date: '',
@@ -51,9 +51,9 @@ const form = useForm({
     shares: 0,
 
     notes: '',
-})
+});
 
-const thumbnailPreview = ref<string | null>(null)
+const thumbnailPreview = ref<string | null>(null);
 
 const platforms = [
     {
@@ -68,7 +68,7 @@ const platforms = [
         value: 'YouTube',
         short: 'YT',
     },
-]
+];
 
 const contentTypes = [
     {
@@ -96,82 +96,83 @@ const contentTypes = [
         label: 'Post',
         description: 'Feed / image post',
     },
-]
+];
 
 const creatorPhoto = computed(() => {
     if (!props.creator.profile_image) {
-        return null
+        return null;
     }
 
-    return `/storage/${props.creator.profile_image}`
-})
+    return `/storage/${props.creator.profile_image}`;
+});
 
 const creatorInitial = computed(() => {
     return props.creator.name
         ? props.creator.name.charAt(0).toUpperCase()
-        : 'C'
-})
+        : 'C';
+});
 
 const formattedNumber = (value: number) => {
-    return new Intl.NumberFormat('id-ID').format(value || 0)
-}
+    return new Intl.NumberFormat('id-ID').format(value || 0);
+};
 
 const formatCompact = (value: number) => {
-    if (!value) return '0'
+    if (!value) return '0';
 
     if (value >= 1_000_000) {
-        return `${(value / 1_000_000).toFixed(1)}M`
+        return `${(value / 1_000_000).toFixed(1)}M`;
     }
 
     if (value >= 1_000) {
-        return `${(value / 1_000).toFixed(1)}K`
+        return `${(value / 1_000).toFixed(1)}K`;
     }
 
-    return value.toString()
-}
+    return value.toString();
+};
 
 const engagementRate = computed(() => {
     if (!form.views || form.views <= 0) {
-        return 0
+        return 0;
     }
 
     const engagement =
         Number(form.likes || 0) +
         Number(form.comments || 0) +
-        Number(form.shares || 0)
+        Number(form.shares || 0);
 
-    return (engagement / form.views) * 100
-})
+    return (engagement / form.views) * 100;
+});
 
 const formattedEngagementRate = computed(() => {
-    return `${engagementRate.value.toFixed(2)}%`
-})
+    return `${engagementRate.value.toFixed(2)}%`;
+});
 
 const totalEngagement = computed(() => {
     return (
         Number(form.likes || 0) +
         Number(form.comments || 0) +
         Number(form.shares || 0)
-    )
-})
+    );
+});
 
 const engagementPerView = computed(() => {
     if (!form.views) {
-        return 0
+        return 0;
     }
 
-    return totalEngagement.value / form.views
-})
+    return totalEngagement.value / form.views;
+});
 
 const performanceLevel = computed(() => {
-    const rate = engagementRate.value
+    const rate = engagementRate.value;
 
     if (!form.views) {
         return {
             label: 'Belum tersedia',
-            description: 'Masukkan views dan engagement untuk melihat performa.',
+            description:
+                'Masukkan views dan engagement untuk melihat performa.',
             class: 'bg-muted text-muted-foreground',
-        }
+        };
     }
 
     if (rate >= 10) {
@@ -179,7 +180,7 @@ const performanceLevel = computed(() => {
             label: 'Excellent',
             description: 'Engagement sangat tinggi.',
             class: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-        }
+        };
     }
 
     if (rate >= 5) {
@@ -187,7 +188,7 @@ const performanceLevel = computed(() => {
             label: 'Strong',
             description: 'Engagement berada pada level yang baik.',
             class: 'bg-blue-500/10 text-blue-600 dark:text-blue-400',
-        }
+        };
     }
 
     if (rate >= 2) {
@@ -195,51 +196,47 @@ const performanceLevel = computed(() => {
             label: 'Average',
             description: 'Engagement masih cukup sehat.',
             class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-        }
+        };
     }
 
     return {
         label: 'Low',
         description: 'Engagement relatif rendah.',
         class: 'bg-red-500/10 text-red-600 dark:text-red-400',
-    }
-})
+    };
+});
 
 const contentScore = computed(() => {
     if (!form.views || !props.creator.followers) {
-        return 0
+        return 0;
     }
 
-    const viewRate =
-        (Number(form.views) / props.creator.followers) * 100
+    const viewRate = (Number(form.views) / props.creator.followers) * 100;
 
-    const engagement = engagementRate.value
+    const engagement = engagementRate.value;
 
-    const viewScore = Math.min(viewRate, 100) * 0.5
-    const engagementScore = Math.min(engagement * 5, 100) * 0.5
+    const viewScore = Math.min(viewRate, 100) * 0.5;
+    const engagementScore = Math.min(engagement * 5, 100) * 0.5;
 
-    return Math.min(
-        100,
-        Number((viewScore + engagementScore).toFixed(1)),
-    )
-})
+    return Math.min(100, Number((viewScore + engagementScore).toFixed(1)));
+});
 
 const formattedContentScore = computed(() => {
-    return contentScore.value.toFixed(1)
-})
+    return contentScore.value.toFixed(1);
+});
 
 const dataCompleteness = computed(() => {
-    let completed = 0
+    let completed = 0;
 
-    if (form.content_date) completed++
-    if (form.platform) completed++
-    if (form.content_type) completed++
-    if (form.title) completed++
-    if (form.content_url) completed++
-    if (form.views > 0) completed++
+    if (form.content_date) completed++;
+    if (form.platform) completed++;
+    if (form.content_type) completed++;
+    if (form.title) completed++;
+    if (form.content_url) completed++;
+    if (form.views > 0) completed++;
 
-    return Math.round((completed / 6) * 100)
-})
+    return Math.round((completed / 6) * 100);
+});
 
 const isReady = computed(() => {
     return Boolean(
@@ -247,44 +244,45 @@ const isReady = computed(() => {
         form.platform &&
         form.content_type &&
         form.views > 0,
-    )
-})
+    );
+});
 
 const handleThumbnailChange = (event: Event) => {
-    const target = event.target as HTMLInputElement
-    const file = target.files?.[0]
+    const target = event.target as HTMLInputElement;
+    const file = target.files?.[0];
 
-    if (!file) return
+    if (!file) return;
 
-    form.thumbnail = file
-    thumbnailPreview.value = URL.createObjectURL(file)
-}
+    form.thumbnail = file;
+    thumbnailPreview.value = URL.createObjectURL(file);
+};
 
 const removeThumbnail = () => {
-    form.thumbnail = null
-    thumbnailPreview.value = null
-}
+    form.thumbnail = null;
+    thumbnailPreview.value = null;
+};
 
 const submit = () => {
     form.post(`/creators/${props.creator.id}/contents`, {
         forceFormData: true,
         preserveScroll: true,
-    })
-}
+    });
+};
 </script>
 
 <template>
     <Head :title="`Tambah Konten - ${creator.name}`" />
 
-    <div class="app-textured-bg min-h-full p-4 text-foreground md:p-6">
+    <div class="app-textured-bg text-foreground min-h-full p-4 md:p-6">
         <div class="space-y-6">
-
             <!-- Header -->
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div
+                class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            >
                 <div class="flex items-start gap-3">
                     <Link
                         :href="`/creators/${creator.id}`"
-                        class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background transition-all duration-200 hover:-translate-x-0.5 hover:bg-muted"
+                        class="border-border bg-background hover:bg-muted mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 hover:-translate-x-0.5"
                     >
                         <ArrowLeft class="h-4 w-4" />
                     </Link>
@@ -294,7 +292,7 @@ const submit = () => {
                             Tambah Konten
                         </h1>
 
-                        <p class="mt-1 text-sm text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-sm">
                             Tambahkan konten dan performanya ke creator.
                         </p>
                     </div>
@@ -303,7 +301,7 @@ const submit = () => {
                 <div class="flex items-center gap-2">
                     <Link
                         :href="`/creators/${creator.id}`"
-                        class="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted"
+                        class="border-border bg-background hover:bg-muted inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5"
                     >
                         <X class="h-4 w-4" />
                         Batal
@@ -312,27 +310,23 @@ const submit = () => {
                     <button
                         type="button"
                         :disabled="form.processing || !isReady"
-                        class="inline-flex h-9 items-center gap-2 rounded-lg bg-sky-600 px-4 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
+                        class="text-primary-foreground inline-flex h-9 items-center gap-2 rounded-lg bg-sky-600 px-4 text-sm font-medium shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
                         @click="submit"
                     >
                         <Save class="h-4 w-4" />
 
-                        {{
-                            form.processing
-                                ? 'Menyimpan...'
-                                : 'Simpan Konten'
-                        }}
+                        {{ form.processing ? 'Menyimpan...' : 'Simpan Konten' }}
                     </button>
                 </div>
             </div>
 
             <!-- Creator Context -->
             <section
-                class="rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md"
+                class="border-border bg-card rounded-xl border p-5 shadow-sm transition-all duration-200 hover:shadow-md"
             >
                 <div class="flex items-center gap-4">
                     <div
-                        class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted text-sm font-semibold text-muted-foreground"
+                        class="border-border bg-muted text-muted-foreground flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border text-sm font-semibold"
                     >
                         <img
                             v-if="creatorPhoto"
@@ -352,17 +346,21 @@ const submit = () => {
                                 {{ creator.name }}
                             </h2>
 
-                            <span class="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                            <span
+                                class="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[10px] font-medium"
+                            >
                                 Content Performance
                             </span>
                         </div>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             @{{ creator.username }}
                         </p>
 
-                        <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                            <span class="rounded-md bg-muted px-2 py-1">
+                        <div
+                            class="text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-[11px]"
+                        >
+                            <span class="bg-muted rounded-md px-2 py-1">
                                 {{ creator.platform }}
                             </span>
 
@@ -375,7 +373,8 @@ const submit = () => {
                             <span>•</span>
 
                             <span>
-                                {{ formattedNumber(creator.followers) }} followers
+                                {{ formattedNumber(creator.followers) }}
+                                followers
                             </span>
                         </div>
                     </div>
@@ -384,17 +383,17 @@ const submit = () => {
 
             <!-- Main -->
             <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_350px]">
-
                 <!-- Left -->
                 <div class="space-y-6">
-
                     <!-- Content Identity -->
                     <section
-                        class="rounded-xl border border-border bg-card shadow-sm"
+                        class="border-border bg-card rounded-xl border shadow-sm"
                     >
-                        <div class="border-b border-border px-5 py-4">
+                        <div class="border-border border-b px-5 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <div
+                                    class="bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-lg"
+                                >
                                     <Video class="h-4 w-4" />
                                 </div>
 
@@ -403,7 +402,7 @@ const submit = () => {
                                         Content Information
                                     </h2>
 
-                                    <p class="text-xs text-muted-foreground">
+                                    <p class="text-muted-foreground text-xs">
                                         Informasi dasar konten.
                                     </p>
                                 </div>
@@ -411,7 +410,6 @@ const submit = () => {
                         </div>
 
                         <div class="space-y-5 p-5">
-
                             <!-- Date -->
                             <div class="space-y-2">
                                 <label class="text-xs font-medium">
@@ -420,19 +418,19 @@ const submit = () => {
 
                                 <div class="relative">
                                     <CalendarDays
-                                        class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                        class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
                                     />
 
                                     <input
                                         v-model="form.content_date"
                                         type="date"
-                                        class="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                        class="border-input bg-background focus:border-primary focus:ring-primary/10 h-10 w-full rounded-lg border pr-3 pl-9 text-sm transition-all outline-none focus:ring-2"
                                     />
                                 </div>
 
                                 <p
                                     v-if="form.errors.content_date"
-                                    class="text-xs text-destructive"
+                                    class="text-destructive text-xs"
                                 >
                                     {{ form.errors.content_date }}
                                 </p>
@@ -457,14 +455,18 @@ const submit = () => {
                                         "
                                         @click="form.platform = platform.value"
                                     >
-                                        <span class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-[10px] font-bold">
+                                        <span
+                                            class="bg-muted flex h-7 w-7 items-center justify-center rounded-md text-[10px] font-bold"
+                                        >
                                             {{ platform.short }}
                                         </span>
 
                                         {{ platform.value }}
 
                                         <Check
-                                            v-if="form.platform === platform.value"
+                                            v-if="
+                                                form.platform === platform.value
+                                            "
                                             class="h-3.5 w-3.5"
                                         />
                                     </button>
@@ -490,7 +492,9 @@ const submit = () => {
                                         "
                                         @click="form.content_type = type.value"
                                     >
-                                        <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted">
+                                        <div
+                                            class="bg-muted flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
+                                        >
                                             <Play class="h-3.5 w-3.5" />
                                         </div>
 
@@ -499,14 +503,18 @@ const submit = () => {
                                                 {{ type.label }}
                                             </p>
 
-                                            <p class="mt-0.5 text-[10px] text-muted-foreground">
+                                            <p
+                                                class="text-muted-foreground mt-0.5 text-[10px]"
+                                            >
                                                 {{ type.description }}
                                             </p>
                                         </div>
 
                                         <Check
-                                            v-if="form.content_type === type.value"
-                                            class="ml-auto h-4 w-4 shrink-0 text-primary"
+                                            v-if="
+                                                form.content_type === type.value
+                                            "
+                                            class="text-primary ml-auto h-4 w-4 shrink-0"
                                         />
                                     </button>
                                 </div>
@@ -522,7 +530,7 @@ const submit = () => {
                                     v-model="form.title"
                                     type="text"
                                     placeholder="Contoh: Review produk Mirza Herbal"
-                                    class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                    class="border-input bg-background focus:border-primary focus:ring-primary/10 h-10 w-full rounded-lg border px-3 text-sm transition-all outline-none focus:ring-2"
                                 />
                             </div>
 
@@ -535,14 +543,14 @@ const submit = () => {
                                 <div class="flex gap-2">
                                     <div class="relative flex-1">
                                         <LinkIcon
-                                            class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                            class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
                                         />
 
                                         <input
                                             v-model="form.content_url"
                                             type="url"
                                             placeholder="https://www.tiktok.com/@username/video/..."
-                                            class="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                            class="border-input bg-background focus:border-primary focus:ring-primary/10 h-10 w-full rounded-lg border pr-3 pl-9 text-sm transition-all outline-none focus:ring-2"
                                         />
                                     </div>
 
@@ -551,7 +559,7 @@ const submit = () => {
                                         :href="form.content_url"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted"
+                                        class="border-border hover:bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 hover:-translate-y-0.5"
                                     >
                                         <ExternalLink class="h-4 w-4" />
                                     </a>
@@ -566,15 +574,19 @@ const submit = () => {
 
                                 <div class="flex flex-col gap-3 sm:flex-row">
                                     <label
-                                        class="flex h-28 flex-1 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/30 transition-all duration-200 hover:border-primary hover:bg-primary/5"
+                                        class="border-border bg-muted/30 hover:border-primary hover:bg-primary/5 flex h-28 flex-1 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed transition-all duration-200"
                                     >
-                                        <ImagePlus class="h-6 w-6 text-muted-foreground" />
+                                        <ImagePlus
+                                            class="text-muted-foreground h-6 w-6"
+                                        />
 
                                         <span class="mt-2 text-xs font-medium">
                                             Upload Thumbnail
                                         </span>
 
-                                        <span class="mt-1 text-[10px] text-muted-foreground">
+                                        <span
+                                            class="text-muted-foreground mt-1 text-[10px]"
+                                        >
                                             JPG, PNG, WEBP
                                         </span>
 
@@ -588,7 +600,7 @@ const submit = () => {
 
                                     <div
                                         v-if="thumbnailPreview"
-                                        class="relative h-28 w-full overflow-hidden rounded-lg border border-border sm:w-44"
+                                        class="border-border relative h-28 w-full overflow-hidden rounded-lg border sm:w-44"
                                     >
                                         <img
                                             :src="thumbnailPreview"
@@ -598,7 +610,7 @@ const submit = () => {
 
                                         <button
                                             type="button"
-                                            class="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white transition-all hover:scale-105"
+                                            class="absolute top-2 right-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/70 text-white transition-all hover:scale-105"
                                             @click="removeThumbnail"
                                         >
                                             <X class="h-3.5 w-3.5" />
@@ -611,11 +623,13 @@ const submit = () => {
 
                     <!-- Performance -->
                     <section
-                        class="rounded-xl border border-border bg-card shadow-sm"
+                        class="border-border bg-card rounded-xl border shadow-sm"
                     >
-                        <div class="border-b border-border px-5 py-4">
+                        <div class="border-border border-b px-5 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                <div
+                                    class="bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-lg"
+                                >
                                     <BarChart3 class="h-4 w-4" />
                                 </div>
 
@@ -624,7 +638,7 @@ const submit = () => {
                                         Performance Metrics
                                     </h2>
 
-                                    <p class="text-xs text-muted-foreground">
+                                    <p class="text-muted-foreground text-xs">
                                         Masukkan performa aktual konten.
                                     </p>
                                 </div>
@@ -632,12 +646,15 @@ const submit = () => {
                         </div>
 
                         <div class="grid gap-4 p-5 sm:grid-cols-2">
-
                             <!-- Views -->
-                            <div class="rounded-xl border border-border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
+                            <div
+                                class="border-border rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+                            >
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
-                                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                                        <div
+                                            class="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-lg"
+                                        >
                                             <Play class="h-4 w-4" />
                                         </div>
 
@@ -646,7 +663,9 @@ const submit = () => {
                                         </span>
                                     </div>
 
-                                    <span class="text-[10px] text-muted-foreground">
+                                    <span
+                                        class="text-muted-foreground text-[10px]"
+                                    >
                                         Required
                                     </span>
                                 </div>
@@ -656,14 +675,18 @@ const submit = () => {
                                     type="number"
                                     min="0"
                                     placeholder="0"
-                                    class="mt-4 h-11 w-full rounded-lg border border-input bg-background px-3 text-base font-semibold outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                    class="border-input bg-background focus:border-primary focus:ring-primary/10 mt-4 h-11 w-full rounded-lg border px-3 text-base font-semibold transition-all outline-none focus:ring-2"
                                 />
                             </div>
 
                             <!-- Likes -->
-                            <div class="rounded-xl border border-border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
+                            <div
+                                class="border-border rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+                            >
                                 <div class="flex items-center gap-2">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                                    <div
+                                        class="bg-muted flex h-8 w-8 items-center justify-center rounded-lg"
+                                    >
                                         <ThumbsUp class="h-4 w-4" />
                                     </div>
 
@@ -677,14 +700,18 @@ const submit = () => {
                                     type="number"
                                     min="0"
                                     placeholder="0"
-                                    class="mt-4 h-11 w-full rounded-lg border border-input bg-background px-3 text-base font-semibold outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                    class="border-input bg-background focus:border-primary focus:ring-primary/10 mt-4 h-11 w-full rounded-lg border px-3 text-base font-semibold transition-all outline-none focus:ring-2"
                                 />
                             </div>
 
                             <!-- Comments -->
-                            <div class="rounded-xl border border-border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
+                            <div
+                                class="border-border rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+                            >
                                 <div class="flex items-center gap-2">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                                    <div
+                                        class="bg-muted flex h-8 w-8 items-center justify-center rounded-lg"
+                                    >
                                         <MessageCircle class="h-4 w-4" />
                                     </div>
 
@@ -698,14 +725,18 @@ const submit = () => {
                                     type="number"
                                     min="0"
                                     placeholder="0"
-                                    class="mt-4 h-11 w-full rounded-lg border border-input bg-background px-3 text-base font-semibold outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                    class="border-input bg-background focus:border-primary focus:ring-primary/10 mt-4 h-11 w-full rounded-lg border px-3 text-base font-semibold transition-all outline-none focus:ring-2"
                                 />
                             </div>
 
                             <!-- Shares -->
-                            <div class="rounded-xl border border-border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm">
+                            <div
+                                class="border-border rounded-xl border p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
+                            >
                                 <div class="flex items-center gap-2">
-                                    <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted">
+                                    <div
+                                        class="bg-muted flex h-8 w-8 items-center justify-center rounded-lg"
+                                    >
                                         <Share2 class="h-4 w-4" />
                                     </div>
 
@@ -719,7 +750,7 @@ const submit = () => {
                                     type="number"
                                     min="0"
                                     placeholder="0"
-                                    class="mt-4 h-11 w-full rounded-lg border border-input bg-background px-3 text-base font-semibold outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                    class="border-input bg-background focus:border-primary focus:ring-primary/10 mt-4 h-11 w-full rounded-lg border px-3 text-base font-semibold transition-all outline-none focus:ring-2"
                                 />
                             </div>
                         </div>
@@ -727,20 +758,20 @@ const submit = () => {
 
                     <!-- Notes -->
                     <section
-                        class="rounded-xl border border-border bg-card shadow-sm"
+                        class="border-border bg-card rounded-xl border shadow-sm"
                     >
-                        <div class="border-b border-border px-5 py-4">
+                        <div class="border-border border-b px-5 py-4">
                             <div class="flex items-center gap-3">
-                                <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                                <div
+                                    class="bg-muted text-muted-foreground flex h-9 w-9 items-center justify-center rounded-lg"
+                                >
                                     <FileText class="h-4 w-4" />
                                 </div>
 
                                 <div>
-                                    <h2 class="text-sm font-semibold">
-                                        Notes
-                                    </h2>
+                                    <h2 class="text-sm font-semibold">Notes</h2>
 
-                                    <p class="text-xs text-muted-foreground">
+                                    <p class="text-muted-foreground text-xs">
                                         Tambahkan konteks atau catatan performa.
                                     </p>
                                 </div>
@@ -752,7 +783,7 @@ const submit = () => {
                                 v-model="form.notes"
                                 rows="5"
                                 placeholder="Contoh: Konten mendapatkan boost dari campaign..."
-                                class="w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                class="border-input bg-background focus:border-primary focus:ring-primary/10 w-full resize-none rounded-lg border px-3 py-2.5 text-sm transition-all outline-none focus:ring-2"
                             />
                         </div>
                     </section>
@@ -761,30 +792,36 @@ const submit = () => {
                 <!-- Right -->
                 <aside class="lg:sticky lg:top-6 lg:self-start">
                     <section
-                        class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                        class="border-border bg-card overflow-hidden rounded-xl border shadow-sm"
                     >
-                        <div class="border-b border-border px-5 py-4">
+                        <div class="border-border border-b px-5 py-4">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                    <p
+                                        class="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase"
+                                    >
                                         Performance Preview
                                     </p>
 
-                                    <p class="mt-1 text-xs text-muted-foreground">
+                                    <p
+                                        class="text-muted-foreground mt-1 text-xs"
+                                    >
                                         Dihitung realtime dari data input.
                                     </p>
                                 </div>
 
-                                <TrendingUp class="h-4 w-4 text-primary" />
+                                <TrendingUp class="text-primary h-4 w-4" />
                             </div>
                         </div>
 
                         <div class="p-5">
-
                             <!-- Content Preview -->
-                            <div class="overflow-hidden rounded-xl border border-border bg-background">
-
-                                <div class="relative flex aspect-video items-center justify-center overflow-hidden bg-muted">
+                            <div
+                                class="border-border bg-background overflow-hidden rounded-xl border"
+                            >
+                                <div
+                                    class="bg-muted relative flex aspect-video items-center justify-center overflow-hidden"
+                                >
                                     <img
                                         v-if="thumbnailPreview"
                                         :src="thumbnailPreview"
@@ -794,7 +831,7 @@ const submit = () => {
 
                                     <div
                                         v-else
-                                        class="flex flex-col items-center text-muted-foreground"
+                                        class="text-muted-foreground flex flex-col items-center"
                                     >
                                         <ImagePlus class="h-8 w-8" />
 
@@ -808,32 +845,50 @@ const submit = () => {
                                         class="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent"
                                     />
 
-                                    <div class="absolute bottom-3 left-3 flex items-center gap-2">
-                                        <span class="rounded-md bg-black/70 px-2 py-1 text-[9px] font-medium text-white">
+                                    <div
+                                        class="absolute bottom-3 left-3 flex items-center gap-2"
+                                    >
+                                        <span
+                                            class="rounded-md bg-black/70 px-2 py-1 text-[9px] font-medium text-white"
+                                        >
                                             {{ form.platform }}
                                         </span>
 
-                                        <span class="rounded-md bg-black/70 px-2 py-1 text-[9px] font-medium text-white">
+                                        <span
+                                            class="rounded-md bg-black/70 px-2 py-1 text-[9px] font-medium text-white"
+                                        >
                                             {{ form.content_type }}
                                         </span>
                                     </div>
                                 </div>
 
                                 <div class="p-4">
-                                    <p class="line-clamp-2 text-sm font-semibold">
-                                        {{ form.title || 'Judul konten akan tampil di sini' }}
+                                    <p
+                                        class="line-clamp-2 text-sm font-semibold"
+                                    >
+                                        {{
+                                            form.title ||
+                                            'Judul konten akan tampil di sini'
+                                        }}
                                     </p>
 
-                                    <p class="mt-1 text-[10px] text-muted-foreground">
-                                        {{ form.content_date || 'Tanggal belum dipilih' }}
+                                    <p
+                                        class="text-muted-foreground mt-1 text-[10px]"
+                                    >
+                                        {{
+                                            form.content_date ||
+                                            'Tanggal belum dipilih'
+                                        }}
                                     </p>
                                 </div>
                             </div>
 
                             <!-- Metrics -->
                             <div class="mt-4 grid grid-cols-2 gap-2">
-                                <div class="rounded-lg bg-muted/50 p-3">
-                                    <p class="text-[10px] text-muted-foreground">
+                                <div class="bg-muted/50 rounded-lg p-3">
+                                    <p
+                                        class="text-muted-foreground text-[10px]"
+                                    >
                                         Views
                                     </p>
 
@@ -842,8 +897,10 @@ const submit = () => {
                                     </p>
                                 </div>
 
-                                <div class="rounded-lg bg-muted/50 p-3">
-                                    <p class="text-[10px] text-muted-foreground">
+                                <div class="bg-muted/50 rounded-lg p-3">
+                                    <p
+                                        class="text-muted-foreground text-[10px]"
+                                    >
                                         Engagement
                                     </p>
 
@@ -854,9 +911,13 @@ const submit = () => {
                             </div>
 
                             <!-- Engagement breakdown -->
-                            <div class="mt-3 rounded-lg border border-border p-3">
+                            <div
+                                class="border-border mt-3 rounded-lg border p-3"
+                            >
                                 <div class="flex items-center justify-between">
-                                    <span class="text-[10px] text-muted-foreground">
+                                    <span
+                                        class="text-muted-foreground text-[10px]"
+                                    >
                                         Total Engagement
                                     </span>
 
@@ -866,7 +927,9 @@ const submit = () => {
                                 </div>
 
                                 <div class="mt-3 space-y-2">
-                                    <div class="flex items-center justify-between text-[10px]">
+                                    <div
+                                        class="flex items-center justify-between text-[10px]"
+                                    >
                                         <span class="text-muted-foreground">
                                             Likes
                                         </span>
@@ -876,7 +939,9 @@ const submit = () => {
                                         </span>
                                     </div>
 
-                                    <div class="flex items-center justify-between text-[10px]">
+                                    <div
+                                        class="flex items-center justify-between text-[10px]"
+                                    >
                                         <span class="text-muted-foreground">
                                             Comments
                                         </span>
@@ -886,7 +951,9 @@ const submit = () => {
                                         </span>
                                     </div>
 
-                                    <div class="flex items-center justify-between text-[10px]">
+                                    <div
+                                        class="flex items-center justify-between text-[10px]"
+                                    >
                                         <span class="text-muted-foreground">
                                             Shares
                                         </span>
@@ -899,10 +966,14 @@ const submit = () => {
                             </div>
 
                             <!-- Performance -->
-                            <div class="mt-3 rounded-lg border border-border p-4">
+                            <div
+                                class="border-border mt-3 rounded-lg border p-4"
+                            >
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-[10px] text-muted-foreground">
+                                        <p
+                                            class="text-muted-foreground text-[10px]"
+                                        >
                                             Performance
                                         </p>
 
@@ -919,24 +990,32 @@ const submit = () => {
                                     </span>
                                 </div>
 
-                                <div class="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                                <div
+                                    class="bg-muted mt-3 h-2 overflow-hidden rounded-full"
+                                >
                                     <div
-                                        class="h-full rounded-full bg-primary transition-all duration-500"
+                                        class="bg-primary h-full rounded-full transition-all duration-500"
                                         :style="{
                                             width: `${contentScore}%`,
                                         }"
                                     />
                                 </div>
 
-                                <p class="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                                <p
+                                    class="text-muted-foreground mt-2 text-[10px] leading-relaxed"
+                                >
                                     {{ performanceLevel.description }}
                                 </p>
                             </div>
 
                             <!-- Completeness -->
-                            <div class="mt-3 rounded-lg border border-border p-3">
+                            <div
+                                class="border-border mt-3 rounded-lg border p-3"
+                            >
                                 <div class="flex items-center justify-between">
-                                    <span class="text-[10px] text-muted-foreground">
+                                    <span
+                                        class="text-muted-foreground text-[10px]"
+                                    >
                                         Data completeness
                                     </span>
 
@@ -945,9 +1024,11 @@ const submit = () => {
                                     </span>
                                 </div>
 
-                                <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                                <div
+                                    class="bg-muted mt-2 h-1.5 overflow-hidden rounded-full"
+                                >
                                     <div
-                                        class="h-full rounded-full bg-primary transition-all duration-300"
+                                        class="bg-primary h-full rounded-full transition-all duration-300"
                                         :style="{
                                             width: `${dataCompleteness}%`,
                                         }"
@@ -960,15 +1041,22 @@ const submit = () => {
                                 v-if="isReady"
                                 class="mt-4 flex items-start gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3"
                             >
-                                <Check class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                                <Check
+                                    class="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600"
+                                />
 
                                 <div>
-                                    <p class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                    <p
+                                        class="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400"
+                                    >
                                         Konten siap dianalisis
                                     </p>
 
-                                    <p class="mt-1 text-[10px] leading-relaxed text-muted-foreground">
-                                        Data minimum sudah lengkap dan dapat digunakan dalam Creator Analysis.
+                                    <p
+                                        class="text-muted-foreground mt-1 text-[10px] leading-relaxed"
+                                    >
+                                        Data minimum sudah lengkap dan dapat
+                                        digunakan dalam Creator Analysis.
                                     </p>
                                 </div>
                             </div>
@@ -977,10 +1065,15 @@ const submit = () => {
                                 v-else
                                 class="mt-4 flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3"
                             >
-                                <Sparkles class="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+                                <Sparkles
+                                    class="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600"
+                                />
 
-                                <p class="text-[10px] leading-relaxed text-muted-foreground">
-                                    Lengkapi tanggal dan views agar konten dapat dianalisis.
+                                <p
+                                    class="text-muted-foreground text-[10px] leading-relaxed"
+                                >
+                                    Lengkapi tanggal dan views agar konten dapat
+                                    dianalisis.
                                 </p>
                             </div>
                         </div>
@@ -989,10 +1082,12 @@ const submit = () => {
             </div>
 
             <!-- Bottom action -->
-            <div class="flex items-center justify-between border-t border-border pt-5">
+            <div
+                class="border-border flex items-center justify-between border-t pt-5"
+            >
                 <Link
                     :href="`/creators/${creator.id}`"
-                    class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium transition hover:bg-muted"
+                    class="border-border bg-card hover:bg-muted inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition"
                 >
                     <ChevronLeft class="h-4 w-4" />
                     Kembali
@@ -1001,16 +1096,12 @@ const submit = () => {
                 <button
                     type="button"
                     :disabled="form.processing || !isReady"
-                    class="inline-flex h-9 items-center gap-2 rounded-lg bg-sky-600 px-5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
+                    class="text-primary-foreground inline-flex h-9 items-center gap-2 rounded-lg bg-sky-600 px-5 text-sm font-medium shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
                     @click="submit"
                 >
                     <Save class="h-4 w-4" />
 
-                    {{
-                        form.processing
-                            ? 'Menyimpan...'
-                            : 'Simpan Konten'
-                    }}
+                    {{ form.processing ? 'Menyimpan...' : 'Simpan Konten' }}
                 </button>
             </div>
         </div>

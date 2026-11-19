@@ -37,7 +37,7 @@ const isCollapsed = computed(() => state.value === 'collapsed');
         <!-- Profile Photo -->
         <div class="relative shrink-0">
             <Avatar
-                class="h-9 w-9 overflow-hidden rounded-xl border border-sidebar-border shadow-sm transition-all duration-200 group-hover:scale-105 group-hover:shadow-md"
+                class="border-sidebar-border h-9 w-9 overflow-hidden rounded-xl border shadow-sm transition-all duration-200 group-hover:scale-105 group-hover:shadow-md"
             >
                 <!-- Foto profil asli -->
                 <AvatarImage
@@ -50,7 +50,7 @@ const isCollapsed = computed(() => state.value === 'collapsed');
                 <!-- Fallback kalau belum punya foto -->
                 <AvatarFallback
                     v-else
-                    class="rounded-xl bg-primary/10 text-xs font-semibold text-primary"
+                    class="bg-primary/10 text-primary rounded-xl text-xs font-semibold"
                 >
                     {{ getInitials(user.name) }}
                 </AvatarFallback>
@@ -58,7 +58,7 @@ const isCollapsed = computed(() => state.value === 'collapsed');
 
             <!-- Active indicator -->
             <span
-                class="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-sidebar bg-green-500"
+                class="border-sidebar absolute -right-0.5 -bottom-0.5 h-2.5 w-2.5 rounded-full border-2 bg-green-500"
             />
         </div>
 
@@ -67,15 +67,13 @@ const isCollapsed = computed(() => state.value === 'collapsed');
             v-if="!isCollapsed"
             class="grid min-w-0 flex-1 text-left leading-tight"
         >
-            <span
-                class="truncate text-sm font-semibold tracking-tight"
-            >
+            <span class="truncate text-sm font-semibold tracking-tight">
                 {{ user.name }}
             </span>
 
             <span
                 v-if="showEmail && user.email"
-                class="mt-0.5 truncate text-[11px] text-muted-foreground"
+                class="text-muted-foreground mt-0.5 truncate text-[11px]"
             >
                 {{ user.email }}
             </span>

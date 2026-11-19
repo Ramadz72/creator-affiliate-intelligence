@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Reveal from './Reveal.vue'
+import Reveal from './Reveal.vue';
 </script>
 
 <template>
@@ -7,7 +7,7 @@ import Reveal from './Reveal.vue'
         <Reveal :delay="240">
             <div class="mb-6 text-center">
                 <p
-                    class="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500"
+                    class="text-xs font-semibold tracking-[0.2em] text-slate-500 uppercase"
                 >
                     Menganalisis Creator & Affiliate di Seluruh Platform Utama
                 </p>
@@ -59,18 +59,10 @@ import Reveal from './Reveal.vue'
                             stroke-width="1.8"
                             aria-hidden="true"
                         >
-                            <path
-                                d="M7 8.5h10l1 11H6l1-11Z"
-                            />
-                            <path
-                                d="M9 8.5V6.8a3 3 0 0 1 6 0v1.7"
-                            />
-                            <path
-                                d="M10 12.5h4"
-                            />
-                            <path
-                                d="M12 11v5"
-                            />
+                            <path d="M7 8.5h10l1 11H6l1-11Z" />
+                            <path d="M9 8.5V6.8a3 3 0 0 1 6 0v1.7" />
+                            <path d="M10 12.5h4" />
+                            <path d="M12 11v5" />
                         </svg>
                     </div>
 
@@ -100,13 +92,7 @@ import Reveal from './Reveal.vue'
                             stroke-width="1.8"
                             aria-hidden="true"
                         >
-                            <rect
-                                x="5"
-                                y="6"
-                                width="14"
-                                height="13"
-                                rx="2"
-                            />
+                            <rect x="5" y="6" width="14" height="13" rx="2" />
                             <path d="M8 6V4h8v2" />
                             <path d="M9 10h6" />
                             <path d="M9 13h6" />
@@ -146,11 +132,7 @@ import Reveal from './Reveal.vue'
                                 height="17"
                                 rx="5"
                             />
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="4"
-                            />
+                            <circle cx="12" cy="12" r="4" />
                             <circle
                                 cx="17.5"
                                 cy="6.5"

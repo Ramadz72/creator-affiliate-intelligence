@@ -1,23 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Head } from '@inertiajs/vue3'
-import {
-    Check,
-    Monitor,
-    Moon,
-    Palette,
-    Sun,
-} from '@lucide/vue'
+import { computed } from 'vue';
+import { Head } from '@inertiajs/vue3';
+import { Check, Monitor, Moon, Palette, Sun } from '@lucide/vue';
 
-import { useAppearance } from '@/composables/useAppearance'
-import Heading from '@/components/Heading.vue'
-import { edit } from '@/routes/appearance'
+import { useAppearance } from '@/composables/useAppearance';
+import Heading from '@/components/Heading.vue';
+import { edit } from '@/routes/appearance';
 
-const {
-    appearance,
-    resolvedAppearance,
-    updateAppearance,
-} = useAppearance()
+const { appearance, resolvedAppearance, updateAppearance } = useAppearance();
 
 defineOptions({
     layout: {
@@ -28,7 +18,7 @@ defineOptions({
             },
         ],
     },
-})
+});
 
 const themes = [
     {
@@ -49,27 +39,25 @@ const themes = [
         description: 'Ikuti pengaturan perangkat.',
         Icon: Monitor,
     },
-] as const
+] as const;
 
 const currentThemeLabel = computed(() => {
     if (appearance.value === 'system') {
-        return `System · ${resolvedAppearance.value === 'dark' ? 'Dark' : 'Light'}`
+        return `System · ${resolvedAppearance.value === 'dark' ? 'Dark' : 'Light'}`;
     }
 
-    return resolvedAppearance.value === 'dark'
-        ? 'Dark mode'
-        : 'Light mode'
-})
+    return resolvedAppearance.value === 'dark' ? 'Dark mode' : 'Light mode';
+});
 
 const currentThemeDescription = computed(() => {
     if (appearance.value === 'system') {
-        return 'Tampilan mengikuti preferensi tema perangkat Anda.'
+        return 'Tampilan mengikuti preferensi tema perangkat Anda.';
     }
 
     return appearance.value === 'dark'
         ? 'Tampilan gelap sedang digunakan.'
-        : 'Tampilan terang sedang digunakan.'
-})
+        : 'Tampilan terang sedang digunakan.';
+});
 </script>
 
 <template>
@@ -78,7 +66,6 @@ const currentThemeDescription = computed(() => {
     <h1 class="sr-only">Appearance settings</h1>
 
     <div class="space-y-8">
-
         <!-- Header -->
         <Heading
             variant="small"
@@ -88,10 +75,10 @@ const currentThemeDescription = computed(() => {
 
         <!-- Current Appearance -->
         <div
-            class="relative overflow-hidden rounded-2xl border border-border bg-card"
+            class="border-border bg-card relative overflow-hidden rounded-2xl border"
         >
             <div
-                class="absolute -right-20 -top-20 h-48 w-48 rounded-full bg-primary/10 blur-3xl"
+                class="bg-primary/10 absolute -top-20 -right-20 h-48 w-48 rounded-full blur-3xl"
             />
 
             <div
@@ -99,45 +86,48 @@ const currentThemeDescription = computed(() => {
             >
                 <div class="flex items-start gap-4">
                     <div
-                        class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary"
+                        class="bg-primary/10 text-primary flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
                     >
                         <Palette class="h-5 w-5" />
                     </div>
 
                     <div>
                         <div class="flex flex-wrap items-center gap-2">
-                            <h2 class="font-semibold text-foreground">
+                            <h2 class="text-foreground font-semibold">
                                 Current appearance
                             </h2>
 
                             <span
-                                class="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-medium text-primary"
+                                class="bg-primary/10 text-primary inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium"
                             >
                                 Active
                             </span>
                         </div>
 
-                        <p class="mt-1 text-sm font-medium text-foreground">
+                        <p class="text-foreground mt-1 text-sm font-medium">
                             {{ currentThemeLabel }}
                         </p>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             {{ currentThemeDescription }}
                         </p>
                     </div>
                 </div>
 
                 <div
-                    class="rounded-xl border border-border bg-muted/30 px-4 py-3"
+                    class="border-border bg-muted/30 rounded-xl border px-4 py-3"
                 >
-                    <p class="text-[11px] uppercase tracking-wider text-muted-foreground">
+                    <p
+                        class="text-muted-foreground text-[11px] tracking-wider uppercase"
+                    >
                         Preference
                     </p>
 
-                    <p class="mt-1 text-sm font-medium text-foreground">
-                        {{ appearance === 'system'
-                            ? 'System controlled'
-                            : 'Manually selected'
+                    <p class="text-foreground mt-1 text-sm font-medium">
+                        {{
+                            appearance === 'system'
+                                ? 'System controlled'
+                                : 'Manually selected'
                         }}
                     </p>
                 </div>
@@ -147,17 +137,14 @@ const currentThemeDescription = computed(() => {
         <!-- Theme Selection -->
         <section class="space-y-4">
             <div>
-                <h2 class="text-base font-semibold text-foreground">
-                    Theme
-                </h2>
+                <h2 class="text-foreground text-base font-semibold">Theme</h2>
 
-                <p class="mt-1 text-sm text-muted-foreground">
+                <p class="text-muted-foreground mt-1 text-sm">
                     Pilih bagaimana aplikasi menampilkan warna dan kontras.
                 </p>
             </div>
 
             <div class="grid gap-4 md:grid-cols-3">
-
                 <button
                     v-for="theme in themes"
                     :key="theme.value"
@@ -166,13 +153,13 @@ const currentThemeDescription = computed(() => {
                     class="group relative overflow-hidden rounded-2xl border text-left transition-all duration-200"
                     :class="
                         appearance === theme.value
-                            ? 'border-primary ring-2 ring-primary/20'
+                            ? 'border-primary ring-primary/20 ring-2'
                             : 'border-border hover:border-primary/40 hover:shadow-sm'
                     "
                 >
                     <!-- Theme Preview -->
                     <div
-                        class="h-32 overflow-hidden border-b border-border p-3"
+                        class="border-border h-32 overflow-hidden border-b p-3"
                         :class="
                             theme.value === 'dark'
                                 ? 'bg-slate-950'
@@ -192,15 +179,9 @@ const currentThemeDescription = computed(() => {
                             </div>
 
                             <div class="mt-4 grid grid-cols-3 gap-2">
-                                <div
-                                    class="h-10 rounded bg-slate-100"
-                                />
-                                <div
-                                    class="h-10 rounded bg-slate-100"
-                                />
-                                <div
-                                    class="h-10 rounded bg-slate-100"
-                                />
+                                <div class="h-10 rounded bg-slate-100" />
+                                <div class="h-10 rounded bg-slate-100" />
+                                <div class="h-10 rounded bg-slate-100" />
                             </div>
                         </div>
 
@@ -215,15 +196,9 @@ const currentThemeDescription = computed(() => {
                             </div>
 
                             <div class="mt-4 grid grid-cols-3 gap-2">
-                                <div
-                                    class="h-10 rounded bg-slate-800"
-                                />
-                                <div
-                                    class="h-10 rounded bg-slate-800"
-                                />
-                                <div
-                                    class="h-10 rounded bg-slate-800"
-                                />
+                                <div class="h-10 rounded bg-slate-800" />
+                                <div class="h-10 rounded bg-slate-800" />
+                                <div class="h-10 rounded bg-slate-800" />
                             </div>
                         </div>
 
@@ -257,11 +232,11 @@ const currentThemeDescription = computed(() => {
                         <div class="flex items-center justify-between gap-3">
                             <div class="flex items-center gap-2.5">
                                 <div
-                                    class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted"
+                                    class="bg-muted flex h-8 w-8 items-center justify-center rounded-lg"
                                 >
                                     <component
                                         :is="theme.Icon"
-                                        class="h-4 w-4 text-foreground"
+                                        class="text-foreground h-4 w-4"
                                     />
                                 </div>
 
@@ -270,7 +245,7 @@ const currentThemeDescription = computed(() => {
                                         {{ theme.label }}
                                     </p>
 
-                                    <p class="text-xs text-muted-foreground">
+                                    <p class="text-muted-foreground text-xs">
                                         {{ theme.description }}
                                     </p>
                                 </div>
@@ -278,32 +253,31 @@ const currentThemeDescription = computed(() => {
 
                             <div
                                 v-if="appearance === theme.value"
-                                class="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground"
+                                class="bg-primary text-primary-foreground flex h-6 w-6 items-center justify-center rounded-full"
                             >
                                 <Check class="h-3.5 w-3.5" />
                             </div>
                         </div>
                     </div>
                 </button>
-
             </div>
         </section>
 
         <!-- Live Interface Preview -->
         <section class="space-y-4">
             <div>
-                <h2 class="text-base font-semibold text-foreground">
+                <h2 class="text-foreground text-base font-semibold">
                     Interface preview
                 </h2>
 
-                <p class="mt-1 text-sm text-muted-foreground">
+                <p class="text-muted-foreground mt-1 text-sm">
                     Preview sederhana tampilan dashboard berdasarkan tema yang
                     Anda pilih.
                 </p>
             </div>
 
             <div
-                class="overflow-hidden rounded-2xl border border-border shadow-sm"
+                class="border-border overflow-hidden rounded-2xl border shadow-sm"
                 :class="
                     resolvedAppearance === 'dark'
                         ? 'bg-slate-950'
@@ -320,9 +294,7 @@ const currentThemeDescription = computed(() => {
                     "
                 >
                     <div class="flex items-center gap-3">
-                        <div
-                            class="h-8 w-8 rounded-lg bg-primary"
-                        />
+                        <div class="bg-primary h-8 w-8 rounded-lg" />
 
                         <div>
                             <div
@@ -351,7 +323,7 @@ const currentThemeDescription = computed(() => {
                             :class="
                                 resolvedAppearance === 'dark'
                                     ? 'bg-slate-800'
-                                    : 'bg-white border border-slate-200'
+                                    : 'border border-slate-200 bg-white'
                             "
                         />
 
@@ -419,9 +391,7 @@ const currentThemeDescription = computed(() => {
         </section>
 
         <!-- Info -->
-        <div
-            class="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5"
-        >
+        <div class="rounded-2xl border border-blue-500/20 bg-blue-500/5 p-5">
             <div class="flex items-start gap-3">
                 <div
                     class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400"
@@ -430,11 +400,11 @@ const currentThemeDescription = computed(() => {
                 </div>
 
                 <div>
-                    <h3 class="text-sm font-semibold text-foreground">
+                    <h3 class="text-foreground text-sm font-semibold">
                         Tentang System theme
                     </h3>
 
-                    <p class="mt-1 text-xs leading-5 text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs leading-5">
                         Jika memilih System, aplikasi akan mengikuti preferensi
                         tema perangkat Anda. Perubahan tema dari sistem operasi
                         juga akan diterapkan secara otomatis.
@@ -442,6 +412,5 @@ const currentThemeDescription = computed(() => {
                 </div>
             </div>
         </div>
-
     </div>
 </template>

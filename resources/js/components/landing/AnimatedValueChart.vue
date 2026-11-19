@@ -1,85 +1,77 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { VALUE_SERIES } from '../../data/landing'
+import { computed, ref } from 'vue';
+import { VALUE_SERIES } from '../../data/landing';
 
-const chartWidth = 400
-const chartHeight = 96
+const chartWidth = 400;
+const chartHeight = 96;
 
-const paddingX = 4
-const paddingY = 8
+const paddingX = 4;
+const paddingY = 8;
 
-const hoveredIndex = ref<number | null>(null)
-const isAnimated = ref(false)
+const hoveredIndex = ref<number | null>(null);
+const isAnimated = ref(false);
 
 // Mengikuti data dari frontend asli.
 // Untuk tampilan chart hero digunakan Pekan 1–7.
-const series = VALUE_SERIES.slice(0, 7)
+const series = VALUE_SERIES.slice(0, 7);
 
-const minValue = 0
-const maxValue = 5
+const minValue = 0;
+const maxValue = 5;
 
 const points = computed(() => {
-    const usableWidth = chartWidth - paddingX * 2
-    const usableHeight = chartHeight - paddingY * 2
+    const usableWidth = chartWidth - paddingX * 2;
+    const usableHeight = chartHeight - paddingY * 2;
 
     return series.map((item, index) => {
-        const x =
-            paddingX +
-            (index / (series.length - 1)) * usableWidth
+        const x = paddingX + (index / (series.length - 1)) * usableWidth;
 
         const y =
             chartHeight -
             paddingY -
-            ((item.value - minValue) / (maxValue - minValue)) *
-                usableHeight
+            ((item.value - minValue) / (maxValue - minValue)) * usableHeight;
 
         return {
             ...item,
             x,
             y,
-        }
-    })
-})
+        };
+    });
+});
 
 const linePoints = computed(() =>
-    points.value
-        .map((point) => `${point.x},${point.y}`)
-        .join(' ')
-)
+    points.value.map((point) => `${point.x},${point.y}`).join(' '),
+);
 
 const areaPoints = computed(() => {
-    if (!points.value.length) return ''
+    if (!points.value.length) return '';
 
-    const first = points.value[0]
-    const last = points.value[points.value.length - 1]
+    const first = points.value[0];
+    const last = points.value[points.value.length - 1];
 
     return [
         `${first.x},${chartHeight}`,
         ...points.value.map((point) => `${point.x},${point.y}`),
         `${last.x},${chartHeight}`,
-    ].join(' ')
-})
+    ].join(' ');
+});
 
 const hoveredPoint = computed(() => {
-    if (hoveredIndex.value === null) return null
+    if (hoveredIndex.value === null) return null;
 
-    return points.value[hoveredIndex.value] ?? null
-})
+    return points.value[hoveredIndex.value] ?? null;
+});
 
 function handleMouseEnter(index: number) {
-    hoveredIndex.value = index
+    hoveredIndex.value = index;
 }
 
 function handleMouseLeave() {
-    hoveredIndex.value = null
+    hoveredIndex.value = null;
 }
 </script>
 
 <template>
-    <div
-        class="relative mt-3 h-24 w-full"
-        @mouseenter="isAnimated = true"
-    >
+    <div class="relative mt-3 h-24 w-full" @mouseenter="isAnimated = true">
         <svg
             viewBox="0 0 400 96"
             preserveAspectRatio="none"
@@ -87,23 +79,13 @@ function handleMouseLeave() {
             @mouseleave="handleMouseLeave"
         >
             <defs>
-                <linearGradient
-                    id="valueFill"
-                    x1="0"
-                    y1="0"
-                    x2="0"
-                    y2="1"
-                >
+                <linearGradient id="valueFill" x1="0" y1="0" x2="0" y2="1">
                     <stop
                         offset="0%"
                         stop-color="#38BDF8"
                         stop-opacity="0.45"
                     />
-                    <stop
-                        offset="100%"
-                        stop-color="#38BDF8"
-                        stop-opacity="0"
-                    />
+                    <stop offset="100%" stop-color="#38BDF8" stop-opacity="0" />
                 </linearGradient>
             </defs>
 
@@ -172,7 +154,7 @@ function handleMouseLeave() {
                     left: `${(hoveredPoint.x / chartWidth) * 100}%`,
                     top: `${Math.max(
                         0,
-                        (hoveredPoint.y / chartHeight) * 100 - 55
+                        (hoveredPoint.y / chartHeight) * 100 - 55,
                     )}%`,
                 }"
             >
@@ -180,12 +162,14 @@ function handleMouseLeave() {
                     Pekan {{ hoveredPoint.time.replace('P', '') }}
                 </p>
 
-                <p class="mt-0.5 whitespace-nowrap text-sm font-bold text-white">
+                <p
+                    class="mt-0.5 text-sm font-bold whitespace-nowrap text-white"
+                >
                     Rp {{ hoveredPoint.value.toFixed(1) }} jt
                 </p>
 
                 <div
-                    class="absolute bottom-[-5px] left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-b border-r border-slate-700 bg-slate-900"
+                    class="absolute bottom-[-5px] left-1/2 h-2 w-2 -translate-x-1/2 rotate-45 border-r border-b border-slate-700 bg-slate-900"
                 ></div>
             </div>
         </Transition>
@@ -229,7 +213,6 @@ function handleMouseLeave() {
     transform: translate(-50%, 4px);
 }
 
-
 @media (prefers-reduced-motion: reduce) {
     .chart-line,
     .chart-area {
@@ -243,5 +226,4 @@ function handleMouseLeave() {
         transition: none;
     }
 }
-
 </style>

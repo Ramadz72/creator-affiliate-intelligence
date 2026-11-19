@@ -1,13 +1,7 @@
 ﻿<script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import {
-    ArrowLeft,
-    Check,
-    CheckCircle2,
-    Mail,
-    ShieldCheck,
-} from '@lucide/vue';
+import { ArrowLeft, Check, CheckCircle2, Mail, ShieldCheck } from '@lucide/vue';
 
 import InputError from '@/components/InputError.vue';
 import PasswordInput from '@/components/PasswordInput.vue';
@@ -64,7 +58,6 @@ const progressWidth = computed(() => {
 
     <div class="min-h-screen bg-slate-950">
         <div class="grid min-h-screen lg:grid-cols-2">
-
             <!-- ================================================= -->
             <!-- LEFT : BRAND -->
             <!-- ================================================= -->
@@ -73,7 +66,7 @@ const progressWidth = computed(() => {
             >
                 <!-- Glow -->
                 <div
-                    class="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"
+                    class="absolute top-1/4 -left-32 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"
                 />
 
                 <div
@@ -104,27 +97,24 @@ const progressWidth = computed(() => {
                 <!-- Main content -->
                 <div class="relative z-10 max-w-xl">
                     <p
-                        class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-sky-400"
+                        class="mb-4 text-sm font-semibold tracking-[0.25em] text-sky-400 uppercase"
                     >
                         Creator Intelligence
                     </p>
 
                     <h1
-                        class="font-heading text-5xl font-extrabold leading-tight tracking-tight text-white xl:text-6xl"
+                        class="font-heading text-5xl leading-tight font-extrabold tracking-tight text-white xl:text-6xl"
                     >
                         Kelola Creator &
-                        <span class="text-sky-400">
-                            Affiliate
-                        </span>
+                        <span class="text-sky-400"> Affiliate </span>
                         lebih cerdas.
                     </h1>
 
                     <p
                         class="mt-6 max-w-lg text-lg leading-relaxed text-slate-400"
                     >
-                        Analisis performa creator, pantau affiliate,
-                        dan temukan peluang kolaborasi terbaik dalam
-                        satu platform.
+                        Analisis performa creator, pantau affiliate, dan temukan
+                        peluang kolaborasi terbaik dalam satu platform.
                     </p>
 
                     <!-- Feature cards -->
@@ -132,9 +122,7 @@ const progressWidth = computed(() => {
                         <div
                             class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:bg-white/10"
                         >
-                            <p class="text-2xl font-bold text-white">
-                                Creator
-                            </p>
+                            <p class="text-2xl font-bold text-white">Creator</p>
 
                             <p class="mt-1 text-sm text-slate-400">
                                 Intelligence
@@ -156,13 +144,9 @@ const progressWidth = computed(() => {
                         <div
                             class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:bg-white/10"
                         >
-                            <p class="text-2xl font-bold text-white">
-                                ROI
-                            </p>
+                            <p class="text-2xl font-bold text-white">ROI</p>
 
-                            <p class="mt-1 text-sm text-slate-400">
-                                Analysis
-                            </p>
+                            <p class="mt-1 text-sm text-slate-400">Analysis</p>
                         </div>
                     </div>
                 </div>
@@ -180,7 +164,6 @@ const progressWidth = computed(() => {
                 class="relative flex min-h-screen items-center justify-center overflow-y-auto bg-white px-6 py-8 sm:px-10 lg:px-14 xl:px-20"
             >
                 <div class="w-full max-w-md">
-
                     <!-- BACK TO WELCOME -->
                     <div class="mb-7">
                         <Link
@@ -191,9 +174,7 @@ const progressWidth = computed(() => {
                                 class="size-4 transition-transform duration-200 group-hover:-translate-x-1"
                             />
 
-                            <span>
-                                Kembali ke Welcome
-                            </span>
+                            <span> Kembali ke Welcome </span>
                         </Link>
                     </div>
 
@@ -222,11 +203,9 @@ const progressWidth = computed(() => {
                             Selamat datang kembali
                         </h2>
 
-                        <p
-                            class="mt-3 text-sm leading-relaxed text-slate-500"
-                        >
-                            Masuk untuk melanjutkan ke Creator &
-                            Affiliate Intelligence.
+                        <p class="mt-3 text-sm leading-relaxed text-slate-500">
+                            Masuk untuk melanjutkan ke Creator & Affiliate
+                            Intelligence.
                         </p>
                     </div>
 
@@ -238,14 +217,13 @@ const progressWidth = computed(() => {
                         class="flex flex-col gap-6"
                     >
                         <div class="grid gap-5">
-
                             <!-- Progress -->
                             <div>
                                 <div
                                     class="mb-2 flex items-center justify-between"
                                 >
                                     <span
-                                        class="text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                                        class="text-[11px] font-semibold tracking-wider text-slate-400 uppercase"
                                     >
                                         Login progress
                                     </span>
@@ -307,7 +285,7 @@ const progressWidth = computed(() => {
 
                                     <div
                                         v-if="emailIsValid"
-                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500"
+                                        class="absolute top-1/2 right-3 -translate-y-1/2 text-emerald-500"
                                     >
                                         <CheckCircle2 class="size-4" />
                                     </div>
@@ -322,9 +300,7 @@ const progressWidth = computed(() => {
                                     Email terlihat valid
                                 </p>
 
-                                <InputError
-                                    :message="errors.email"
-                                />
+                                <InputError :message="errors.email" />
                             </div>
 
                             <!-- PASSWORD -->
@@ -364,7 +340,7 @@ const progressWidth = computed(() => {
 
                                     <div
                                         v-if="passwordFilled"
-                                        class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500"
+                                        class="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-emerald-500"
                                     >
                                         <CheckCircle2 class="size-4" />
                                     </div>
@@ -379,9 +355,7 @@ const progressWidth = computed(() => {
                                     Password terisi
                                 </p>
 
-                                <InputError
-                                    :message="errors.password"
-                                />
+                                <InputError :message="errors.password" />
                             </div>
 
                             <!-- REMEMBER -->
@@ -496,15 +470,8 @@ const progressWidth = computed(() => {
 <style scoped>
 .auth-grid {
     background-image:
-        linear-gradient(
-            rgba(56, 189, 248, 0.035) 1px,
-            transparent 1px
-        ),
-        linear-gradient(
-            90deg,
-            rgba(56, 189, 248, 0.035) 1px,
-            transparent 1px
-        );
+        linear-gradient(rgba(56, 189, 248, 0.035) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(56, 189, 248, 0.035) 1px, transparent 1px);
     background-size: 48px 48px;
 }
 </style>

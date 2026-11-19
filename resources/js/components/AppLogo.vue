@@ -1,9 +1,8 @@
-﻿<script setup lang="ts">
-</script>
+﻿<script setup lang="ts"></script>
 
 <template>
     <div
-        class="flex w-full items-center gap-0 pl-0 pr-2 transition-all duration-200 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0"
+        class="flex w-full items-center gap-0 pr-2 pl-0 transition-all duration-200 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:px-0"
     >
         <!-- Logo -->
         <div
@@ -19,16 +18,24 @@
         <!-- App Name -->
         <div
             class="ml-0 min-w-0 leading-[1.05] transition-all duration-200 group-data-[collapsible=icon]:hidden"
-            style="font-family: 'Plus Jakarta Sans', 'Satoshi', 'Inter', system-ui, -apple-system, sans-serif;"
+            style="
+                font-family:
+                    'Plus Jakarta Sans',
+                    'Satoshi',
+                    'Inter',
+                    system-ui,
+                    -apple-system,
+                    sans-serif;
+            "
         >
             <div
-                class="whitespace-nowrap text-[16px] font-semibold tracking-[-0.02em] text-foreground"
+                class="text-foreground text-[16px] font-semibold tracking-[-0.02em] whitespace-nowrap"
             >
                 Creator Affiliate
             </div>
 
             <div
-                class="mt-0.5 whitespace-nowrap text-[11px] font-medium tracking-[0.24em] text-muted-foreground/80 uppercase"
+                class="text-muted-foreground/80 mt-0.5 text-[11px] font-medium tracking-[0.24em] whitespace-nowrap uppercase"
             >
                 Intelligence
             </div>

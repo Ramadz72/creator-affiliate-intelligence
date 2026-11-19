@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useCurrentUrl } from '@/composables/useCurrentUrl';
 import type { NavItem } from '@/types';
-import { ref, } from 'vue';
+import { ref } from 'vue';
 
 withDefaults(
     defineProps<{
@@ -38,15 +38,13 @@ const getChildPages = (item: NavItem) => {
     // =========================
     // CREATOR
     // =========================
-        if (item.href === '/creators') {
+    if (item.href === '/creators') {
         // Saat sedang Add Creator, jangan tampilkan child pages
         if (url === '/creators/create') {
             return [];
         }
 
-        const match = url.match(
-            /^\/creators\/([^/]+)(?:\/.*)?$/,
-        );
+        const match = url.match(/^\/creators\/([^/]+)(?:\/.*)?$/);
 
         if (!match) {
             return [];
@@ -86,9 +84,7 @@ const getChildPages = (item: NavItem) => {
     // AFFILIATE
     // =========================
     if (item.href === '/affiliates') {
-        const match = url.match(
-            /^\/affiliates\/([^/]+)$/,
-        );
+        const match = url.match(/^\/affiliates\/([^/]+)$/);
 
         if (!match) {
             return [];
@@ -108,28 +104,25 @@ const getChildPages = (item: NavItem) => {
     // CAMPAIGN
     // =========================
     if (item.href === '/campaigns') {
-    // Saat Add Campaign, jangan tampilkan child pages
-    if (url === '/campaigns/create') {
-        return [];
-    }
+        // Saat Add Campaign, jangan tampilkan child pages
+        if (url === '/campaigns/create') {
+            return [];
+        }
 
-    const match = url.match(
-        /^\/campaigns\/([^/]+)(?:\/.*)?$/,
-    );
+        const match = url.match(/^\/campaigns\/([^/]+)(?:\/.*)?$/);
 
-    if (!match) {
-        return [];
-    }
+        if (!match) {
+            return [];
+        }
 
-    const campaignId = match[1];
+        const campaignId = match[1];
 
         const performanceEditMatch = url.match(
             /^\/campaigns\/([^/]+)\/performance\/([^/]+)\/edit$/,
         );
 
         if (performanceEditMatch) {
-            const performanceId =
-                performanceEditMatch[2];
+            const performanceId = performanceEditMatch[2];
 
             return [
                 {
@@ -171,9 +164,7 @@ const getChildPages = (item: NavItem) => {
     // HISTORY
     // =========================
     if (item.href === '/history') {
-        const match = url.match(
-            /^\/history\/([^/]+)$/,
-        );
+        const match = url.match(/^\/history\/([^/]+)$/);
 
         if (!match) {
             return [];
@@ -208,7 +199,7 @@ const openAppTab = (href: any, title: string) => {
     <SidebarGroup class="px-1 py-0">
         <SidebarGroupLabel
             v-if="label"
-            class="mb-1.5 px-2.5 text-[11px] font-medium tracking-[0.16em] text-sidebar-foreground/50 uppercase"
+            class="text-sidebar-foreground/50 mb-1.5 px-2.5 text-[11px] font-medium tracking-[0.16em] uppercase"
         >
             {{ label }}
         </SidebarGroupLabel>
@@ -216,35 +207,26 @@ const openAppTab = (href: any, title: string) => {
         <SidebarMenu>
             <SidebarMenuItem
                 v-for="item in items"
-                :key="item.title"    
-                    @mouseenter="hoveredItem = item.title"
-                    @mouseleave="hoveredItem = null"
-                >
+                :key="item.title"
+                @mouseenter="hoveredItem = item.title"
+                @mouseleave="hoveredItem = null"
+            >
                 <SidebarMenuButton
                     as-child
                     :is-active="
                         isCurrentUrl(item.href) ||
-                        (
-                            item.href === '/creators' &&
-                            currentUrl === '/creators/create'
-                        ) ||
-                        (
-                            item.href === '/campaigns' &&
-                            currentUrl === '/campaigns/create'
-                        )
+                        (item.href === '/creators' &&
+                            currentUrl === '/creators/create') ||
+                        (item.href === '/campaigns' &&
+                            currentUrl === '/campaigns/create')
                     "
                     :tooltip="item.title"
-                    class="relative h-9 rounded-lg px-2.5 transition-all duration-200 hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground data-[active=true]:bg-transparent data-[active=true]:font-medium data-[active=true]:text-sky-600 data-[active=true]:[&>svg]:text-sky-600"
+                    class="hover:bg-sidebar-accent/70 hover:text-sidebar-accent-foreground relative h-9 rounded-lg px-2.5 transition-all duration-200 data-[active=true]:bg-transparent data-[active=true]:font-medium data-[active=true]:text-sky-600 data-[active=true]:[&>svg]:text-sky-600"
                 >
                     <Link
                         :href="item.href"
                         class="transition-transform duration-200 ease-out hover:scale-[1.03]"
-                        @click="
-                            openAppTab(
-                                item.href,
-                                item.title,
-                            )
-                        "
+                        @click="openAppTab(item.href, item.title)"
                     >
                         <component :is="item.icon" />
 
@@ -266,24 +248,19 @@ const openAppTab = (href: any, title: string) => {
                     <div
                         v-if="
                             hoveredItem === item.title &&
-                            (
-                                item.href === '/creators' ||
+                            (item.href === '/creators' ||
                                 item.href === '/affiliates' ||
-                                item.href === '/campaigns'
-                            )
+                                item.href === '/campaigns')
                         "
-                        class="ml-5 overflow-hidden border-l border-border/60 pl-3 group-data-[collapsible=icon]:hidden"
+                        class="border-border/60 ml-5 overflow-hidden border-l pl-3 group-data-[collapsible=icon]:hidden"
                     >
                         <!-- ADD CREATOR -->
                         <Link
                             v-if="item.href === '/creators'"
                             href="/creators/create"
-                            class="group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:scale-[1.02] hover:bg-muted hover:text-sky-600"
+                            class="group text-muted-foreground hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-all duration-200 hover:scale-[1.02] hover:text-sky-600"
                             @click="
-                                openAppTab(
-                                    '/creators/create',
-                                    'Tambah Creator',
-                                )
+                                openAppTab('/creators/create', 'Tambah Creator')
                             "
                         >
                             <span
@@ -292,22 +269,15 @@ const openAppTab = (href: any, title: string) => {
                                 +
                             </span>
 
-                            <span class="font-medium">
-                                Tambah Creator
-                            </span>
+                            <span class="font-medium"> Tambah Creator </span>
                         </Link>
 
                         <!-- IMPORT DATA -->
                         <Link
                             v-if="item.href === '/affiliates'"
                             href="/imports"
-                            class="group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:scale-[1.02] hover:bg-muted hover:text-sky-600"
-                            @click="
-                                openAppTab(
-                                    '/imports',
-                                    'Import Data',
-                                )
-                            "
+                            class="group text-muted-foreground hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-all duration-200 hover:scale-[1.02] hover:text-sky-600"
+                            @click="openAppTab('/imports', 'Import Data')"
                         >
                             <span
                                 class="flex h-5 w-5 items-center justify-center rounded-md text-xs font-medium transition-all duration-200 group-hover:bg-sky-500/10"
@@ -315,16 +285,14 @@ const openAppTab = (href: any, title: string) => {
                                 +
                             </span>
 
-                            <span class="font-medium">
-                                Import Data
-                            </span>
+                            <span class="font-medium"> Import Data </span>
                         </Link>
 
                         <!-- ADD CAMPAIGN -->
                         <Link
                             v-if="item.href === '/campaigns'"
                             href="/campaigns/create"
-                            class="group flex items-center gap-2 rounded-md px-2 py-1.5 text-sm text-muted-foreground transition-all duration-200 hover:scale-[1.02] hover:bg-muted hover:text-sky-600"
+                            class="group text-muted-foreground hover:bg-muted flex items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-all duration-200 hover:scale-[1.02] hover:text-sky-600"
                             @click="
                                 openAppTab(
                                     '/campaigns/create',
@@ -338,9 +306,7 @@ const openAppTab = (href: any, title: string) => {
                                 +
                             </span>
 
-                            <span class="font-medium">
-                                Tambah Campaign
-                            </span>
+                            <span class="font-medium"> Tambah Campaign </span>
                         </Link>
                     </div>
                 </Transition>
@@ -348,24 +314,19 @@ const openAppTab = (href: any, title: string) => {
                 <!-- CHILD PAGE -->
                 <div
                     v-if="getChildPages(item).length"
-                    class="ml-5 border-l border-border/60 pl-3 group-data-[collapsible=icon]:hidden"
+                    class="border-border/60 ml-5 border-l pl-3 group-data-[collapsible=icon]:hidden"
                 >
                     <Link
                         v-for="child in getChildPages(item)"
                         :key="child.href"
                         :href="child.href"
-                        class="flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-all duration-200 hover:bg-muted hover:text-foreground"
+                        class="hover:bg-muted hover:text-foreground flex items-center gap-2 rounded-md px-2 py-2 text-sm transition-all duration-200"
                         :class="
                             isCurrentUrl(child.href)
                                 ? 'font-medium text-sky-600'
                                 : 'text-muted-foreground'
                         "
-                        @click="
-                            openAppTab(
-                                child.href,
-                                child.title,
-                            )
-                        "
+                        @click="openAppTab(child.href, child.title)"
                     >
                         <span
                             class="h-1.5 w-1.5 shrink-0 rounded-full bg-current"

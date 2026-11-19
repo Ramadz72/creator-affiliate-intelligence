@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import { Head } from '@inertiajs/vue3';
 import { refDebounced } from '@vueuse/core';
-import {
-    computed,
-    nextTick,
-    onBeforeUnmount,
-    onMounted,
-    ref,
-} from 'vue';
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue';
 import type { Component } from 'vue';
 import { toast } from 'vue-sonner';
 import {
@@ -69,9 +63,7 @@ const categoryIcons: Record<string, Component> = {
 };
 
 const categories = computed<Category[]>(() => {
-    const unique = Array.from(
-        new Set(faqs.map((faq) => faq.category)),
-    );
+    const unique = Array.from(new Set(faqs.map((faq) => faq.category)));
 
     return [
         { name: 'Semua', icon: HelpCircle },
@@ -106,29 +98,22 @@ const filteredFAQs = computed(() => {
             selectedCategory.value === 'Semua' ||
             faq.category === selectedCategory.value;
 
-        const matchesSearch =
-            !keyword || matchesKeyword(faq, keyword);
+        const matchesSearch = !keyword || matchesKeyword(faq, keyword);
 
         return matchesCategory && matchesSearch;
     });
 });
 
 const isFiltering = computed(
-    () =>
-        selectedCategory.value !== 'Semua' ||
-        search.value.trim().length > 0,
+    () => selectedCategory.value !== 'Semua' || search.value.trim().length > 0,
 );
 
-const allVisibleIds = computed(() =>
-    filteredFAQs.value.map((faq) => faq.id),
-);
+const allVisibleIds = computed(() => filteredFAQs.value.map((faq) => faq.id));
 
 const allExpanded = computed(() => {
     return (
         allVisibleIds.value.length > 0 &&
-        allVisibleIds.value.every((id) =>
-            openItems.value.includes(id),
-        )
+        allVisibleIds.value.every((id) => openItems.value.includes(id))
     );
 });
 
@@ -139,8 +124,7 @@ const categoryCount = (category: string) => {
         const matchesCategory =
             category === 'Semua' || faq.category === category;
 
-        const matchesSearch =
-            !keyword || matchesKeyword(faq, keyword);
+        const matchesSearch = !keyword || matchesKeyword(faq, keyword);
 
         return matchesCategory && matchesSearch;
     }).length;
@@ -166,9 +150,7 @@ const toggleFAQ = (id: number) => {
         openItems.value.push(id);
         syncHash(id);
     } else {
-        openItems.value = openItems.value.filter(
-            (itemId) => itemId !== id,
-        );
+        openItems.value = openItems.value.filter((itemId) => itemId !== id);
 
         if (window.location.hash === `#faq-${id}`) {
             syncHash(null);
@@ -213,10 +195,7 @@ const highlightParts = (text: string): HighlightPart[] => {
         return [{ text, match: false }];
     }
 
-    const escaped = keyword.replace(
-        /[.*+?^${}()|[\]\\]/g,
-        '\\$&',
-    );
+    const escaped = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
     const regex = new RegExp(`(${escaped})`, 'gi');
 
@@ -250,8 +229,7 @@ const handleShortcut = (event: KeyboardEvent) => {
     const isSlash = event.key === '/' && !isTyping;
 
     const isCommandK =
-        (event.ctrlKey || event.metaKey) &&
-        event.key.toLowerCase() === 'k';
+        (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k';
 
     if (isSlash || isCommandK) {
         event.preventDefault();
@@ -326,10 +304,10 @@ onBeforeUnmount(() => {
                         <p
                             class="mt-2 text-sm leading-6 text-blue-50/90 md:text-base"
                         >
-                            Temukan jawaban seputar penggunaan Creator
-                            Affiliate Intelligence, mulai dari creator
-                            analysis, affiliate, import data Seller Center,
-                            hingga scoring dan insights.
+                            Temukan jawaban seputar penggunaan Creator Affiliate
+                            Intelligence, mulai dari creator analysis,
+                            affiliate, import data Seller Center, hingga scoring
+                            dan insights.
                         </p>
                     </div>
 
@@ -383,9 +361,7 @@ onBeforeUnmount(() => {
             <section
                 class="border-border bg-card mt-5 rounded-xl border p-3 shadow-sm"
             >
-                <div
-                    class="flex flex-col gap-3 md:flex-row md:items-center"
-                >
+                <div class="flex flex-col gap-3 md:flex-row md:items-center">
                     <div class="relative flex-1">
                         <Search
                             class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
@@ -453,9 +429,7 @@ onBeforeUnmount(() => {
             </section>
 
             <!-- Mobile Categories -->
-            <div
-                class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden"
-            >
+            <div class="mt-4 flex gap-2 overflow-x-auto pb-1 lg:hidden">
                 <button
                     v-for="category in categories"
                     :key="`mobile-${category.name}`"
@@ -486,9 +460,7 @@ onBeforeUnmount(() => {
             </div>
 
             <!-- Content -->
-            <div
-                class="mt-5 grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]"
-            >
+            <div class="mt-5 grid gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
                 <!-- Sidebar -->
                 <aside class="hidden lg:block">
                     <div class="sticky top-20 space-y-3">
@@ -552,8 +524,8 @@ onBeforeUnmount(() => {
                             <p
                                 class="text-muted-foreground mt-1 text-xs leading-5"
                             >
-                                Gunakan kata kunci singkat seperti
-                                "scoring", "import", atau "CHASE". Tekan
+                                Gunakan kata kunci singkat seperti "scoring",
+                                "import", atau "CHASE". Tekan
                                 <kbd
                                     class="border-border bg-muted rounded border px-1 py-0.5 text-[10px]"
                                 >
@@ -599,18 +571,11 @@ onBeforeUnmount(() => {
                                 class="h-3.5 w-3.5 rotate-180 transition-transform"
                             />
 
-                            {{
-                                allExpanded
-                                    ? 'Tutup semua'
-                                    : 'Buka semua'
-                            }}
+                            {{ allExpanded ? 'Tutup semua' : 'Buka semua' }}
                         </button>
                     </div>
 
-                    <div
-                        v-if="filteredFAQs.length"
-                        class="space-y-2.5"
-                    >
+                    <div v-if="filteredFAQs.length" class="space-y-2.5">
                         <article
                             v-for="(faq, index) in filteredFAQs"
                             :id="`faq-${faq.id}`"
@@ -638,12 +603,7 @@ onBeforeUnmount(() => {
                                                 : ''
                                         "
                                     >
-                                        {{
-                                            String(index + 1).padStart(
-                                                2,
-                                                '0',
-                                            )
-                                        }}
+                                        {{ String(index + 1).padStart(2, '0') }}
                                     </span>
 
                                     <span class="min-w-0 flex-1">
@@ -670,7 +630,7 @@ onBeforeUnmount(() => {
                                                 :key="`q-${faq.id}-${partIndex}`"
                                                 :class="
                                                     part.match
-                                                        ? 'rounded bg-amber-200/70 px-0.5 text-foreground dark:bg-amber-400/25'
+                                                        ? 'text-foreground rounded bg-amber-200/70 px-0.5 dark:bg-amber-400/25'
                                                         : ''
                                                 "
                                             >
@@ -728,13 +688,11 @@ onBeforeUnmount(() => {
                                             <span
                                                 v-for="(
                                                     part, partIndex
-                                                ) in highlightParts(
-                                                    faq.answer,
-                                                )"
+                                                ) in highlightParts(faq.answer)"
                                                 :key="`a-${faq.id}-${partIndex}`"
                                                 :class="
                                                     part.match
-                                                        ? 'rounded bg-amber-200/70 px-0.5 text-foreground dark:bg-amber-400/25'
+                                                        ? 'text-foreground rounded bg-amber-200/70 px-0.5 dark:bg-amber-400/25'
                                                         : ''
                                                 "
                                             >
@@ -755,20 +713,16 @@ onBeforeUnmount(() => {
                         <div
                             class="bg-muted flex h-12 w-12 items-center justify-center rounded-xl"
                         >
-                            <Search
-                                class="text-muted-foreground h-5 w-5"
-                            />
+                            <Search class="text-muted-foreground h-5 w-5" />
                         </div>
 
                         <h2 class="mt-4 text-base font-semibold">
                             Tidak ada FAQ ditemukan
                         </h2>
 
-                        <p
-                            class="text-muted-foreground mt-1 max-w-sm text-sm"
-                        >
-                            Coba gunakan kata kunci lain atau pilih
-                            kategori yang berbeda.
+                        <p class="text-muted-foreground mt-1 max-w-sm text-sm">
+                            Coba gunakan kata kunci lain atau pilih kategori
+                            yang berbeda.
                         </p>
 
                         <button
@@ -799,9 +753,7 @@ onBeforeUnmount(() => {
                             Masih membutuhkan bantuan?
                         </p>
 
-                        <p
-                            class="text-muted-foreground mt-1 text-sm leading-6"
-                        >
+                        <p class="text-muted-foreground mt-1 text-sm leading-6">
                             Jika informasi yang kamu cari belum tersedia,
                             silakan hubungi administrator atau tim yang
                             menangani Creator Affiliate Intelligence.

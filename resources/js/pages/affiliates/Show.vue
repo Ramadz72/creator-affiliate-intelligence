@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, router } from '@inertiajs/vue3'
-import { computed, ref, onBeforeUnmount, onMounted } from 'vue'
+import { Head, Link, router } from '@inertiajs/vue3';
+import { computed, ref, onBeforeUnmount, onMounted } from 'vue';
 import {
     ArrowLeft,
     BarChart3,
@@ -14,159 +14,144 @@ import {
     Sparkles,
     Lightbulb,
     Info,
-} from '@lucide/vue'
+} from '@lucide/vue';
 import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
     TooltipTrigger,
-} from '@/components/ui/tooltip'
+} from '@/components/ui/tooltip';
 
 interface AffiliateScore {
-    performance_score: number
-    growth_score: number | null
-    consistency_score: number | null
-    opportunity_score: number | null
-    action: string
-    growth_percent: number | null
-    period_count: number
+    performance_score: number;
+    growth_score: number | null;
+    consistency_score: number | null;
+    opportunity_score: number | null;
+    action: string;
+    growth_percent: number | null;
+    period_count: number;
     latest_period: {
-        start: string | null
-        end: string | null
-    }
-    insights: string[]
+        start: string | null;
+        end: string | null;
+    };
+    insights: string[];
 }
 
 interface Movement {
-    status: 'UP' | 'DOWN' | 'STABLE' | 'NO_BASELINE'
-    previous_gmv: number | null
-    gmv_change: number | null
-    gmv_change_percent: number | null
+    status: 'UP' | 'DOWN' | 'STABLE' | 'NO_BASELINE';
+    previous_gmv: number | null;
+    gmv_change: number | null;
+    gmv_change_percent: number | null;
 }
 
 interface Performance {
-    id: number
-    gmv: number | string
-    gmv_live: number | string
-    gmv_video: number | string
-    gmv_product_card: number | string
-    refund: number | string
-    attributed_orders: number
-    products_sold: number
-    aov: number | string
-    ctr: number | string
-    ctor: number | string
-    impressions: number
-    video_views: number
-    buyers: number
-    commission: number | string
-    live_count: number
-    video_count: number
-    showcase_products: number
-    content_samples: number
-    samples_sent: number
-    products_returned: number
-    period_start: string | null
-    period_end: string | null
+    id: number;
+    gmv: number | string;
+    gmv_live: number | string;
+    gmv_video: number | string;
+    gmv_product_card: number | string;
+    refund: number | string;
+    attributed_orders: number;
+    products_sold: number;
+    aov: number | string;
+    ctr: number | string;
+    ctor: number | string;
+    impressions: number;
+    video_views: number;
+    buyers: number;
+    commission: number | string;
+    live_count: number;
+    video_count: number;
+    showcase_products: number;
+    content_samples: number;
+    samples_sent: number;
+    products_returned: number;
+    period_start: string | null;
+    period_end: string | null;
 
-    movement?: Movement
+    movement?: Movement;
 }
 
 interface Affiliate {
-    id: number
-    name: string
-    username: string
-    platform: string
-    status: string
+    id: number;
+    name: string;
+    username: string;
+    platform: string;
+    status: string;
 }
-
 
 interface Props {
-    affiliate: Affiliate
+    affiliate: Affiliate;
 
-    latest_performance: Performance | null
+    latest_performance: Performance | null;
 
-    performance_history: Performance[]
+    performance_history: Performance[];
 
     selected_period: {
-        start: string
-        end: string
-    } | null
+        start: string;
+        end: string;
+    } | null;
 
     comparison_period: {
-        start: string
-        end: string
-    } | null
+        start: string;
+        end: string;
+    } | null;
 
-    score: AffiliateScore | null
-    back_url: string
-        from: 'dashboard' | 'insights' | 'affiliates'
+    score: AffiliateScore | null;
+    back_url: string;
+    from: 'dashboard' | 'insights' | 'affiliates';
 }
 
-const props = defineProps<Props>()
+const props = defineProps<Props>();
 
 const handleClickOutside = (event: MouseEvent) => {
-    const target = event.target as HTMLElement
+    const target = event.target as HTMLElement;
 
     if (!target.closest('[data-period-dropdown]')) {
-        showPeriodDropdown.value = false
+        showPeriodDropdown.value = false;
     }
-}
+};
 
 onMounted(() => {
-    document.addEventListener(
-        'click',
-        handleClickOutside
-    )
-})
+    document.addEventListener('click', handleClickOutside);
+});
 
 onBeforeUnmount(() => {
-    document.removeEventListener(
-        'click',
-        handleClickOutside
-    )
-})
+    document.removeEventListener('click', handleClickOutside);
+});
 
-const startDate = ref(
-    props.selected_period?.start ?? ''
-)
+const startDate = ref(props.selected_period?.start ?? '');
 
-const endDate = ref(
-    props.selected_period?.end ?? ''
-)
+const endDate = ref(props.selected_period?.end ?? '');
 
-const comparisonPeriod = computed(
-    () => props.comparison_period
-)
+const comparisonPeriod = computed(() => props.comparison_period);
 
-const showPeriodDropdown = ref(false)
+const showPeriodDropdown = ref(false);
 
-const periodPreset = ref<
-    '7days' | '30days' | 'today' | 'custom'
->('custom')
+const periodPreset = ref<'7days' | '30days' | 'today' | 'custom'>('custom');
 
 const formatDateInput = (date: Date) => {
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
 
-    return `${year}-${month}-${day}`
-}
+    return `${year}-${month}-${day}`;
+};
 
 const getToday = () => {
-    return formatDateInput(new Date())
-}
+    return formatDateInput(new Date());
+};
 
 const getDaysAgo = (days: number) => {
-    const date = new Date()
+    const date = new Date();
 
-    date.setDate(date.getDate() - days)
+    date.setDate(date.getDate() - days);
 
-    return formatDateInput(date)
-}
+    return formatDateInput(date);
+};
 
 const applyFilters = () => {
-    showPeriodDropdown.value = false
+    showPeriodDropdown.value = false;
 
     router.get(
         `/affiliates/${props.affiliate.id}`,
@@ -178,169 +163,165 @@ const applyFilters = () => {
         {
             preserveState: true,
             preserveScroll: true,
-        }
-    )
-}
+        },
+    );
+};
 
-const formatPeriodDate = (
-    date: string | null | undefined
-) => {
-    if (!date) return '-'
+const formatPeriodDate = (date: string | null | undefined) => {
+    if (!date) return '-';
 
-    const parsed = new Date(`${date}T00:00:00`)
+    const parsed = new Date(`${date}T00:00:00`);
 
     if (Number.isNaN(parsed.getTime())) {
-        return date
+        return date;
     }
 
     return new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
-    }).format(parsed)
-}
+    }).format(parsed);
+};
 
 const selectedPeriodLabel = computed(() => {
     if (!startDate.value || !endDate.value) {
-        return 'Pilih periode data'
+        return 'Pilih periode data';
     }
 
-    return `${formatPeriodDate(startDate.value)} — ${formatPeriodDate(endDate.value)}`
-})
+    return `${formatPeriodDate(startDate.value)} — ${formatPeriodDate(endDate.value)}`;
+});
 
 const comparisonPeriodLabel = computed(() => {
     if (!comparisonPeriod.value) {
-        return 'Belum ada periode pembanding'
+        return 'Belum ada periode pembanding';
     }
 
-    return `${formatPeriodDate(comparisonPeriod.value.start)} — ${formatPeriodDate(comparisonPeriod.value.end)}`
-})
+    return `${formatPeriodDate(comparisonPeriod.value.start)} — ${formatPeriodDate(comparisonPeriod.value.end)}`;
+});
 
-const selectPreset = (
-    preset: '7days' | '30days' | 'today'
-) => {
-    periodPreset.value = preset
+const selectPreset = (preset: '7days' | '30days' | 'today') => {
+    periodPreset.value = preset;
 
     if (preset === 'today') {
-        startDate.value = getToday()
-        endDate.value = getToday()
+        startDate.value = getToday();
+        endDate.value = getToday();
     }
 
     if (preset === '7days') {
-        startDate.value = getDaysAgo(6)
-        endDate.value = getToday()
+        startDate.value = getDaysAgo(6);
+        endDate.value = getToday();
     }
 
     if (preset === '30days') {
-        startDate.value = getDaysAgo(29)
-        endDate.value = getToday()
+        startDate.value = getDaysAgo(29);
+        endDate.value = getToday();
     }
 
-    applyFilters()
-}
+    applyFilters();
+};
 
 const selectCustom = () => {
-    periodPreset.value = 'custom'
-}
+    periodPreset.value = 'custom';
+};
 
 const applyCustomPeriod = () => {
     if (!startDate.value || !endDate.value) {
-        return
+        return;
     }
 
     if (startDate.value > endDate.value) {
-        const temp = startDate.value
+        const temp = startDate.value;
 
-        startDate.value = endDate.value
-        endDate.value = temp
+        startDate.value = endDate.value;
+        endDate.value = temp;
     }
 
-    periodPreset.value = 'custom'
+    periodPreset.value = 'custom';
 
-    applyFilters()
-}
+    applyFilters();
+};
 
 const formatCurrency = (value: number | string | null | undefined) => {
-    const number = Number(value ?? 0)
+    const number = Number(value ?? 0);
 
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         maximumFractionDigits: 0,
-    }).format(number)
-}
+    }).format(number);
+};
 
 const formatNumber = (value: number | string | null | undefined) => {
-    return new Intl.NumberFormat('id-ID').format(Number(value ?? 0))
-}
+    return new Intl.NumberFormat('id-ID').format(Number(value ?? 0));
+};
 
 const formatPercent = (value: number | string | null | undefined) => {
-    return `${Number(value ?? 0).toFixed(2)}%`
-}
+    return `${Number(value ?? 0).toFixed(2)}%`;
+};
 
 const movementLabel = (movement?: Movement) => {
-    if (!movement) return 'Belum ada data sebelumnya'
+    if (!movement) return 'Belum ada data sebelumnya';
 
     switch (movement.status) {
         case 'UP':
-            return 'Performa naik'
+            return 'Performa naik';
 
         case 'DOWN':
-            return 'Performa turun'
+            return 'Performa turun';
 
         case 'STABLE':
-            return 'Performa stabil'
+            return 'Performa stabil';
 
         default:
-            return 'Belum ada data sebelumnya'
+            return 'Belum ada data sebelumnya';
     }
-}
+};
 
 const movementClass = (movement?: Movement) => {
     if (!movement) {
-        return 'bg-muted text-muted-foreground'
+        return 'bg-muted text-muted-foreground';
     }
 
     switch (movement.status) {
         case 'UP':
-            return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+            return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
 
         case 'DOWN':
-            return 'bg-red-500/10 text-red-600 dark:text-red-400'
+            return 'bg-red-500/10 text-red-600 dark:text-red-400';
 
         case 'STABLE':
-            return 'bg-muted text-muted-foreground'
+            return 'bg-muted text-muted-foreground';
 
         default:
-            return 'bg-muted text-muted-foreground'
+            return 'bg-muted text-muted-foreground';
     }
-}
+};
 
 const movementIcon = (movement?: Movement) => {
-    if (!movement) return '—'
+    if (!movement) return '—';
 
     switch (movement.status) {
         case 'UP':
-            return '↑'
+            return '↑';
 
         case 'DOWN':
-            return '↓'
+            return '↓';
 
         case 'STABLE':
-            return '→'
+            return '→';
 
         default:
-            return '—'
+            return '—';
     }
-}
+};
 
 const periodLabel = (performance: Performance | null) => {
     if (!performance?.period_start || !performance?.period_end) {
-        return '-'
+        return '-';
     }
 
-    return `${performance.period_start} — ${performance.period_end}`
-}
+    return `${performance.period_start} — ${performance.period_end}`;
+};
 
 const formatScore = (value: number | null | undefined) => {
     if (value === null || value === undefined) return '—';
@@ -361,19 +342,19 @@ const formatAvailableScore = (
 function actionClass(action: string): string {
     switch (action) {
         case 'CHASE':
-            return 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+            return 'bg-blue-500/10 text-blue-600 dark:text-blue-400';
 
         case 'SUPPORT':
-            return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400'
+            return 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400';
 
         case 'MONITOR':
-            return 'bg-amber-500/10 text-amber-600 dark:text-amber-400'
+            return 'bg-amber-500/10 text-amber-600 dark:text-amber-400';
 
         case 'DEPRIORITIZE':
-            return 'bg-muted text-muted-foreground'
+            return 'bg-muted text-muted-foreground';
 
         default:
-            return 'bg-muted text-muted-foreground'
+            return 'bg-muted text-muted-foreground';
     }
 }
 
@@ -384,609 +365,601 @@ const actionInfo = (action: string) => {
                 title: 'PRIORITASKAN UNTUK DI KEJAR',
                 description:
                     'Prioritaskan affiliate ini untuk kolaborasi, campaign, sample, dan dorong lebih banyak konten.',
-            }
+            };
 
         case 'SUPPORT':
             return {
                 title: 'PERTAHANKAN DAN DORONG',
                 description:
                     'Berikan dukungan seperti sample, brief, promo, atau insentif untuk membantu meningkatkan performa.',
-            }
+            };
 
         case 'MONITOR':
             return {
                 title: 'PANTAU TERLEBIH DAHULU',
                 description:
                     'Pantau perkembangan affiliate dan evaluasi kembali setelah tersedia lebih banyak data performance.',
-            }
+            };
 
         case 'DEPRIORITIZE':
             return {
                 title: 'KURANGI PRIORITAS',
                 description:
                     'Kurangi alokasi resource untuk affiliate ini dan fokuskan effort pada peluang yang lebih menjanjikan.',
-            }
+            };
 
         default:
             return {
                 title: 'BELUM ADA REKOMENDASI',
                 description:
                     'Belum tersedia rekomendasi tindakan untuk affiliate ini.',
-            }
+            };
     }
-}
-
+};
 </script>
 
 <template>
     <Head :title="`Affiliate - ${affiliate.name}`" />
 
     <div class="app-textured-bg w-full max-w-[1600px] space-y-4 px-6 py-6">
-
         <!-- Header -->
-            <div class="flex items-center justify-between gap-6">
-                <div class="flex items-center gap-6">
-                    <Link
-                        :href="props.back_url"
-                        class="inline-flex h-11 w-11 items-center justify-center rounded-lg border border-border bg-card hover:bg-muted"
-                    >
-                        <ArrowLeft class="h-5 w-5" />
-                    </Link>
-
-                    <div>
-                        <h1 class="text-2xl font-semibold tracking-tight">
-                            {{ affiliate.name }}
-                        </h1>
-
-                        <p class="text-sm text-muted-foreground">
-                            @{{ affiliate.username }}
-                            · {{ affiliate.platform }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Periode Data -->
-                <div
-                    class="relative ml-auto shrink-0"
-                    data-period-dropdown
+        <div class="flex items-center justify-between gap-6">
+            <div class="flex items-center gap-6">
+                <Link
+                    :href="props.back_url"
+                    class="border-border bg-card hover:bg-muted inline-flex h-11 w-11 items-center justify-center rounded-lg border"
                 >
-                    <button
-                        type="button"
-                        @click="
-                            showPeriodDropdown = !showPeriodDropdown
-                        "
-                        class="flex h-10 min-w-[285px] items-center justify-between gap-3 rounded-lg border border-border bg-background px-3.5 text-sm text-foreground shadow-sm transition-all hover:border-sky-300 hover:bg-muted/40 focus:outline-none focus:ring-2 focus:ring-sky-500/20"
-                    >
-                        <span class="flex min-w-0 items-center gap-2">
-                            <svg
-                                class="h-4 w-4 shrink-0 text-muted-foreground"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="2"
-                            >
-                                <rect
-                                    x="3"
-                                    y="4"
-                                    width="18"
-                                    height="18"
-                                    rx="2"
-                                />
+                    <ArrowLeft class="h-5 w-5" />
+                </Link>
 
-                                <line
-                                    x1="16"
-                                    y1="2"
-                                    x2="16"
-                                    y2="6"
-                                />
+                <div>
+                    <h1 class="text-2xl font-semibold tracking-tight">
+                        {{ affiliate.name }}
+                    </h1>
 
-                                <line
-                                    x1="8"
-                                    y1="2"
-                                    x2="8"
-                                    y2="6"
-                                />
+                    <p class="text-muted-foreground text-sm">
+                        @{{ affiliate.username }} · {{ affiliate.platform }}
+                    </p>
+                </div>
+            </div>
 
-                                <line
-                                    x1="3"
-                                    y1="10"
-                                    x2="21"
-                                    y2="10"
-                                />
-                            </svg>
-
-                            <span class="truncate">
-                                {{ selectedPeriodLabel }}
-                            </span>
-                        </span>
-
+            <!-- Periode Data -->
+            <div class="relative ml-auto shrink-0" data-period-dropdown>
+                <button
+                    type="button"
+                    @click="showPeriodDropdown = !showPeriodDropdown"
+                    class="border-border bg-background text-foreground hover:bg-muted/40 flex h-10 min-w-[285px] items-center justify-between gap-3 rounded-lg border px-3.5 text-sm shadow-sm transition-all hover:border-sky-300 focus:ring-2 focus:ring-sky-500/20 focus:outline-none"
+                >
+                    <span class="flex min-w-0 items-center gap-2">
                         <svg
-                            class="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200"
-                            :class="{
-                                'rotate-180': showPeriodDropdown
-                            }"
+                            class="text-muted-foreground h-4 w-4 shrink-0"
                             viewBox="0 0 24 24"
                             fill="none"
                             stroke="currentColor"
                             stroke-width="2"
                         >
-                            <path d="m6 9 6 6 6-6" />
+                            <rect x="3" y="4" width="18" height="18" rx="2" />
+
+                            <line x1="16" y1="2" x2="16" y2="6" />
+
+                            <line x1="8" y1="2" x2="8" y2="6" />
+
+                            <line x1="3" y1="10" x2="21" y2="10" />
                         </svg>
-                    </button>
 
-                    <Transition
-                        enter-active-class="transition duration-150 ease-out"
-                        enter-from-class="translate-y-1 opacity-0"
-                        enter-to-class="translate-y-0 opacity-100"
-                        leave-active-class="transition duration-100 ease-in"
-                        leave-from-class="translate-y-0 opacity-100"
-                        leave-to-class="translate-y-1 opacity-0"
+                        <span class="truncate">
+                            {{ selectedPeriodLabel }}
+                        </span>
+                    </span>
+
+                    <svg
+                        class="text-muted-foreground h-4 w-4 shrink-0 transition-transform duration-200"
+                        :class="{
+                            'rotate-180': showPeriodDropdown,
+                        }"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
                     >
-                        <div
-                            v-if="showPeriodDropdown"
-                            class="absolute right-0 z-50 mt-2 w-[420px] overflow-hidden rounded-xl border border-border bg-popover shadow-xl shadow-black/10"
-                        >
-                            <div class="grid grid-cols-[150px_1fr]">
+                        <path d="m6 9 6 6 6-6" />
+                    </svg>
+                </button>
 
-                                <!-- Preset -->
-                                <div class="border-r border-border p-2">
-                                    <div class="px-3 py-2 text-xs font-medium text-muted-foreground">
-                                        Periode
-                                    </div>
-
-                                    <button
-                                        type="button"
-                                        @click="selectPreset('7days')"
-                                        class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
-                                        :class="{
-                                            'bg-muted font-medium':
-                                                periodPreset === '7days'
-                                        }"
-                                    >
-                                        7 hari terakhir
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        @click="selectPreset('30days')"
-                                        class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
-                                        :class="{
-                                            'bg-muted font-medium':
-                                                periodPreset === '30days'
-                                        }"
-                                    >
-                                        30 hari terakhir
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        @click="selectPreset('today')"
-                                        class="flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
-                                        :class="{
-                                            'bg-muted font-medium':
-                                                periodPreset === 'today'
-                                        }"
-                                    >
-                                        Hari ini
-                                    </button>
-
-                                    <button
-                                        type="button"
-                                        @click="selectCustom"
-                                        class="flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition hover:bg-muted"
-                                        :class="{
-                                            'bg-muted font-medium':
-                                                periodPreset === 'custom'
-                                        }"
-                                    >
-                                        <span>Kustom</span>
-
-                                        <span class="text-muted-foreground">
-                                            ›
-                                        </span>
-                                    </button>
-                                </div>
-
-                                <!-- Custom Range -->
-                                <div class="p-4">
-                                    <div class="mb-4">
-                                        <p class="text-sm font-medium">
-                                            Pilih rentang tanggal
-                                        </p>
-
-                                        <p class="mt-1 text-xs text-muted-foreground">
-                                            Data akan dibandingkan dengan periode sebelumnya
-                                            dengan jumlah hari yang sama.
-                                        </p>
-                                    </div>
-
-                                    <!-- Start -->
-                                    <div>
-                                        <label
-                                            class="mb-1.5 block text-xs font-medium text-muted-foreground"
-                                        >
-                                            Tanggal mulai
-                                        </label>
-
-                                        <input
-                                            v-model="startDate"
-                                            type="date"
-                                            @focus="selectCustom"
-                                            class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
-                                        />
-                                    </div>
-
-                                    <!-- End -->
-                                    <div class="mt-3">
-                                        <label
-                                            class="mb-1.5 block text-xs font-medium text-muted-foreground"
-                                        >
-                                            Tanggal akhir
-                                        </label>
-
-                                        <input
-                                            v-model="endDate"
-                                            type="date"
-                                            :min="startDate"
-                                            @focus="selectCustom"
-                                            class="h-10 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none transition focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
-                                        />
-                                    </div>
-
-                                    <!-- Preview -->
-                                    <div
-                                        class="mt-4 rounded-xl border border-border bg-card p-5 shadow-sm"
-                                    >
-                                        <p class="text-sm text-muted-foreground">
-                                            Periode Terpilih
-                                        </p>
-
-                                        <p class="mt-2 font-semibold">
-                                            {{ selectedPeriodLabel }}
-                                        </p>
-
-                                        <div
-                                            v-if="comparisonPeriod"
-                                            class="mt-3 border-t border-border pt-3"
-                                        >
-                                            <p class="text-xs text-muted-foreground">
-                                                Dibandingkan dengan
-                                            </p>
-
-                                            <p class="mt-1 text-sm font-medium">
-                                                {{ comparisonPeriodLabel }}
-                                            </p>
-                                        </div>
-                                    </div>
-
-                                    <!-- Apply -->
-                                    <button
-                                        type="button"
-                                        :disabled="
-                                            !startDate ||
-                                            !endDate
-                                        "
-                                        @click="applyCustomPeriod"
-                                        class="mt-4 flex h-10 w-full items-center justify-center rounded-lg bg-sky-600 px-4 text-sm font-medium text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
-                                    >
-                                        Terapkan Periode
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </Transition>
-                </div>
-            </div>
-
-            <!-- Affiliate Intelligence -->
-            <div class="mb-6 rounded-2xl border border-border bg-card p-6">
-                <div class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                        <div class="mb-2 flex items-center gap-2">
-                            <Sparkles class="h-5 w-5 text-blue-500" />
-
-                            <h2 class="text-lg font-semibold">
-                                Affiliate Intelligence
-                            </h2>
-                        </div>
-
-                        <p class="text-sm text-muted-foreground">
-                            Analisis performa dan peluang affiliate berdasarkan data Seller Center.
-                        </p>
-                    </div>
-
-                    <!-- Action -->
-                    <div
-                        v-if="props.score"
-                        class="flex items-center gap-2"
-                    >
-                        <div class="max-w-xs text-right leading-tight">
-                            <p class="text-sm font-semibold text-foreground">
-                                {{ actionInfo(props.score.action).title }}
-                            </p>
-
-                            <p class="mt-1 text-xs text-muted-foreground">
-                                {{ actionInfo(props.score.action).description }}
-                            </p>
-                        </div>
-
-                        <div
-                            class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold"
-                            :class="actionClass(props.score.action)"
-                        >
-                            {{ props.score.action }}
-                        </div>
-                    </div>
-
-                    <!-- Jika belum ada score -->
-                    <div
-                        v-else
-                        class="rounded-full bg-muted px-4 py-2 text-sm font-medium text-muted-foreground"
-                    >
-                        Belum ada rekomendasi
-                    </div>
-                </div>
-
-                <!-- Score -->
-                <div
-                    v-if="props.score"
-                    class="mt-5 grid gap-4 md:grid-cols-4"
+                <Transition
+                    enter-active-class="transition duration-150 ease-out"
+                    enter-from-class="translate-y-1 opacity-0"
+                    enter-to-class="translate-y-0 opacity-100"
+                    leave-active-class="transition duration-100 ease-in"
+                    leave-from-class="translate-y-0 opacity-100"
+                    leave-to-class="translate-y-1 opacity-0"
                 >
-
-                    <!-- Performance -->
-                    <div class="group relative rounded-lg bg-muted/20 p-4">
-                        <div class="flex items-center gap-2">
-                            <p class="text-sm text-muted-foreground">
-                                Performance
-                            </p>
-
-                            <div class="relative">
-                                <Info
-                                    class="h-4 w-4 cursor-help text-muted-foreground"
-                                />
-
+                    <div
+                        v-if="showPeriodDropdown"
+                        class="border-border bg-popover absolute right-0 z-50 mt-2 w-[420px] overflow-hidden rounded-xl border shadow-xl shadow-black/10"
+                    >
+                        <div class="grid grid-cols-[150px_1fr]">
+                            <!-- Preset -->
+                            <div class="border-border border-r p-2">
                                 <div
-                                    class="pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-[450px] rounded-lg border border-border bg-popover p-4 text-left text-xs text-popover-foreground shadow-lg group-hover:block"
+                                    class="text-muted-foreground px-3 py-2 text-xs font-medium"
                                 >
-                                    <p class="font-semibold">
-                                        Cara menghitung Performance
+                                    Periode
+                                </div>
+
+                                <button
+                                    type="button"
+                                    @click="selectPreset('7days')"
+                                    class="hover:bg-muted flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition"
+                                    :class="{
+                                        'bg-muted font-medium':
+                                            periodPreset === '7days',
+                                    }"
+                                >
+                                    7 hari terakhir
+                                </button>
+
+                                <button
+                                    type="button"
+                                    @click="selectPreset('30days')"
+                                    class="hover:bg-muted flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition"
+                                    :class="{
+                                        'bg-muted font-medium':
+                                            periodPreset === '30days',
+                                    }"
+                                >
+                                    30 hari terakhir
+                                </button>
+
+                                <button
+                                    type="button"
+                                    @click="selectPreset('today')"
+                                    class="hover:bg-muted flex w-full items-center rounded-lg px-3 py-2.5 text-left text-sm transition"
+                                    :class="{
+                                        'bg-muted font-medium':
+                                            periodPreset === 'today',
+                                    }"
+                                >
+                                    Hari ini
+                                </button>
+
+                                <button
+                                    type="button"
+                                    @click="selectCustom"
+                                    class="hover:bg-muted flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm transition"
+                                    :class="{
+                                        'bg-muted font-medium':
+                                            periodPreset === 'custom',
+                                    }"
+                                >
+                                    <span>Kustom</span>
+
+                                    <span class="text-muted-foreground">
+                                        ›
+                                    </span>
+                                </button>
+                            </div>
+
+                            <!-- Custom Range -->
+                            <div class="p-4">
+                                <div class="mb-4">
+                                    <p class="text-sm font-medium">
+                                        Pilih rentang tanggal
                                     </p>
 
-                                    <p class="mt-2 leading-relaxed text-muted-foreground">
-                                        Performance Score dihitung dari performa affiliate
-                                        pada periode yang dipilih dan dibandingkan dengan
-                                        affiliate lain pada periode yang sama.
-                                    </p>
-
-                                    <div class="mt-3 space-y-1 text-muted-foreground">
-                                        <p>• GMV — 40%</p>
-                                        <p>• Orders — 25%</p>
-                                        <p>• Buyers — 15%</p>
-                                        <p>• Content Activity — 10%</p>
-                                        <p>• Engagement — 10%</p>
-                                    </div>
-
-                                    <p class="mt-3 leading-relaxed text-muted-foreground">
-                                        Engagement terdiri dari CTR dan CTOR dengan bobot
-                                        masing-masing 50%.
+                                    <p
+                                        class="text-muted-foreground mt-1 text-xs"
+                                    >
+                                        Data akan dibandingkan dengan periode
+                                        sebelumnya dengan jumlah hari yang sama.
                                     </p>
                                 </div>
+
+                                <!-- Start -->
+                                <div>
+                                    <label
+                                        class="text-muted-foreground mb-1.5 block text-xs font-medium"
+                                    >
+                                        Tanggal mulai
+                                    </label>
+
+                                    <input
+                                        v-model="startDate"
+                                        type="date"
+                                        @focus="selectCustom"
+                                        class="border-border bg-background h-10 w-full rounded-lg border px-3 text-sm transition outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
+                                    />
+                                </div>
+
+                                <!-- End -->
+                                <div class="mt-3">
+                                    <label
+                                        class="text-muted-foreground mb-1.5 block text-xs font-medium"
+                                    >
+                                        Tanggal akhir
+                                    </label>
+
+                                    <input
+                                        v-model="endDate"
+                                        type="date"
+                                        :min="startDate"
+                                        @focus="selectCustom"
+                                        class="border-border bg-background h-10 w-full rounded-lg border px-3 text-sm transition outline-none focus:border-sky-400 focus:ring-2 focus:ring-sky-500/10"
+                                    />
+                                </div>
+
+                                <!-- Preview -->
+                                <div
+                                    class="border-border bg-card mt-4 rounded-xl border p-5 shadow-sm"
+                                >
+                                    <p class="text-muted-foreground text-sm">
+                                        Periode Terpilih
+                                    </p>
+
+                                    <p class="mt-2 font-semibold">
+                                        {{ selectedPeriodLabel }}
+                                    </p>
+
+                                    <div
+                                        v-if="comparisonPeriod"
+                                        class="border-border mt-3 border-t pt-3"
+                                    >
+                                        <p
+                                            class="text-muted-foreground text-xs"
+                                        >
+                                            Dibandingkan dengan
+                                        </p>
+
+                                        <p class="mt-1 text-sm font-medium">
+                                            {{ comparisonPeriodLabel }}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Apply -->
+                                <button
+                                    type="button"
+                                    :disabled="!startDate || !endDate"
+                                    @click="applyCustomPeriod"
+                                    class="mt-4 flex h-10 w-full items-center justify-center rounded-lg bg-sky-600 px-4 text-sm font-medium text-white transition hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    Terapkan Periode
+                                </button>
                             </div>
                         </div>
+                    </div>
+                </Transition>
+            </div>
+        </div>
 
-                        <p class="mt-2 text-2xl font-semibold">
-                            {{
-                                props.score?.performance_score !== null &&
-                                props.score?.performance_score !== undefined
-                                    ? Number(props.score.performance_score).toFixed(2)
-                                    : '—'
-                            }}
+        <!-- Affiliate Intelligence -->
+        <div class="border-border bg-card mb-6 rounded-2xl border p-6">
+            <div
+                class="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between"
+            >
+                <div>
+                    <div class="mb-2 flex items-center gap-2">
+                        <Sparkles class="h-5 w-5 text-blue-500" />
+
+                        <h2 class="text-lg font-semibold">
+                            Affiliate Intelligence
+                        </h2>
+                    </div>
+
+                    <p class="text-muted-foreground text-sm">
+                        Analisis performa dan peluang affiliate berdasarkan data
+                        Seller Center.
+                    </p>
+                </div>
+
+                <!-- Action -->
+                <div v-if="props.score" class="flex items-center gap-2">
+                    <div class="max-w-xs text-right leading-tight">
+                        <p class="text-foreground text-sm font-semibold">
+                            {{ actionInfo(props.score.action).title }}
                         </p>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            Performance score
+                        <p class="text-muted-foreground mt-1 text-xs">
+                            {{ actionInfo(props.score.action).description }}
                         </p>
                     </div>
 
-
-                    <!-- Growth -->
-                    <div class="group relative rounded-lg bg-muted/20 p-4">
-                        <div class="flex items-center gap-2">
-                            <p class="text-sm text-muted-foreground">
-                                Growth
-                            </p>
-
-                            <div class="relative">
-                                <Info
-                                    class="h-4 w-4 cursor-help text-muted-foreground"
-                                />
-
-                                <div
-                                    class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-[420px] -translate-x-1/2 rounded-lg border border-border bg-popover p-4 text-left text-xs text-popover-foreground shadow-lg group-hover:block"
-                                >
-                                    <p class="font-semibold">
-                                        Cara menghitung Growth
-                                    </p>
-
-                                    <p class="mt-2 leading-relaxed text-muted-foreground">
-                                        Growth Score berasal dari perubahan GMV dibandingkan
-                                        dengan periode pembanding dengan durasi yang sama.
-                                    </p>
-
-                                    <div class="mt-3 rounded-md bg-muted/50 p-2 font-mono text-[11px]">
-                                        Growth %
-                                        =
-                                        (GMV sekarang − GMV sebelumnya)
-                                        ÷ GMV sebelumnya × 100
-                                    </div>
-
-                                    <p class="mt-3 leading-relaxed text-muted-foreground">
-                                        Growth kemudian dinormalisasi menjadi score 0–100
-                                        untuk digunakan dalam perhitungan Opportunity.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p class="mt-2 text-2xl font-semibold">
-                            {{
-                                props.score?.growth_score !== null &&
-                                props.score?.growth_score !== undefined
-                                    ? Number(props.score.growth_score).toFixed(2)
-                                    : '—'
-                            }}
-                        </p>
-
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            Growth score
-                        </p>
-                    </div>
-
-
-                    <!-- Consistency -->
-                    <div class="group relative rounded-lg bg-muted/20 p-4">
-                        <div class="flex items-center gap-2">
-                            <p class="text-sm text-muted-foreground">
-                                Consistency
-                            </p>
-
-                            <div class="relative">
-                                <Info
-                                    class="h-4 w-4 cursor-help text-muted-foreground"
-                                />
-
-                                <div
-                                    class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-[420px] -translate-x-1/2 rounded-lg border border-border bg-popover p-4 text-left text-xs text-popover-foreground shadow-lg group-hover:block"
-                                >
-                                    <p class="font-semibold">
-                                        Cara menghitung Consistency
-                                    </p>
-
-                                    <p class="mt-2 leading-relaxed text-muted-foreground">
-                                        Consistency mengukur seberapa stabil GMV affiliate
-                                        dari hari ke hari selama periode yang dipilih.
-                                    </p>
-
-                                    <p class="mt-3 leading-relaxed text-muted-foreground">
-                                        Semakin kecil variasi GMV harian, semakin tinggi
-                                        nilai consistency.
-                                    </p>
-
-                                    <div class="mt-3 rounded-md bg-muted/50 p-2 font-mono text-[11px]">
-                                        Consistency
-                                        =
-                                        100 − Coefficient of Variation × 100
-                                    </div>
-
-                                    <p class="mt-3 leading-relaxed text-muted-foreground">
-                                        Minimal dibutuhkan 2 snapshot harian untuk menghitung
-                                        nilai ini.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p class="mt-2 text-2xl font-semibold">
-                            {{
-                                props.score &&
-                                props.score.period_count >= 2 &&
-                                props.score.consistency_score !== null &&
-                                props.score.consistency_score !== undefined
-                                    ? Number(props.score.consistency_score).toFixed(2)
-                                    : '—'
-                            }}
-                        </p>
-
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            {{
-                                props.score && props.score.period_count >= 2
-                                    ? 'Performance stability'
-                                    : 'Belum tersedia · butuh ≥ 2 hari'
-                            }}
-                        </p>
-                    </div>
-
-
-                    <!-- Opportunity -->
-                    <div class="group relative rounded-lg bg-muted/20 p-4">
-                        <div class="flex items-center gap-2">
-                            <p class="text-sm text-muted-foreground">
-                                Opportunity
-                            </p>
-
-                            <div class="relative">
-                                <Info
-                                    class="h-4 w-4 cursor-help text-muted-foreground"
-                                />
-
-                                <div
-                                    class="pointer-events-none absolute bottom-full right-0 z-50 mb-2 hidden w-[420px] rounded-lg border border-border bg-popover p-4 text-left text-xs text-popover-foreground shadow-lg group-hover:block"
-                                >
-                                    <p class="font-semibold">
-                                        Cara menghitung Opportunity
-                                    </p>
-
-                                    <p class="mt-2 leading-relaxed text-muted-foreground">
-                                        Opportunity Score menunjukkan peluang affiliate
-                                        berdasarkan kombinasi performa, pertumbuhan,
-                                        dan kestabilan performanya.
-                                    </p>
-
-                                    <div class="mt-3 space-y-1 text-muted-foreground">
-                                        <p>• Performance — 50%</p>
-                                        <p>• Growth — 30%</p>
-                                        <p>• Consistency — 20%</p>
-                                    </div>
-
-                                    <p class="mt-3 leading-relaxed text-muted-foreground">
-                                        Jika periode hanya memiliki 1 snapshot harian,
-                                        consistency belum tersedia sehingga bobot yang
-                                        tersedia dinormalisasi.
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <p class="mt-2 text-2xl font-semibold">
-                            {{
-                                props.score?.opportunity_score !== null &&
-                                props.score?.opportunity_score !== undefined
-                                    ? Number(props.score.opportunity_score).toFixed(2)
-                                    : '—'
-                            }}
-                        </p>
-
-                        <p class="mt-1 text-xs text-muted-foreground">
-                            Opportunity score
-                        </p>
+                    <div
+                        class="inline-flex shrink-0 items-center rounded-full px-4 py-2 text-sm font-semibold"
+                        :class="actionClass(props.score.action)"
+                    >
+                        {{ props.score.action }}
                     </div>
                 </div>
 
-                <!-- Empty Score -->
+                <!-- Jika belum ada score -->
                 <div
                     v-else
-                    class="mt-6 rounded-xl border border-dashed border-border bg-muted/20 p-6 text-center"
+                    class="bg-muted text-muted-foreground rounded-full px-4 py-2 text-sm font-medium"
                 >
-                    <Sparkles class="mx-auto h-8 w-8 text-muted-foreground" />
+                    Belum ada rekomendasi
+                </div>
+            </div>
 
-                    <p class="mt-3 text-sm font-medium">
-                        Intelligence belum tersedia
+            <!-- Score -->
+            <div v-if="props.score" class="mt-5 grid gap-4 md:grid-cols-4">
+                <!-- Performance -->
+                <div class="group bg-muted/20 relative rounded-lg p-4">
+                    <div class="flex items-center gap-2">
+                        <p class="text-muted-foreground text-sm">Performance</p>
+
+                        <div class="relative">
+                            <Info
+                                class="text-muted-foreground h-4 w-4 cursor-help"
+                            />
+
+                            <div
+                                class="border-border bg-popover text-popover-foreground pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-[450px] rounded-lg border p-4 text-left text-xs shadow-lg group-hover:block"
+                            >
+                                <p class="font-semibold">
+                                    Cara menghitung Performance
+                                </p>
+
+                                <p
+                                    class="text-muted-foreground mt-2 leading-relaxed"
+                                >
+                                    Performance Score dihitung dari performa
+                                    affiliate pada periode yang dipilih dan
+                                    dibandingkan dengan affiliate lain pada
+                                    periode yang sama.
+                                </p>
+
+                                <div
+                                    class="text-muted-foreground mt-3 space-y-1"
+                                >
+                                    <p>• GMV — 40%</p>
+                                    <p>• Orders — 25%</p>
+                                    <p>• Buyers — 15%</p>
+                                    <p>• Content Activity — 10%</p>
+                                    <p>• Engagement — 10%</p>
+                                </div>
+
+                                <p
+                                    class="text-muted-foreground mt-3 leading-relaxed"
+                                >
+                                    Engagement terdiri dari CTR dan CTOR dengan
+                                    bobot masing-masing 50%.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="mt-2 text-2xl font-semibold">
+                        {{
+                            props.score?.performance_score !== null &&
+                            props.score?.performance_score !== undefined
+                                ? Number(props.score.performance_score).toFixed(
+                                      2,
+                                  )
+                                : '—'
+                        }}
                     </p>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
-                        Score akan tersedia setelah affiliate memiliki data performance yang sudah diproses.
+                    <p class="text-muted-foreground mt-1 text-xs">
+                        Performance score
+                    </p>
+                </div>
+
+                <!-- Growth -->
+                <div class="group bg-muted/20 relative rounded-lg p-4">
+                    <div class="flex items-center gap-2">
+                        <p class="text-muted-foreground text-sm">Growth</p>
+
+                        <div class="relative">
+                            <Info
+                                class="text-muted-foreground h-4 w-4 cursor-help"
+                            />
+
+                            <div
+                                class="border-border bg-popover text-popover-foreground pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-[420px] -translate-x-1/2 rounded-lg border p-4 text-left text-xs shadow-lg group-hover:block"
+                            >
+                                <p class="font-semibold">
+                                    Cara menghitung Growth
+                                </p>
+
+                                <p
+                                    class="text-muted-foreground mt-2 leading-relaxed"
+                                >
+                                    Growth Score berasal dari perubahan GMV
+                                    dibandingkan dengan periode pembanding
+                                    dengan durasi yang sama.
+                                </p>
+
+                                <div
+                                    class="bg-muted/50 mt-3 rounded-md p-2 font-mono text-[11px]"
+                                >
+                                    Growth % = (GMV sekarang − GMV sebelumnya) ÷
+                                    GMV sebelumnya × 100
+                                </div>
+
+                                <p
+                                    class="text-muted-foreground mt-3 leading-relaxed"
+                                >
+                                    Growth kemudian dinormalisasi menjadi score
+                                    0–100 untuk digunakan dalam perhitungan
+                                    Opportunity.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="mt-2 text-2xl font-semibold">
+                        {{
+                            props.score?.growth_score !== null &&
+                            props.score?.growth_score !== undefined
+                                ? Number(props.score.growth_score).toFixed(2)
+                                : '—'
+                        }}
+                    </p>
+
+                    <p class="text-muted-foreground mt-1 text-xs">
+                        Growth score
+                    </p>
+                </div>
+
+                <!-- Consistency -->
+                <div class="group bg-muted/20 relative rounded-lg p-4">
+                    <div class="flex items-center gap-2">
+                        <p class="text-muted-foreground text-sm">Consistency</p>
+
+                        <div class="relative">
+                            <Info
+                                class="text-muted-foreground h-4 w-4 cursor-help"
+                            />
+
+                            <div
+                                class="border-border bg-popover text-popover-foreground pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 hidden w-[420px] -translate-x-1/2 rounded-lg border p-4 text-left text-xs shadow-lg group-hover:block"
+                            >
+                                <p class="font-semibold">
+                                    Cara menghitung Consistency
+                                </p>
+
+                                <p
+                                    class="text-muted-foreground mt-2 leading-relaxed"
+                                >
+                                    Consistency mengukur seberapa stabil GMV
+                                    affiliate dari hari ke hari selama periode
+                                    yang dipilih.
+                                </p>
+
+                                <p
+                                    class="text-muted-foreground mt-3 leading-relaxed"
+                                >
+                                    Semakin kecil variasi GMV harian, semakin
+                                    tinggi nilai consistency.
+                                </p>
+
+                                <div
+                                    class="bg-muted/50 mt-3 rounded-md p-2 font-mono text-[11px]"
+                                >
+                                    Consistency = 100 − Coefficient of Variation
+                                    × 100
+                                </div>
+
+                                <p
+                                    class="text-muted-foreground mt-3 leading-relaxed"
+                                >
+                                    Minimal dibutuhkan 2 snapshot harian untuk
+                                    menghitung nilai ini.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="mt-2 text-2xl font-semibold">
+                        {{
+                            props.score &&
+                            props.score.period_count >= 2 &&
+                            props.score.consistency_score !== null &&
+                            props.score.consistency_score !== undefined
+                                ? Number(props.score.consistency_score).toFixed(
+                                      2,
+                                  )
+                                : '—'
+                        }}
+                    </p>
+
+                    <p class="text-muted-foreground mt-1 text-xs">
+                        {{
+                            props.score && props.score.period_count >= 2
+                                ? 'Performance stability'
+                                : 'Belum tersedia · butuh ≥ 2 hari'
+                        }}
+                    </p>
+                </div>
+
+                <!-- Opportunity -->
+                <div class="group bg-muted/20 relative rounded-lg p-4">
+                    <div class="flex items-center gap-2">
+                        <p class="text-muted-foreground text-sm">Opportunity</p>
+
+                        <div class="relative">
+                            <Info
+                                class="text-muted-foreground h-4 w-4 cursor-help"
+                            />
+
+                            <div
+                                class="border-border bg-popover text-popover-foreground pointer-events-none absolute right-0 bottom-full z-50 mb-2 hidden w-[420px] rounded-lg border p-4 text-left text-xs shadow-lg group-hover:block"
+                            >
+                                <p class="font-semibold">
+                                    Cara menghitung Opportunity
+                                </p>
+
+                                <p
+                                    class="text-muted-foreground mt-2 leading-relaxed"
+                                >
+                                    Opportunity Score menunjukkan peluang
+                                    affiliate berdasarkan kombinasi performa,
+                                    pertumbuhan, dan kestabilan performanya.
+                                </p>
+
+                                <div
+                                    class="text-muted-foreground mt-3 space-y-1"
+                                >
+                                    <p>• Performance — 50%</p>
+                                    <p>• Growth — 30%</p>
+                                    <p>• Consistency — 20%</p>
+                                </div>
+
+                                <p
+                                    class="text-muted-foreground mt-3 leading-relaxed"
+                                >
+                                    Jika periode hanya memiliki 1 snapshot
+                                    harian, consistency belum tersedia sehingga
+                                    bobot yang tersedia dinormalisasi.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="mt-2 text-2xl font-semibold">
+                        {{
+                            props.score?.opportunity_score !== null &&
+                            props.score?.opportunity_score !== undefined
+                                ? Number(props.score.opportunity_score).toFixed(
+                                      2,
+                                  )
+                                : '—'
+                        }}
+                    </p>
+
+                    <p class="text-muted-foreground mt-1 text-xs">
+                        Opportunity score
                     </p>
                 </div>
             </div>
+
+            <!-- Empty Score -->
+            <div
+                v-else
+                class="border-border bg-muted/20 mt-6 rounded-xl border border-dashed p-6 text-center"
+            >
+                <Sparkles class="text-muted-foreground mx-auto h-8 w-8" />
+
+                <p class="mt-3 text-sm font-medium">
+                    Intelligence belum tersedia
+                </p>
+
+                <p class="text-muted-foreground mt-1 text-xs">
+                    Score akan tersedia setelah affiliate memiliki data
+                    performance yang sudah diproses.
+                </p>
+            </div>
+        </div>
 
         <!-- Period -->
         <div
             v-if="latest_performance"
-            class="rounded-xl border border-border bg-card p-4"
+            class="border-border bg-card rounded-xl border p-4"
         >
             <div class="flex items-center justify-between gap-4">
                 <div>
-                    <p class="text-sm text-muted-foreground">
+                    <p class="text-muted-foreground text-sm">
                         Performance terbaru
                     </p>
 
@@ -1002,18 +975,18 @@ const actionInfo = (action: string) => {
                     <div class="mb-2 flex items-center gap-2">
                         <Lightbulb class="h-4 w-4 text-amber-500" />
 
-                        <h3 class="font-medium">
-                            Intelligence Insights
-                        </h3>
+                        <h3 class="font-medium">Intelligence Insights</h3>
                     </div>
 
                     <ul class="space-y-1">
                         <li
                             v-for="insight in props.score.insights"
                             :key="insight"
-                            class="flex gap-2 text-sm text-muted-foreground"
+                            class="text-muted-foreground flex gap-2 text-sm"
                         >
-                            <span class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current" />
+                            <span
+                                class="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-current"
+                            />
                             <span>{{ insight }}</span>
                         </li>
                     </ul>
@@ -1030,33 +1003,27 @@ const actionInfo = (action: string) => {
         <!-- Empty -->
         <div
             v-if="!latest_performance"
-            class="rounded-xl border border-dashed border-border bg-card p-10 text-center"
+            class="border-border bg-card rounded-xl border border-dashed p-10 text-center"
         >
-            <BarChart3 class="mx-auto h-10 w-10 text-muted-foreground" />
+            <BarChart3 class="text-muted-foreground mx-auto h-10 w-10" />
 
-            <h2 class="mt-4 font-semibold">
-                Belum ada performance
-            </h2>
+            <h2 class="mt-4 font-semibold">Belum ada performance</h2>
 
-            <p class="mt-1 text-sm text-muted-foreground">
-                Affiliate ini belum memiliki data performance dari Seller Center.
+            <p class="text-muted-foreground mt-1 text-sm">
+                Affiliate ini belum memiliki data performance dari Seller
+                Center.
             </p>
         </div>
 
         <!-- KPI -->
-        <div
-            v-else
-            class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"
-        >
-            <div class="rounded-xl border border-border bg-card p-5">
+        <div v-else class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div class="border-border bg-card rounded-xl border p-5">
                 <div class="flex items-center gap-3">
-                    <div class="rounded-lg bg-primary/10 p-2">
-                        <Wallet class="h-4 w-4 text-primary" />
+                    <div class="bg-primary/10 rounded-lg p-2">
+                        <Wallet class="text-primary h-4 w-4" />
                     </div>
 
-                    <p class="text-sm text-muted-foreground">
-                        GMV
-                    </p>
+                    <p class="text-muted-foreground text-sm">GMV</p>
                 </div>
 
                 <div class="mt-4 flex items-end justify-between gap-4">
@@ -1064,10 +1031,7 @@ const actionInfo = (action: string) => {
                         {{ formatCurrency(latest_performance.gmv) }}
                     </p>
 
-                    <div
-                        v-if="latest_performance.movement"
-                        class="text-right"
-                    >
+                    <div v-if="latest_performance.movement" class="text-right">
                         <span
                             class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
                             :class="movementClass(latest_performance.movement)"
@@ -1075,36 +1039,36 @@ const actionInfo = (action: string) => {
                             {{ movementIcon(latest_performance.movement) }}
 
                             <template
-                                v-if="latest_performance.movement.gmv_change_percent !== null"
+                                v-if="
+                                    latest_performance.movement
+                                        .gmv_change_percent !== null
+                                "
                             >
                                 {{
                                     Math.abs(
-                                        latest_performance.movement.gmv_change_percent
+                                        latest_performance.movement
+                                            .gmv_change_percent,
                                     ).toFixed(2)
                                 }}%
                             </template>
 
-                            <template v-else>
-                                —
-                            </template>
+                            <template v-else> — </template>
                         </span>
 
-                        <p class="mt-1 text-[10px] text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-[10px]">
                             {{ movementLabel(latest_performance.movement) }}
                         </p>
                     </div>
                 </div>
             </div>
 
-            <div class="rounded-xl border border-border bg-card p-5">
+            <div class="border-border bg-card rounded-xl border p-5">
                 <div class="flex items-center gap-3">
-                    <div class="rounded-lg bg-primary/10 p-2">
-                        <ShoppingCart class="h-4 w-4 text-primary" />
+                    <div class="bg-primary/10 rounded-lg p-2">
+                        <ShoppingCart class="text-primary h-4 w-4" />
                     </div>
 
-                    <p class="text-sm text-muted-foreground">
-                        Orders
-                    </p>
+                    <p class="text-muted-foreground text-sm">Orders</p>
                 </div>
 
                 <p class="mt-4 text-2xl font-semibold">
@@ -1112,15 +1076,13 @@ const actionInfo = (action: string) => {
                 </p>
             </div>
 
-            <div class="rounded-xl border border-border bg-card p-5">
+            <div class="border-border bg-card rounded-xl border p-5">
                 <div class="flex items-center gap-3">
-                    <div class="rounded-lg bg-primary/10 p-2">
-                        <Package class="h-4 w-4 text-primary" />
+                    <div class="bg-primary/10 rounded-lg p-2">
+                        <Package class="text-primary h-4 w-4" />
                     </div>
 
-                    <p class="text-sm text-muted-foreground">
-                        Products Sold
-                    </p>
+                    <p class="text-muted-foreground text-sm">Products Sold</p>
                 </div>
 
                 <p class="mt-4 text-2xl font-semibold">
@@ -1128,15 +1090,13 @@ const actionInfo = (action: string) => {
                 </p>
             </div>
 
-            <div class="rounded-xl border border-border bg-card p-5">
+            <div class="border-border bg-card rounded-xl border p-5">
                 <div class="flex items-center gap-3">
-                    <div class="rounded-lg bg-primary/10 p-2">
-                        <Users class="h-4 w-4 text-primary" />
+                    <div class="bg-primary/10 rounded-lg p-2">
+                        <Users class="text-primary h-4 w-4" />
                     </div>
 
-                    <p class="text-sm text-muted-foreground">
-                        Buyers
-                    </p>
+                    <p class="text-muted-foreground text-sm">Buyers</p>
                 </div>
 
                 <p class="mt-4 text-2xl font-semibold">
@@ -1148,15 +1108,17 @@ const actionInfo = (action: string) => {
         <!-- Performance metrics -->
         <div
             v-if="latest_performance"
-            class="rounded-xl border border-border bg-card p-5"
+            class="border-border bg-card rounded-xl border p-5"
         >
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div
+                class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            >
                 <div>
-                    <p class="text-sm text-muted-foreground">
+                    <p class="text-muted-foreground text-sm">
                         Performance Movement
                     </p>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Dibandingkan dengan snapshot sebelumnya
                     </p>
                 </div>
@@ -1180,147 +1142,134 @@ const actionInfo = (action: string) => {
                                     latest_performance.movement.status === 'UP',
 
                                 'text-red-600 dark:text-red-400':
-                                    latest_performance.movement.status === 'DOWN',
+                                    latest_performance.movement.status ===
+                                    'DOWN',
                             }"
                         >
                             <template
-                                v-if="latest_performance.movement.gmv_change_percent !== null"
+                                v-if="
+                                    latest_performance.movement
+                                        .gmv_change_percent !== null
+                                "
                             >
                                 {{
                                     Math.abs(
-                                        latest_performance.movement.gmv_change_percent
+                                        latest_performance.movement
+                                            .gmv_change_percent,
                                     ).toFixed(2)
                                 }}%
                             </template>
 
-                            <template v-else>
-                                —
-                            </template>
+                            <template v-else> — </template>
                         </p>
 
-                        <p class="text-xs text-muted-foreground">
+                        <p class="text-muted-foreground text-xs">
                             {{ movementLabel(latest_performance.movement) }}
                         </p>
                     </div>
 
                     <div
                         v-if="latest_performance.movement.previous_gmv !== null"
-                        class="border-l border-border pl-4"
+                        class="border-border border-l pl-4"
                     >
-                        <p class="text-xs text-muted-foreground">
+                        <p class="text-muted-foreground text-xs">
                             GMV sebelumnya
                         </p>
 
                         <p class="mt-1 font-medium">
                             {{
                                 formatCurrency(
-                                    latest_performance.movement.previous_gmv
+                                    latest_performance.movement.previous_gmv,
                                 )
                             }}
                         </p>
                     </div>
                 </div>
 
-                <div
-                    v-else
-                    class="text-sm text-muted-foreground"
-                >
+                <div v-else class="text-muted-foreground text-sm">
                     Belum ada snapshot sebelumnya
                 </div>
             </div>
         </div>
 
-                <!-- Performance Metrics -->
+        <!-- Performance Metrics -->
         <div
             v-if="latest_performance"
-            class="rounded-xl border border-border bg-card p-6"
+            class="border-border bg-card rounded-xl border p-6"
         >
             <div class="flex items-center gap-3">
-                <BarChart3 class="h-5 w-5 text-primary" />
+                <BarChart3 class="text-primary h-5 w-5" />
 
                 <div>
-                    <h2 class="font-semibold">
-                        Performance Metrics
-                    </h2>
+                    <h2 class="font-semibold">Performance Metrics</h2>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Metrik performa berdasarkan periode yang dipilih.
                     </p>
                 </div>
             </div>
 
             <div class="mt-6 grid gap-4 sm:grid-cols-4 lg:grid-cols-5">
-
                 <!-- AOV -->
-                <div class="rounded-lg bg-muted/30 p-4">
-                    <p class="text-sm text-muted-foreground">
-                        AOV
-                    </p>
+                <div class="bg-muted/30 rounded-lg p-4">
+                    <p class="text-muted-foreground text-sm">AOV</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatCurrency(latest_performance.aov) }}
                     </p>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Average Order Value
                     </p>
                 </div>
 
                 <!-- CTR -->
-                <div class="rounded-lg bg-muted/30 p-4">
-                    <p class="text-sm text-muted-foreground">
-                        CTR
-                    </p>
+                <div class="bg-muted/30 rounded-lg p-4">
+                    <p class="text-muted-foreground text-sm">CTR</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatPercent(latest_performance.ctr) }}
                     </p>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Click Through Rate
                     </p>
                 </div>
 
                 <!-- CTOR -->
-                <div class="rounded-lg bg-muted/30 p-4">
-                    <p class="text-sm text-muted-foreground">
-                        CTOR
-                    </p>
+                <div class="bg-muted/30 rounded-lg p-4">
+                    <p class="text-muted-foreground text-sm">CTOR</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatPercent(latest_performance.ctor) }}
                     </p>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Click To Order Rate
                     </p>
                 </div>
                 <!-- Impressions -->
-                <div class="rounded-lg bg-muted/30 p-4">
-                    <p class="text-sm text-muted-foreground">
-                        Impressions
-                    </p>
+                <div class="bg-muted/30 rounded-lg p-4">
+                    <p class="text-muted-foreground text-sm">Impressions</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatNumber(latest_performance.impressions) }}
                     </p>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Total impressions
                     </p>
                 </div>
 
                 <!-- Video Views -->
-                <div class="rounded-lg bg-muted/30 p-4">
-                    <p class="text-sm text-muted-foreground">
-                        Video Views
-                    </p>
+                <div class="bg-muted/30 rounded-lg p-4">
+                    <p class="text-muted-foreground text-sm">Video Views</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatNumber(latest_performance.video_views) }}
                     </p>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Total video views
                     </p>
                 </div>
@@ -1330,51 +1279,41 @@ const actionInfo = (action: string) => {
         <!-- Content activity -->
         <div
             v-if="latest_performance"
-            class="rounded-xl border border-border bg-card p-6"
+            class="border-border bg-card rounded-xl border p-6"
         >
             <div class="flex items-center gap-3">
-                <Video class="h-5 w-5 text-primary" />
+                <Video class="text-primary h-5 w-5" />
 
-                <h2 class="font-semibold">
-                    Content Activity
-                </h2>
+                <h2 class="font-semibold">Content Activity</h2>
             </div>
 
             <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="rounded-lg bg-muted/30 p-4">
-                    <p class="text-sm text-muted-foreground">
-                        Video
-                    </p>
+                <div class="bg-muted/30 rounded-lg p-4">
+                    <p class="text-muted-foreground text-sm">Video</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatNumber(latest_performance.video_count) }}
                     </p>
                 </div>
 
-                <div class="rounded-lg bg-muted/30 p-4">
-                    <p class="text-sm text-muted-foreground">
-                        LIVE
-                    </p>
+                <div class="bg-muted/30 rounded-lg p-4">
+                    <p class="text-muted-foreground text-sm">LIVE</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatNumber(latest_performance.live_count) }}
                     </p>
                 </div>
 
-                <div class="rounded-lg bg-muted/30 p-4">
-                    <p class="text-sm text-muted-foreground">
-                        Showcase
-                    </p>
+                <div class="bg-muted/30 rounded-lg p-4">
+                    <p class="text-muted-foreground text-sm">Showcase</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatNumber(latest_performance.showcase_products) }}
                     </p>
                 </div>
 
-                <div class="rounded-lg bg-muted/30 p-4">
-                    <p class="text-sm text-muted-foreground">
-                        Sample Content
-                    </p>
+                <div class="bg-muted/30 rounded-lg p-4">
+                    <p class="text-muted-foreground text-sm">Sample Content</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatNumber(latest_performance.content_samples) }}
@@ -1384,20 +1323,18 @@ const actionInfo = (action: string) => {
         </div>
 
         <!-- History -->
-        <div class="rounded-xl border border-border bg-card">
-            <div class="border-b border-border p-6">
-                <h2 class="font-semibold">
-                    Performance History
-                </h2>
+        <div class="border-border bg-card rounded-xl border">
+            <div class="border-border border-b p-6">
+                <h2 class="font-semibold">Performance History</h2>
 
-                <p class="mt-1 text-sm text-muted-foreground">
+                <p class="text-muted-foreground mt-1 text-sm">
                     Riwayat performance berdasarkan setiap import Seller Center.
                 </p>
             </div>
 
             <div class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead class="border-b border-border bg-muted/30">
+                    <thead class="border-border bg-muted/30 border-b">
                         <tr>
                             <th class="px-6 py-4 text-left font-medium">
                                 Period
@@ -1427,7 +1364,7 @@ const actionInfo = (action: string) => {
                         <tr
                             v-for="performance in performance_history"
                             :key="performance.id"
-                            class="border-b border-border last:border-0"
+                            class="border-border border-b last:border-0"
                         >
                             <td class="px-6 py-4">
                                 {{ periodLabel(performance) }}
@@ -1441,18 +1378,22 @@ const actionInfo = (action: string) => {
                                 <template
                                     v-if="
                                         performance.movement &&
-                                        performance.movement.gmv_change_percent !== null
+                                        performance.movement
+                                            .gmv_change_percent !== null
                                     "
                                 >
                                     <span
                                         class="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold"
-                                        :class="movementClass(performance.movement)"
+                                        :class="
+                                            movementClass(performance.movement)
+                                        "
                                     >
                                         {{ movementIcon(performance.movement) }}
 
                                         {{
                                             Math.abs(
-                                                performance.movement.gmv_change_percent
+                                                performance.movement
+                                                    .gmv_change_percent,
                                             ).toFixed(2)
                                         }}%
                                     </span>
@@ -1460,14 +1401,16 @@ const actionInfo = (action: string) => {
 
                                 <span
                                     v-else
-                                    class="text-xs text-muted-foreground"
+                                    class="text-muted-foreground text-xs"
                                 >
                                     —
                                 </span>
                             </td>
 
                             <td class="px-6 py-4 text-right">
-                                {{ formatNumber(performance.attributed_orders) }}
+                                {{
+                                    formatNumber(performance.attributed_orders)
+                                }}
                             </td>
 
                             <td class="px-6 py-4 text-right">
@@ -1486,7 +1429,7 @@ const actionInfo = (action: string) => {
                         <tr v-if="performance_history.length === 0">
                             <td
                                 colspan="7"
-                                class="px-6 py-10 text-center text-muted-foreground"
+                                class="text-muted-foreground px-6 py-10 text-center"
                             >
                                 Belum ada riwayat performance.
                             </td>
@@ -1495,6 +1438,5 @@ const actionInfo = (action: string) => {
                 </table>
             </div>
         </div>
-
     </div>
 </template>

@@ -1,13 +1,6 @@
 <script setup lang="ts">
-import {
-    computed,
-    nextTick,
-    onMounted,
-    onUnmounted,
-    ref,
-    watch,
-} from 'vue'
-import { router, usePage  } from '@inertiajs/vue3';
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue';
+import { router, usePage } from '@inertiajs/vue3';
 
 import {
     Bell,
@@ -33,10 +26,7 @@ import { toast } from 'vue-sonner';
 
 import { SidebarTrigger } from '@/components/ui/sidebar';
 
-import {
-    useAppTabs,
-    type AppTab,
-} from '@/composables/useAppTabs';
+import { useAppTabs, type AppTab } from '@/composables/useAppTabs';
 import { useAppearance } from '@/composables/useAppearance';
 
 const {
@@ -50,17 +40,10 @@ const {
     closeTab,
 } = useAppTabs();
 
-const {
-    resolvedAppearance,
-    updateAppearance,
-} = useAppearance();
+const { resolvedAppearance, updateAppearance } = useAppearance();
 
 const toggleAppearance = () => {
-    updateAppearance(
-        resolvedAppearance.value === 'dark'
-            ? 'light'
-            : 'dark',
-    );
+    updateAppearance(resolvedAppearance.value === 'dark' ? 'light' : 'dark');
 };
 
 const searchOpen = ref(false);
@@ -112,47 +95,50 @@ const searchResults = ref<
 const notificationOpen = ref(false);
 const profileOpen = ref(false);
 
-const notificationMenu = ref<HTMLElement | null>(null)
-const profileMenu = ref<HTMLElement | null>(null)
+const notificationMenu = ref<HTMLElement | null>(null);
+const profileMenu = ref<HTMLElement | null>(null);
 
 const handleOutsideClick = (event: PointerEvent) => {
-    const target = event.target as Node
+    const target = event.target as Node;
 
     if (!notificationMenu.value?.contains(target)) {
-        notificationOpen.value = false
+        notificationOpen.value = false;
     }
 
     if (!profileMenu.value?.contains(target)) {
-        profileOpen.value = false
+        profileOpen.value = false;
     }
-}
+};
 
 const handleEscape = (event: KeyboardEvent) => {
     if (event.key === 'Escape') {
-        notificationOpen.value = false
-        profileOpen.value = false
-        searchOpen.value = false
+        notificationOpen.value = false;
+        profileOpen.value = false;
+        searchOpen.value = false;
     }
-}
+};
 
 onMounted(() => {
-    document.addEventListener('pointerdown', handleOutsideClick)
-    document.addEventListener('keydown', handleEscape)
-})
+    document.addEventListener('pointerdown', handleOutsideClick);
+    document.addEventListener('keydown', handleEscape);
+});
 
 onUnmounted(() => {
-    document.removeEventListener('pointerdown', handleOutsideClick)
-    document.removeEventListener('keydown', handleEscape)
-})
+    document.removeEventListener('pointerdown', handleOutsideClick);
+    document.removeEventListener('keydown', handleEscape);
+});
 
 const page = usePage();
 
-const user = computed(() => page.props.auth?.user as {
-    name?: string;
-    email?: string;
-    business_name?: string | null;
-    profile_photo?: string | null;
-});
+const user = computed(
+    () =>
+        page.props.auth?.user as {
+            name?: string;
+            email?: string;
+            business_name?: string | null;
+            profile_photo?: string | null;
+        },
+);
 
 type NotificationSeverity = 'success' | 'info' | 'warning' | 'error';
 type NotificationFilter = 'all' | 'unread';
@@ -207,13 +193,8 @@ const notifyToast = (notification: AppNotification) => {
     }
 };
 
-const fetchNotifications = async (
-    page = 1,
-    append = false,
-) => {
-    const loading = append
-        ? notificationsLoadingMore
-        : notificationsLoading;
+const fetchNotifications = async (page = 1, append = false) => {
+    const loading = append ? notificationsLoadingMore : notificationsLoading;
 
     if (loading.value) return;
 
@@ -226,30 +207,23 @@ const fetchNotifications = async (
             per_page: '10',
         });
 
-        const response = await fetch(
-            `/notifications?${params.toString()}`,
-            {
-                headers: {
-                    Accept: 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest',
-                },
-                credentials: 'same-origin',
+        const response = await fetch(`/notifications?${params.toString()}`, {
+            headers: {
+                Accept: 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
             },
-        );
+            credentials: 'same-origin',
+        });
 
         if (!response.ok) {
             throw new Error(`HTTP ${response.status}`);
         }
 
         const data = await response.json();
-        const incoming: AppNotification[] =
-            data.notifications ?? [];
+        const incoming: AppNotification[] = data.notifications ?? [];
 
         if (append) {
-            notifications.value = [
-                ...notifications.value,
-                ...incoming,
-            ];
+            notifications.value = [...notifications.value, ...incoming];
         } else {
             notifications.value = incoming;
         }
@@ -275,10 +249,7 @@ const fetchNotifications = async (
                 knownNotificationIds.add(notification.id),
             );
 
-            if (
-                !notificationOpen.value &&
-                newUnread.length > 0
-            ) {
+            if (!notificationOpen.value && newUnread.length > 0) {
                 notifyToast(newUnread[0]);
             }
         }
@@ -293,17 +264,11 @@ const fetchNotifications = async (
 const loadNotifications = () => fetchNotifications(1, false);
 
 const loadMoreNotifications = () => {
-    if (
-        !notificationHasMore.value ||
-        !notificationNextPage.value
-    ) {
+    if (!notificationHasMore.value || !notificationNextPage.value) {
         return;
     }
 
-    void fetchNotifications(
-        notificationNextPage.value,
-        true,
-    );
+    void fetchNotifications(notificationNextPage.value, true);
 };
 
 const setNotificationFilter = (filter: NotificationFilter) => {
@@ -318,13 +283,10 @@ const setNotificationFilter = (filter: NotificationFilter) => {
 };
 
 const getCsrfToken = () =>
-    document.querySelector<HTMLMetaElement>(
-        'meta[name="csrf-token"]',
-    )?.content ?? '';
+    document.querySelector<HTMLMetaElement>('meta[name="csrf-token"]')
+        ?.content ?? '';
 
-const markNotificationRead = async (
-    notification: AppNotification,
-) => {
+const markNotificationRead = async (notification: AppNotification) => {
     if (!notification.read) {
         try {
             const response = await fetch(
@@ -359,9 +321,7 @@ const markNotificationRead = async (
     }
 };
 
-const deleteNotification = async (
-    notification: AppNotification,
-) => {
+const deleteNotification = async (notification: AppNotification) => {
     try {
         const response = await fetch(
             `/notifications/${encodeURIComponent(notification.id)}`,
@@ -386,8 +346,7 @@ const deleteNotification = async (
             (item) => item.id !== notification.id,
         );
         knownNotificationIds.delete(notification.id);
-        unreadCount.value =
-            data.unread_count ?? unreadCount.value;
+        unreadCount.value = data.unread_count ?? unreadCount.value;
     } catch (error) {
         console.error('Gagal menghapus notifikasi:', error);
     }
@@ -459,11 +418,7 @@ const clearAllNotifications = async () => {
 };
 
 const startOfDay = (date: Date) =>
-    new Date(
-        date.getFullYear(),
-        date.getMonth(),
-        date.getDate(),
-    ).getTime();
+    new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 
 const notificationDateLabel = (iso: string | null) => {
     if (!iso) return 'Lebih lama';
@@ -471,9 +426,7 @@ const notificationDateLabel = (iso: string | null) => {
     const date = new Date(iso);
     const today = startOfDay(new Date());
     const day = startOfDay(date);
-    const diffDays = Math.round(
-        (today - day) / 86_400_000,
-    );
+    const diffDays = Math.round((today - day) / 86_400_000);
 
     if (diffDays === 0) return 'Hari ini';
     if (diffDays === 1) return 'Kemarin';
@@ -494,9 +447,7 @@ const groupedNotifications = computed(() => {
     const index = new Map<string, number>();
 
     for (const notification of notifications.value) {
-        const label = notificationDateLabel(
-            notification.created_at,
-        );
+        const label = notificationDateLabel(notification.created_at);
 
         if (!index.has(label)) {
             index.set(label, groups.length);
@@ -522,10 +473,7 @@ const severityIconClass = (severity: NotificationSeverity) => {
     }
 };
 
-const metaNumber = (
-    notification: AppNotification,
-    key: string,
-) => {
+const metaNumber = (notification: AppNotification, key: string) => {
     const value = notification.meta?.[key];
 
     return typeof value === 'number'
@@ -533,21 +481,15 @@ const metaNumber = (
         : '0';
 };
 
+let removeNavigateListener: (() => void) | undefined;
 
-let removeNavigateListener:
-    (() => void) | undefined;
+const openAppTab = (event: Event) => {
+    const customEvent = event as CustomEvent<{
+        href: string;
+        title: string;
+    }>;
 
-const openAppTab = (
-    event: Event,
-) => {
-    const customEvent =
-        event as CustomEvent<{
-            href: string;
-            title: string;
-        }>;
-
-    const { href, title } =
-        customEvent.detail;
+    const { href, title } = customEvent.detail;
 
     if (!href) {
         return;
@@ -559,19 +501,14 @@ const openAppTab = (
         return;
     }
 
-    updateActiveTab(
-        title,
-        href,
-    );
+    updateActiveTab(title, href);
 };
 
 const handleCreateTab = () => {
     createTab();
 };
 
-const handleTabClick = (
-    tab: AppTab,
-) => {
+const handleTabClick = (tab: AppTab) => {
     activateTab(tab.id);
 
     if (tab.href) {
@@ -579,47 +516,33 @@ const handleTabClick = (
     }
 };
 
-const handleCloseTab = (
-    tab: AppTab,
-) => {
+const handleCloseTab = (tab: AppTab) => {
     if (!tab.closable) {
         return;
     }
 
-    const wasActive =
-        activeTabId.value === tab.id;
+    const wasActive = activeTabId.value === tab.id;
 
     const nextTab = closeTab(tab.id);
 
-    if (
-        wasActive &&
-        nextTab?.href
-    ) {
+    if (wasActive && nextTab?.href) {
         router.visit(nextTab.href);
     }
 };
 
 const handleSearch = () => {
-    const keyword = search.value
-        .trim()
-        .toLowerCase();
+    const keyword = search.value.trim().toLowerCase();
 
     if (!keyword) {
         return;
     }
 
-    const result = searchResults.value.find(
-        (item) =>
-            item.title
-                .toLowerCase()
-                .includes(keyword),
+    const result = searchResults.value.find((item) =>
+        item.title.toLowerCase().includes(keyword),
     );
 
     if (result) {
-        updateActiveTab(
-            result.title,
-            result.href,
-        );
+        updateActiveTab(result.title, result.href);
 
         router.visit(result.href);
 
@@ -637,10 +560,7 @@ const getTabIcon = (tab: AppTab) => {
 };
 
 const getPageTitle = (url: string) => {
-    const pathname = new URL(
-        url,
-        window.location.origin,
-    ).pathname;
+    const pathname = new URL(url, window.location.origin).pathname;
 
     // =========================
     // DASHBOARD
@@ -652,61 +572,33 @@ const getPageTitle = (url: string) => {
     // =========================
     // CREATOR
     // =========================
-    if (
-        /^\/creators\/[^/]+\/contents\/create$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/creators\/[^/]+\/contents\/create$/.test(pathname)) {
         return 'Add Content';
     }
 
-    if (
-        /^\/creators\/[^/]+\/rate-cards\/create$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/creators\/[^/]+\/rate-cards\/create$/.test(pathname)) {
         return 'Add Rate Card';
     }
 
-    if (
-        /^\/creators\/[^/]+\/analysis\/history\/[^/]+$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/creators\/[^/]+\/analysis\/history\/[^/]+$/.test(pathname)) {
         return 'Analysis Detail';
     }
 
-    if (
-        /^\/creators\/[^/]+\/analysis\/history$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/creators\/[^/]+\/analysis\/history$/.test(pathname)) {
         return 'Analysis History';
     }
 
-    if (
-        /^\/creators\/[^/]+\/analysis$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/creators\/[^/]+\/analysis$/.test(pathname)) {
         return 'Analyze Creator';
     }
 
-    if (
-        /^\/creators\/[^/]+\/edit$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/creators\/[^/]+\/edit$/.test(pathname)) {
         return 'Edit Creator';
     }
 
     if (pathname === '/creators/create') return 'Tambah Creator';
 
-    if (
-        /^\/creators\/[^/]+$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/creators\/[^/]+$/.test(pathname)) {
         return 'Detail Creator';
     }
 
@@ -717,11 +609,7 @@ const getPageTitle = (url: string) => {
     // =========================
     // AFFILIATE
     // =========================
-    if (
-        /^\/affiliates\/[^/]+$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/affiliates\/[^/]+$/.test(pathname)) {
         return 'Detail Affiliate';
     }
 
@@ -729,52 +617,35 @@ const getPageTitle = (url: string) => {
         return 'Affiliate';
     }
 
-      // =========================
+    // =========================
     // INSIGHTS
     // =========================
     if (/^\/insights\/[^/]+$/.test(pathname)) {
-        return 'Insight Detail'
+        return 'Insight Detail';
     }
 
     if (pathname === '/insights') {
-        return 'Insights'
+        return 'Insights';
     }
-   
 
     // =========================
     // CAMPAIGN
     // =========================
-    if (
-        /^\/campaigns\/[^/]+\/performance\/[^/]+\/edit$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/campaigns\/[^/]+\/performance\/[^/]+\/edit$/.test(pathname)) {
         return 'Edit Performance';
     }
 
-    if (
-        /^\/campaigns\/[^/]+\/performance\/create$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/campaigns\/[^/]+\/performance\/create$/.test(pathname)) {
         return 'Add Performance';
     }
 
-    if (
-        /^\/campaigns\/[^/]+\/edit$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/campaigns\/[^/]+\/edit$/.test(pathname)) {
         return 'Edit Campaign';
     }
 
     if (pathname === '/campaigns/create') return 'Tambah Campaign';
 
-    if (
-        /^\/campaigns\/[^/]+$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/campaigns\/[^/]+$/.test(pathname)) {
         return 'Detail Campaign';
     }
 
@@ -785,11 +656,7 @@ const getPageTitle = (url: string) => {
     // =========================
     // HISTORY
     // =========================
-    if (
-        /^\/history\/[^/]+$/.test(
-            pathname,
-        )
-    ) {
+    if (/^\/history\/[^/]+$/.test(pathname)) {
         return 'Detail History';
     }
 
@@ -815,18 +682,18 @@ const getPageTitle = (url: string) => {
 };
 
 const toggleNotifications = () => {
-    notificationOpen.value = !notificationOpen.value
-    profileOpen.value = false
+    notificationOpen.value = !notificationOpen.value;
+    profileOpen.value = false;
 
     if (notificationOpen.value) {
-        void loadNotifications()
+        void loadNotifications();
     }
-}
+};
 
 const toggleProfile = () => {
-    profileOpen.value = !profileOpen.value
-    notificationOpen.value = false
-}
+    profileOpen.value = !profileOpen.value;
+    notificationOpen.value = false;
+};
 
 onMounted(() => {
     initializeTabs();
@@ -837,31 +704,19 @@ onMounted(() => {
         void loadNotifications();
     }, 30_000);
 
-    window.addEventListener(
-        'app:open-tab',
-        openAppTab,
-    );
+    window.addEventListener('app:open-tab', openAppTab);
 
-    removeNavigateListener =
-        router.on('navigate', (event) => {
-            const url =
-                event.detail.page.url;
+    removeNavigateListener = router.on('navigate', (event) => {
+        const url = event.detail.page.url;
 
-            const title =
-                getPageTitle(url);
+        const title = getPageTitle(url);
 
-            if (!title) {
-                return;
-            }
+        if (!title) {
+            return;
+        }
 
-            updateActiveTab(
-                title,
-                new URL(
-                    url,
-                    window.location.origin,
-                ).pathname,
-            );
-        });
+        updateActiveTab(title, new URL(url, window.location.origin).pathname);
+    });
 });
 
 onUnmounted(() => {
@@ -880,29 +735,21 @@ onUnmounted(() => {
 
 <template>
     <header
-        class="sticky top-0 z-40 flex h-13 shrink-0 border-b border-border/80 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80"
+        class="border-border/80 bg-background/95 supports-[backdrop-filter]:bg-background/80 sticky top-0 z-40 flex h-13 shrink-0 border-b backdrop-blur"
     >
         <!-- SIDEBAR TOGGLE -->
-        <div
-            class="flex h-16 w-12 shrink-0 items-center justify-center"
-        >
-            <SidebarTrigger
-                class="h-4 w-4"
-            >
+        <div class="flex h-16 w-12 shrink-0 items-center justify-center">
+            <SidebarTrigger class="h-4 w-4">
                 <PanelLeft class="h-4 w-4" />
 
-                <span class="sr-only">
-                    Toggle Sidebar
-                </span>
+                <span class="sr-only"> Toggle Sidebar </span>
             </SidebarTrigger>
         </div>
 
         <!-- TAB BAR -->
-        <div
-            class="flex min-w-0 flex-1 items-end overflow-hidden"
-        >
+        <div class="flex min-w-0 flex-1 items-end overflow-hidden">
             <div
-                class="flex h-full min-w-0 items-end gap-1 overflow-x-auto px-2 scrollbar-none"
+                class="flex h-full min-w-0 scrollbar-none items-end gap-1 overflow-x-auto px-2"
             >
                 <!-- TABS -->
                 <button
@@ -910,20 +757,17 @@ onUnmounted(() => {
                     :key="tab.id"
                     type="button"
                     @click="handleTabClick(tab)"
-                    class="group relative flex h-10 min-w-[130px] max-w-[200px] items-center gap-2 rounded-t-lg border border-b-0 px-3 text-sm transition-all duration-200"
+                    class="group relative flex h-10 max-w-[200px] min-w-[130px] items-center gap-2 rounded-t-lg border border-b-0 px-3 text-sm transition-all duration-200"
                     :class="
                         activeTabId === tab.id
                             ? 'border-border bg-background text-foreground shadow-[0_-1px_0_hsl(var(--border))] before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:via-sky-400/40 before:to-transparent'
-                            : 'border-transparent bg-transparent text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+                            : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground border-transparent bg-transparent'
                     "
                 >
                     <!-- ACTIVE INDICATOR -->
                     <span
-                        v-if="
-                            activeTabId ===
-                            tab.id
-                        "
-                        class="absolute inset-x-2 bottom-0 h-[1px] bg-background"
+                        v-if="activeTabId === tab.id"
+                        class="bg-background absolute inset-x-2 bottom-0 h-[1px]"
                     />
 
                     <!-- ICON -->
@@ -934,24 +778,18 @@ onUnmounted(() => {
                     />
 
                     <!-- TITLE -->
-                    <span
-                        class="min-w-0 flex-1 truncate text-left font-medium"
-                    >
+                    <span class="min-w-0 flex-1 truncate text-left font-medium">
                         {{ tab.title }}
                     </span>
 
                     <!-- CLOSE -->
                     <span
                         v-if="tab.closable"
-                        @click.stop="
-                            handleCloseTab(tab)
-                        "
-                        class="flex h-6 w-6 shrink-0 items-center justify-center rounded-md opacity-50 transition hover:bg-muted-foreground/10 hover:text-foreground hover:opacity-100"
+                        @click.stop="handleCloseTab(tab)"
+                        class="hover:bg-muted-foreground/10 hover:text-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-md opacity-50 transition hover:opacity-100"
                         title="Tutup tab"
                     >
-                        <X
-                            class="h-3.5 w-3.5"
-                        />
+                        <X class="h-3.5 w-3.5" />
                     </span>
                 </button>
 
@@ -959,7 +797,7 @@ onUnmounted(() => {
                 <button
                     type="button"
                     @click="handleCreateTab"
-                    class="mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground hover:scale-105"
+                    class="text-muted-foreground hover:bg-muted hover:text-foreground mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-all duration-200 hover:scale-105"
                     title="Buka tab baru"
                 >
                     <Plus class="h-4 w-4" />
@@ -968,9 +806,7 @@ onUnmounted(() => {
         </div>
 
         <!-- RIGHT ACTIONS -->
-        <div
-            class="flex h-13 shrink-0 items-center gap-1 px-3"
-        >
+        <div class="flex h-13 shrink-0 items-center gap-1 px-3">
             <!-- SEARCH -->
             <div class="relative flex items-center">
                 <input
@@ -979,7 +815,7 @@ onUnmounted(() => {
                     @keyup.enter="handleSearch"
                     type="text"
                     placeholder="Cari menu..."
-                    class="h-9 w-52 rounded-lg border bg-background px-3 pr-9 text-sm outline-none transition focus:border-sky-500"
+                    class="bg-background h-9 w-52 rounded-lg border px-3 pr-9 text-sm transition outline-none focus:border-sky-500"
                     autofocus
                 />
 
@@ -989,7 +825,7 @@ onUnmounted(() => {
                         searchOpen = !searchOpen;
                         if (!searchOpen) search = '';
                     "
-                    class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    class="text-muted-foreground hover:bg-muted hover:text-foreground flex h-9 w-9 items-center justify-center rounded-lg transition"
                     title="Search"
                 >
                     <Search class="h-4 w-4" />
@@ -997,30 +833,20 @@ onUnmounted(() => {
 
                 <!-- SEARCH RESULT -->
                 <div
-                    v-if="
-                        searchOpen &&
-                        search.trim()
-                    "
-                    class="absolute right-0 top-11 z-50 w-64 overflow-hidden rounded-xl border bg-background p-2 shadow-xl"
+                    v-if="searchOpen && search.trim()"
+                    class="bg-background absolute top-11 right-0 z-50 w-64 overflow-hidden rounded-xl border p-2 shadow-xl"
                 >
                     <button
-                        v-for="result in searchResults.filter(
-                            (item) =>
-                                item.title
-                                    .toLowerCase()
-                                    .includes(
-                                        search
-                                            .toLowerCase(),
-                                    ),
+                        v-for="result in searchResults.filter((item) =>
+                            item.title
+                                .toLowerCase()
+                                .includes(search.toLowerCase()),
                         )"
                         :key="result.href"
                         type="button"
-                        class="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition hover:bg-muted"
+                        class="hover:bg-muted flex w-full items-center justify-between rounded-lg px-3 py-2 text-left transition"
                         @click="
-                            updateActiveTab(
-                                result.title,
-                                result.href,
-                            );
+                            updateActiveTab(result.title, result.href);
                             router.visit(result.href);
                             searchOpen = false;
                             search = '';
@@ -1030,38 +856,31 @@ onUnmounted(() => {
                             {{ result.title }}
                         </span>
 
-                        <span
-                            class="text-[10px] text-muted-foreground"
-                        >
+                        <span class="text-muted-foreground text-[10px]">
                             {{ result.type }}
                         </span>
                     </button>
 
                     <div
                         v-if="
-                            !searchResults.some(
-                                (item) =>
-                                    item.title
-                                        .toLowerCase()
-                                        .includes(
-                                            search
-                                                .toLowerCase(),
-                                        ),
+                            !searchResults.some((item) =>
+                                item.title
+                                    .toLowerCase()
+                                    .includes(search.toLowerCase()),
                             )
                         "
-                        class="px-3 py-3 text-center text-xs text-muted-foreground"
+                        class="text-muted-foreground px-3 py-3 text-center text-xs"
                     >
                         Tidak ditemukan
                     </div>
                 </div>
             </div>
 
-            
             <!-- THEME -->
             <button
                 type="button"
                 @click="toggleAppearance"
-                class="flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition-all duration-200 hover:bg-muted hover:text-foreground"
+                class="text-muted-foreground hover:bg-muted hover:text-foreground flex h-9 w-9 items-center justify-center rounded-lg transition-all duration-200"
                 :title="
                     resolvedAppearance === 'dark'
                         ? 'Gunakan mode terang'
@@ -1083,32 +902,36 @@ onUnmounted(() => {
                 <button
                     type="button"
                     @click="toggleNotifications"
-                    class="relative flex h-9 w-9 items-center justify-center rounded-lg text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    class="text-muted-foreground hover:bg-muted hover:text-foreground relative flex h-9 w-9 items-center justify-center rounded-lg transition"
                     title="Notifications"
                 >
                     <Bell class="h-4 w-4" />
 
                     <!-- BADGE -->
-                    <span v-if="unreadCount > 0"
-                    class="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
-                    {{ unreadCount > 9 ? '9+' : unreadCount }}
-                </span>
+                    <span
+                        v-if="unreadCount > 0"
+                        class="absolute top-1 right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-bold text-white"
+                    >
+                        {{ unreadCount > 9 ? '9+' : unreadCount }}
+                    </span>
                 </button>
 
                 <!-- DROPDOWN -->
                 <div
                     v-if="notificationOpen"
-                    class="absolute right-0 top-11 z-50 w-80 overflow-hidden rounded-xl border bg-background shadow-xl sm:w-96"
+                    class="bg-background absolute top-11 right-0 z-50 w-80 overflow-hidden rounded-xl border shadow-xl sm:w-96"
                 >
                     <!-- HEADER -->
-                    <div class="border-b px-4 pb-0 pt-3">
+                    <div class="border-b px-4 pt-3 pb-0">
                         <div class="flex items-start justify-between gap-3">
                             <div>
                                 <h3 class="text-sm font-semibold">
                                     Notifications
                                 </h3>
 
-                                <p class="mt-0.5 text-[11px] text-muted-foreground">
+                                <p
+                                    class="text-muted-foreground mt-0.5 text-[11px]"
+                                >
                                     {{ unreadCount }} belum dibaca
                                 </p>
                             </div>
@@ -1117,7 +940,7 @@ onUnmounted(() => {
                                 <button
                                     v-if="unreadCount > 0"
                                     type="button"
-                                    class="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                                    class="text-muted-foreground hover:bg-muted hover:text-foreground flex h-7 w-7 items-center justify-center rounded-md transition"
                                     title="Tandai semua dibaca"
                                     @click="markAllNotificationsAsRead()"
                                 >
@@ -1155,10 +978,10 @@ onUnmounted(() => {
                         <div class="mt-3 flex gap-1">
                             <button
                                 type="button"
-                                class="rounded-t-md px-2.5 pb-2 pt-1 text-xs font-medium transition"
+                                class="rounded-t-md px-2.5 pt-1 pb-2 text-xs font-medium transition"
                                 :class="
                                     notificationFilter === 'all'
-                                        ? 'border-b-2 border-sky-500 text-foreground'
+                                        ? 'text-foreground border-b-2 border-sky-500'
                                         : 'text-muted-foreground hover:text-foreground'
                                 "
                                 @click="setNotificationFilter('all')"
@@ -1168,10 +991,10 @@ onUnmounted(() => {
 
                             <button
                                 type="button"
-                                class="inline-flex items-center rounded-t-md px-2.5 pb-2 pt-1 text-xs font-medium transition"
+                                class="inline-flex items-center rounded-t-md px-2.5 pt-1 pb-2 text-xs font-medium transition"
                                 :class="
                                     notificationFilter === 'unread'
-                                        ? 'border-b-2 border-sky-500 text-foreground'
+                                        ? 'text-foreground border-b-2 border-sky-500'
                                         : 'text-muted-foreground hover:text-foreground'
                                 "
                                 @click="setNotificationFilter('unread')"
@@ -1191,7 +1014,7 @@ onUnmounted(() => {
                     <!-- LOADING -->
                     <div
                         v-if="notificationsLoading && !notifications.length"
-                        class="px-4 py-8 text-center text-xs text-muted-foreground"
+                        class="text-muted-foreground px-4 py-8 text-center text-xs"
                     >
                         Memuat notifikasi...
                     </div>
@@ -1201,7 +1024,7 @@ onUnmounted(() => {
                         v-else-if="notificationError && !notifications.length"
                         class="px-4 py-8 text-center"
                     >
-                        <p class="text-xs text-muted-foreground">
+                        <p class="text-muted-foreground text-xs">
                             Notifikasi gagal dimuat.
                         </p>
 
@@ -1224,7 +1047,7 @@ onUnmounted(() => {
                             :key="group.label"
                         >
                             <p
-                                class="sticky top-0 z-10 bg-background/95 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground backdrop-blur"
+                                class="bg-background/95 text-muted-foreground sticky top-0 z-10 px-4 py-1.5 text-[10px] font-semibold tracking-wide uppercase backdrop-blur"
                             >
                                 {{ group.label }}
                             </p>
@@ -1234,14 +1057,12 @@ onUnmounted(() => {
                                 :key="notification.id"
                                 class="group flex items-stretch border-b last:border-b-0"
                                 :class="
-                                    !notification.read
-                                        ? 'bg-sky-500/5'
-                                        : ''
+                                    !notification.read ? 'bg-sky-500/5' : ''
                                 "
                             >
                                 <button
                                     type="button"
-                                    class="flex min-w-0 flex-1 gap-3 px-4 py-3 text-left transition hover:bg-muted/60"
+                                    class="hover:bg-muted/60 flex min-w-0 flex-1 gap-3 px-4 py-3 text-left transition"
                                     @click="markNotificationRead(notification)"
                                 >
                                     <div
@@ -1276,10 +1097,7 @@ onUnmounted(() => {
                                             class="h-4 w-4"
                                         />
 
-                                        <Info
-                                            v-else
-                                            class="h-4 w-4"
-                                        />
+                                        <Info v-else class="h-4 w-4" />
                                     </div>
 
                                     <div class="min-w-0 flex-1">
@@ -1298,14 +1116,14 @@ onUnmounted(() => {
                                             </span>
 
                                             <span
-                                                class="shrink-0 text-[10px] text-muted-foreground"
+                                                class="text-muted-foreground shrink-0 text-[10px]"
                                             >
                                                 {{ notification.time }}
                                             </span>
                                         </div>
 
                                         <p
-                                            class="mt-1 text-[11px] leading-relaxed text-muted-foreground"
+                                            class="text-muted-foreground mt-1 text-[11px] leading-relaxed"
                                         >
                                             {{ notification.message }}
                                         </p>
@@ -1369,7 +1187,7 @@ onUnmounted(() => {
 
                                 <button
                                     type="button"
-                                    class="flex w-9 shrink-0 items-center justify-center text-muted-foreground opacity-0 transition hover:text-red-500 group-hover:opacity-100"
+                                    class="text-muted-foreground flex w-9 shrink-0 items-center justify-center opacity-0 transition group-hover:opacity-100 hover:text-red-500"
                                     title="Hapus notifikasi"
                                     @click.stop="
                                         deleteNotification(notification)
@@ -1383,7 +1201,7 @@ onUnmounted(() => {
                         <button
                             v-if="notificationHasMore"
                             type="button"
-                            class="flex w-full items-center justify-center gap-2 border-t px-4 py-2.5 text-xs font-medium text-sky-600 transition hover:bg-muted/60 disabled:opacity-60"
+                            class="hover:bg-muted/60 flex w-full items-center justify-center gap-2 border-t px-4 py-2.5 text-xs font-medium text-sky-600 transition disabled:opacity-60"
                             :disabled="notificationsLoadingMore"
                             @click="loadMoreNotifications()"
                         >
@@ -1403,10 +1221,10 @@ onUnmounted(() => {
                     <!-- EMPTY -->
                     <div v-else class="px-4 py-10 text-center">
                         <Inbox
-                            class="mx-auto h-8 w-8 text-muted-foreground/40"
+                            class="text-muted-foreground/40 mx-auto h-8 w-8"
                         />
 
-                        <p class="mt-2 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-2 text-xs">
                             {{
                                 notificationFilter === 'unread'
                                     ? 'Tidak ada notifikasi yang belum dibaca.'
@@ -1422,10 +1240,10 @@ onUnmounted(() => {
                 <button
                     type="button"
                     @click="toggleProfile"
-                    class="flex h-10 items-center gap-2 rounded-lg px-2 transition hover:bg-muted"
+                    class="hover:bg-muted flex h-10 items-center gap-2 rounded-lg px-2 transition"
                 >
                     <div
-                        class="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border bg-muted"
+                        class="bg-muted flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border"
                     >
                         <img
                             v-if="user?.profile_photo"
@@ -1436,43 +1254,35 @@ onUnmounted(() => {
 
                         <span
                             v-else
-                            class="text-sm font-semibold text-muted-foreground"
+                            class="text-muted-foreground text-sm font-semibold"
                         >
                             {{ user?.name?.charAt(0)?.toUpperCase() ?? 'U' }}
                         </span>
                     </div>
 
-                    <div
-                        class="hidden text-left lg:block"
-                    >
-                        <div
-                            class="text-xs font-semibold"
-                        >
+                    <div class="hidden text-left lg:block">
+                        <div class="text-xs font-semibold">
                             {{ user?.name ?? 'User' }}
                         </div>
 
-                        <div class="truncate text-xs text-muted-foreground">
+                        <div class="text-muted-foreground truncate text-xs">
                             {{ user?.business_name ?? 'Belum ada nama bisnis' }}
                         </div>
                     </div>
 
                     <ChevronDown
-                        class="hidden h-4 w-4 text-muted-foreground lg:block"
+                        class="text-muted-foreground hidden h-4 w-4 lg:block"
                     />
                 </button>
 
                 <div
                     v-if="profileOpen"
-                    class="absolute right-0 top-12 z-50 w-52 rounded-xl border bg-background p-2 shadow-xl"
+                    class="bg-background absolute top-12 right-0 z-50 w-52 rounded-xl border p-2 shadow-xl"
                 >
                     <button
                         type="button"
-                        class="flex w-full rounded-lg px-3 py-2 text-left text-sm transition hover:bg-muted"
-                        @click="
-                            router.visit(
-                                '/settings',
-                            )
-                        "
+                        class="hover:bg-muted flex w-full rounded-lg px-3 py-2 text-left text-sm transition"
+                        @click="router.visit('/settings')"
                     >
                         Profile & Settings
                     </button>

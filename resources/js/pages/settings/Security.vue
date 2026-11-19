@@ -67,7 +67,7 @@ const enableTwoFactor = () =>
     router.post('/user/two-factor-authentication', {}, requestOptions);
 
 const disableTwoFactor = () =>
-    router.delete('/user/two-factor-authentication', {}, requestOptions);
+    router.delete('/user/two-factor-authentication', requestOptions);
 
 const regenerateRecoveryCodes = () =>
     router.post('/user/two-factor-recovery-codes', {}, requestOptions);

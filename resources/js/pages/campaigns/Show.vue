@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, nextTick, ref } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
+import { computed, nextTick, ref } from 'vue';
+import { Link, router } from '@inertiajs/vue3';
 import {
     Activity,
     ArrowLeft,
@@ -26,88 +26,88 @@ import {
     Users,
     WalletCards,
     X,
-} from '@lucide/vue'
+} from '@lucide/vue';
 
-import PerformanceChart from '@/components/PerformanceChart.vue'
+import PerformanceChart from '@/components/PerformanceChart.vue';
 
 interface Creator {
-    id: number
-    name: string
-    username: string
-    platform: string
-    profile_image: string | null
+    id: number;
+    name: string;
+    username: string;
+    platform: string;
+    profile_image: string | null;
 }
 
 interface Performance {
-    id: number
-    performance_date?: string | null
-    views: number
-    likes: number
-    comments: number
-    shares: number
-    saves: number
-    clicks: number
-    orders: number
-    buyers: number
-    gmv: string | number
-    engagement_rate: string | number
-    conversion_rate: string | number
-    cost_per_view: string | number
-    cost_per_order: string | number
-    roas: string | number
-    roi: string | number
+    id: number;
+    performance_date?: string | null;
+    views: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    saves: number;
+    clicks: number;
+    orders: number;
+    buyers: number;
+    gmv: string | number;
+    engagement_rate: string | number;
+    conversion_rate: string | number;
+    cost_per_view: string | number;
+    cost_per_order: string | number;
+    roas: string | number;
+    roi: string | number;
 }
 
 interface PerformanceHistory extends Performance {
-    performance_date: string
-    created_at?: string | null
-    updated_at?: string | null
+    performance_date: string;
+    created_at?: string | null;
+    updated_at?: string | null;
 }
 
 interface Campaign {
-    id: number
-    campaign_name: string
-    product_name: string
-    platform: string
-    deliverable: string
-    agreed_price: string | number
-    start_date: string | null
-    end_date: string | null
-    status: 'planned' | 'running' | 'completed' | 'cancelled'
-    notes: string | null
-    creator: Creator
-    performances: Performance[]
-    performance_histories: PerformanceHistory[]
+    id: number;
+    campaign_name: string;
+    product_name: string;
+    platform: string;
+    deliverable: string;
+    agreed_price: string | number;
+    start_date: string | null;
+    end_date: string | null;
+    status: 'planned' | 'running' | 'completed' | 'cancelled';
+    notes: string | null;
+    creator: Creator;
+    performances: Performance[];
+    performance_histories: PerformanceHistory[];
 }
 
-type ChartMetric = 'views' | 'gmv' | 'orders' | 'roas' | 'roi'
+type ChartMetric = 'views' | 'gmv' | 'orders' | 'roas' | 'roi';
 
 const props = defineProps<{
-    campaign: Campaign
-}>()
+    campaign: Campaign;
+}>();
 
-const activeTab = ref<'overview' | 'performance'>('overview')
-const expandedPerformance = ref<number | null>(null)
-const showDeleteModal = ref(false)
-const deleting = ref(false)
-const selectedMetric = ref<ChartMetric>('views')
-const chartSection = ref<HTMLElement | null>(null)
+const activeTab = ref<'overview' | 'performance'>('overview');
+const expandedPerformance = ref<number | null>(null);
+const showDeleteModal = ref(false);
+const deleting = ref(false);
+const selectedMetric = ref<ChartMetric>('views');
+const chartSection = ref<HTMLElement | null>(null);
 
 const performance = computed(() => {
-    return props.campaign.performances[0] ?? null
-})
+    return props.campaign.performances[0] ?? null;
+});
 
 const hasPerformance = computed(() => {
-    return props.campaign.performances.length > 0
-})
+    return props.campaign.performances.length > 0;
+});
 
 const formatRupiah = (value: string | number) => {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         maximumFractionDigits: 0,
-    }).format(Number(value || 0))
-}
+    }).format(Number(value || 0));
+};
 
 const formatEfficiencyRupiah = (value: string | number) => {
     return new Intl.NumberFormat('id-ID', {
@@ -115,64 +115,60 @@ const formatEfficiencyRupiah = (value: string | number) => {
         currency: 'IDR',
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
-    }).format(Number(value || 0))
-}
+    }).format(Number(value || 0));
+};
 
 const formatNumber = (value: string | number) => {
-    return new Intl.NumberFormat('id-ID').format(Number(value || 0))
-}
+    return new Intl.NumberFormat('id-ID').format(Number(value || 0));
+};
 
 const formatCompact = (value: string | number) => {
-    const number = Number(value || 0)
+    const number = Number(value || 0);
 
     if (number >= 1_000_000_000) {
-        return `${(number / 1_000_000_000).toFixed(1)}B`
+        return `${(number / 1_000_000_000).toFixed(1)}B`;
     }
 
     if (number >= 1_000_000) {
-        return `${(number / 1_000_000).toFixed(1)}M`
+        return `${(number / 1_000_000).toFixed(1)}M`;
     }
 
     if (number >= 1_000) {
-        return `${(number / 1_000).toFixed(1)}K`
+        return `${(number / 1_000).toFixed(1)}K`;
     }
 
-    return String(number)
-}
+    return String(number);
+};
 
 const formatPercent = (value: string | number) => {
-    return `${Number(value || 0).toFixed(2)}%`
-}
+    return `${Number(value || 0).toFixed(2)}%`;
+};
 
 const formatRoas = (value: string | number) => {
-    return `${Number(value || 0).toFixed(2)}x`
-}
+    return `${Number(value || 0).toFixed(2)}x`;
+};
 
 const formatRoi = (value: string | number) => {
-    return `${Number(value || 0).toFixed(2)}%`
-}
+    return `${Number(value || 0).toFixed(2)}%`;
+};
 
 const formatDate = (date: string | null | undefined) => {
-    if (
-        !date ||
-        date === '0000-00-00' ||
-        date === '0000-00-00 00:00:00'
-    ) {
-        return '-'
+    if (!date || date === '0000-00-00' || date === '0000-00-00 00:00:00') {
+        return '-';
     }
 
-    const parsedDate = new Date(date)
+    const parsedDate = new Date(date);
 
     if (Number.isNaN(parsedDate.getTime())) {
-        return '-'
+        return '-';
     }
 
     return new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
-    }).format(parsedDate)
-}
+    }).format(parsedDate);
+};
 
 const statusLabel = (status: Campaign['status']) => {
     const labels = {
@@ -180,109 +176,102 @@ const statusLabel = (status: Campaign['status']) => {
         running: 'Running',
         completed: 'Completed',
         cancelled: 'Cancelled',
-    }
+    };
 
-    return labels[status]
-}
+    return labels[status];
+};
 
 const statusClass = (status: Campaign['status']) => {
     const classes = {
         planned: 'bg-muted text-muted-foreground',
-        running:
-            'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-        completed:
-            'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-        cancelled:
-            'bg-red-500/10 text-red-600 dark:text-red-400',
-    }
+        running: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+        completed: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+        cancelled: 'bg-red-500/10 text-red-600 dark:text-red-400',
+    };
 
-    return classes[status]
-}
+    return classes[status];
+};
 
 const campaignDuration = computed(() => {
-    if (!props.campaign.start_date) return 1
+    if (!props.campaign.start_date) return 1;
 
-    const start = new Date(
-        `${props.campaign.start_date}T00:00:00`,
-    )
+    const start = new Date(`${props.campaign.start_date}T00:00:00`);
 
     const end = new Date(
         `${props.campaign.end_date || props.campaign.start_date}T00:00:00`,
-    )
+    );
 
     return Math.max(
         1,
-        Math.ceil(
-            (end.getTime() - start.getTime()) /
-                (1000 * 60 * 60 * 24),
-        ) + 1,
-    )
-})
+        Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) +
+            1,
+    );
+});
 
 const engagementTotal = computed(() => {
-    if (!performance.value) return 0
+    if (!performance.value) return 0;
 
     return (
         Number(performance.value.likes || 0) +
         Number(performance.value.comments || 0) +
         Number(performance.value.shares || 0) +
         Number(performance.value.saves || 0)
-    )
-})
+    );
+});
 
 const conversionRate = computed(() => {
-    if (!performance.value) return 0
+    if (!performance.value) return 0;
 
-    return Number(performance.value.conversion_rate || 0)
-})
+    return Number(performance.value.conversion_rate || 0);
+});
 
 const engagementRate = computed(() => {
-    if (!performance.value) return 0
+    if (!performance.value) return 0;
 
-    return Number(performance.value.engagement_rate || 0)
-})
+    return Number(performance.value.engagement_rate || 0);
+});
 
 const roas = computed(() => {
-    if (!performance.value) return 0
+    if (!performance.value) return 0;
 
-    return Number(performance.value.roas || 0)
-})
+    return Number(performance.value.roas || 0);
+});
 
 const roi = computed(() => {
-    if (!performance.value) return 0
+    if (!performance.value) return 0;
 
-    return Number(performance.value.roi || 0)
-})
+    return Number(performance.value.roi || 0);
+});
 
 const gmv = computed(() => {
-    if (!performance.value) return 0
+    if (!performance.value) return 0;
 
-    return Number(performance.value.gmv || 0)
-})
+    return Number(performance.value.gmv || 0);
+});
 
 const views = computed(() => {
-    if (!performance.value) return 0
+    if (!performance.value) return 0;
 
-    return Number(performance.value.views || 0)
-})
+    return Number(performance.value.views || 0);
+});
 
 const orders = computed(() => {
-    if (!performance.value) return 0
+    if (!performance.value) return 0;
 
-    return Number(performance.value.orders || 0)
-})
+    return Number(performance.value.orders || 0);
+});
 
 const buyers = computed(() => {
-    if (!performance.value) return 0
+    if (!performance.value) return 0;
 
-    return Number(performance.value.buyers || 0)
-})
+    return Number(performance.value.buyers || 0);
+});
 
 const clicks = computed(() => {
-    if (!performance.value) return 0
+    if (!performance.value) return 0;
 
-    return Number(performance.value.clicks || 0)
-})
+    return Number(performance.value.clicks || 0);
+});
 
 const roasStatus = computed(() => {
     if (!hasPerformance.value) {
@@ -291,19 +280,16 @@ const roasStatus = computed(() => {
             description: 'Belum ada data performance.',
             class: 'bg-muted text-muted-foreground',
             textClass: 'text-muted-foreground',
-        }
+        };
     }
 
     if (roas.value >= 3) {
         return {
             label: 'Excellent',
-            description:
-                'GMV mencapai lebih dari 3x nilai campaign.',
-            class:
-                'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-            textClass:
-                'text-emerald-600 dark:text-emerald-400',
-        }
+            description: 'GMV mencapai lebih dari 3x nilai campaign.',
+            class: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+            textClass: 'text-emerald-600 dark:text-emerald-400',
+        };
     }
 
     if (roas.value >= 1.5) {
@@ -311,11 +297,9 @@ const roasStatus = computed(() => {
             label: 'Healthy',
             description:
                 'GMV menghasilkan return yang cukup kuat terhadap biaya campaign.',
-            class:
-                'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-            textClass:
-                'text-sky-600 dark:text-sky-400',
-        }
+            class: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+            textClass: 'text-sky-600 dark:text-sky-400',
+        };
     }
 
     if (roas.value >= 1) {
@@ -323,162 +307,133 @@ const roasStatus = computed(() => {
             label: 'Monitor',
             description:
                 'GMV sudah menutup biaya campaign, tetapi masih perlu dipantau.',
-            class:
-                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-            textClass:
-                'text-amber-600 dark:text-amber-400',
-        }
+            class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+            textClass: 'text-amber-600 dark:text-amber-400',
+        };
     }
 
     return {
         label: 'Need Attention',
         description: 'GMV masih di bawah biaya campaign.',
-        class:
-            'bg-red-500/10 text-red-600 dark:text-red-400',
-        textClass:
-            'text-red-600 dark:text-red-400',
-    }
-})
+        class: 'bg-red-500/10 text-red-600 dark:text-red-400',
+        textClass: 'text-red-600 dark:text-red-400',
+    };
+});
 
 const roiStatus = computed(() => {
     if (!hasPerformance.value) {
         return {
             label: 'No Data',
             class: 'text-muted-foreground',
-        }
+        };
     }
 
     if (roi.value >= 0) {
         return {
             label: 'Positive Return',
-            class:
-                'text-emerald-600 dark:text-emerald-400',
-        }
+            class: 'text-emerald-600 dark:text-emerald-400',
+        };
     }
 
     return {
         label: 'Negative Return',
         class: 'text-red-600 dark:text-red-400',
-    }
-})
+    };
+});
 
 const engagementStatus = computed(() => {
     if (!hasPerformance.value) {
-        return 'No Data'
+        return 'No Data';
     }
 
     if (engagementRate.value >= 5) {
-        return 'Strong'
+        return 'Strong';
     }
 
     if (engagementRate.value >= 2) {
-        return 'Healthy'
+        return 'Healthy';
     }
 
-    return 'Low'
-})
+    return 'Low';
+});
 
 const engagementStatusClass = computed(() => {
     if (!hasPerformance.value) {
-        return 'text-muted-foreground'
+        return 'text-muted-foreground';
     }
 
     if (engagementRate.value >= 5) {
-        return 'text-emerald-600 dark:text-emerald-400'
+        return 'text-emerald-600 dark:text-emerald-400';
     }
 
     if (engagementRate.value >= 2) {
-        return 'text-sky-600 dark:text-sky-400'
+        return 'text-sky-600 dark:text-sky-400';
     }
 
-    return 'text-amber-600 dark:text-amber-400'
-})
+    return 'text-amber-600 dark:text-amber-400';
+});
 
 const salesTrend = computed(() => {
-    const histories = [
-        ...(props.campaign.performance_histories ?? []),
-    ].sort((a, b) =>
-        a.performance_date.localeCompare(b.performance_date),
-    )
+    const histories = [...(props.campaign.performance_histories ?? [])].sort(
+        (a, b) => a.performance_date.localeCompare(b.performance_date),
+    );
 
-    if (histories.length < 3) return null
+    if (histories.length < 3) return null;
 
-    const recent = histories.slice(-4)
-    const first = recent[0]
-    const last = recent[recent.length - 1]
+    const recent = histories.slice(-4);
+    const first = recent[0];
+    const last = recent[recent.length - 1];
 
     const deltas = recent.slice(1).map((item, index) => {
-        const previous = recent[index]
+        const previous = recent[index];
 
         return {
-            orders:
-                Number(item.orders || 0) -
-                Number(previous.orders || 0),
-            gmv:
-                Number(item.gmv || 0) -
-                Number(previous.gmv || 0),
-        }
-    })
+            orders: Number(item.orders || 0) - Number(previous.orders || 0),
+            gmv: Number(item.gmv || 0) - Number(previous.gmv || 0),
+        };
+    });
 
-    const latest = deltas[deltas.length - 1]
+    const latest = deltas[deltas.length - 1];
     const noImprovement = deltas.map((delta, index) => {
-        const previous = deltas[index - 1]
+        const previous = deltas[index - 1];
 
-        return previous
-            ? delta.orders <= previous.orders
-            : delta.orders <= 0
-    })
+        return previous ? delta.orders <= previous.orders : delta.orders <= 0;
+    });
 
-    let noImprovementDays = 0
+    let noImprovementDays = 0;
 
-    for (
-        let index = deltas.length - 1;
-        index >= 0;
-        index -= 1
-    ) {
+    for (let index = deltas.length - 1; index >= 0; index -= 1) {
         if (noImprovement[index]) {
-            noImprovementDays += 1
+            noImprovementDays += 1;
         } else {
-            break
+            break;
         }
     }
 
-    let lowSalesDays = 0
+    let lowSalesDays = 0;
 
-    for (
-        let index = deltas.length - 1;
-        index >= 0;
-        index -= 1
-    ) {
-        if (
-            deltas[index].orders >= 0 &&
-            deltas[index].orders <= 2
-        ) {
-            lowSalesDays += 1
+    for (let index = deltas.length - 1; index >= 0; index -= 1) {
+        if (deltas[index].orders >= 0 && deltas[index].orders <= 2) {
+            lowSalesDays += 1;
         } else {
-            break
+            break;
         }
     }
 
-    const previousOrders = deltas
-        .slice(0, -1)
-        .map((delta) => delta.orders)
+    const previousOrders = deltas.slice(0, -1).map((delta) => delta.orders);
     const trafficValue = (item: PerformanceHistory) =>
         Number(item.views || 0) +
         Number(item.likes || 0) +
         Number(item.comments || 0) +
         Number(item.shares || 0) +
-        Number(item.saves || 0)
+        Number(item.saves || 0);
 
     return {
         noImprovementDays,
         lowSalesDays,
         latestNewOrders: latest.orders,
-        declining: previousOrders.some(
-            (orders) => latest.orders < orders,
-        ),
-        trafficIncreased:
-            trafficValue(last) > trafficValue(first),
+        declining: previousOrders.some((orders) => latest.orders < orders),
+        trafficIncreased: trafficValue(last) > trafficValue(first),
         viewsGrowth: Number(last.views || 0) - Number(first.views || 0),
         engagementGrowth:
             Number(last.likes || 0) +
@@ -489,77 +444,71 @@ const salesTrend = computed(() => {
                 Number(first.comments || 0) +
                 Number(first.shares || 0) +
                 Number(first.saves || 0)),
-    }
-})
+    };
+});
 
 const salesHealthPenalty = computed(() => {
-    const trend = salesTrend.value
+    const trend = salesTrend.value;
 
-    if (!trend) return 0
-    if (
-        trend.lowSalesDays >= 2 &&
-        trend.noImprovementDays >= 2
-    ) {
-        return 20
+    if (!trend) return 0;
+    if (trend.lowSalesDays >= 2 && trend.noImprovementDays >= 2) {
+        return 20;
     }
-    if (trend.lowSalesDays >= 1) return 10
-    if (trend.declining) return 12
+    if (trend.lowSalesDays >= 1) return 10;
+    if (trend.declining) return 12;
 
-    return 0
-})
+    return 0;
+});
 
 const performanceHealth = computed(() => {
-    if (!hasPerformance.value) return 0
+    if (!hasPerformance.value) return 0;
 
-    let score = 0
+    let score = 0;
 
-    if (roas.value >= 3) score += 40
-    else if (roas.value >= 1.5) score += 32
-    else if (roas.value >= 1) score += 22
-    else score += 8
+    if (roas.value >= 3) score += 40;
+    else if (roas.value >= 1.5) score += 32;
+    else if (roas.value >= 1) score += 22;
+    else score += 8;
 
-    if (roi.value >= 100) score += 25
-    else if (roi.value >= 50) score += 20
-    else if (roi.value >= 0) score += 12
-    else score += 5
+    if (roi.value >= 100) score += 25;
+    else if (roi.value >= 50) score += 20;
+    else if (roi.value >= 0) score += 12;
+    else score += 5;
 
-    if (engagementRate.value >= 5) score += 20
-    else if (engagementRate.value >= 2) score += 15
-    else score += 8
+    if (engagementRate.value >= 5) score += 20;
+    else if (engagementRate.value >= 2) score += 15;
+    else score += 8;
 
-    if (conversionRate.value >= 5) score += 15
-    else if (conversionRate.value >= 2) score += 10
-    else score += 5
+    if (conversionRate.value >= 5) score += 15;
+    else if (conversionRate.value >= 2) score += 10;
+    else score += 5;
 
-    return Math.max(
-        0,
-        Math.min(score, 100) - salesHealthPenalty.value,
-    )
-})
+    return Math.max(0, Math.min(score, 100) - salesHealthPenalty.value);
+});
 
 const performanceHealthLabel = computed(() => {
-    if (performanceHealth.value >= 80) return 'Strong'
-    if (performanceHealth.value >= 60) return 'Healthy'
-    if (performanceHealth.value >= 40) return 'Monitor'
+    if (performanceHealth.value >= 80) return 'Strong';
+    if (performanceHealth.value >= 60) return 'Healthy';
+    if (performanceHealth.value >= 40) return 'Monitor';
 
-    return 'Need Attention'
-})
+    return 'Need Attention';
+});
 
 const performanceHealthClass = computed(() => {
     if (performanceHealth.value >= 80) {
-        return 'text-emerald-600 dark:text-emerald-400'
+        return 'text-emerald-600 dark:text-emerald-400';
     }
 
     if (performanceHealth.value >= 60) {
-        return 'text-sky-600 dark:text-sky-400'
+        return 'text-sky-600 dark:text-sky-400';
     }
 
     if (performanceHealth.value >= 40) {
-        return 'text-amber-600 dark:text-amber-400'
+        return 'text-amber-600 dark:text-amber-400';
     }
 
-    return 'text-red-600 dark:text-red-400'
-})
+    return 'text-red-600 dark:text-red-400';
+});
 
 const campaignAction = computed(() => {
     if (!hasPerformance.value) {
@@ -576,10 +525,10 @@ const campaignAction = computed(() => {
             cta: 'Add Performance',
             class: 'bg-muted text-muted-foreground',
             iconClass: 'bg-muted text-muted-foreground',
-        }
+        };
     }
 
-    const trend = salesTrend.value
+    const trend = salesTrend.value;
 
     if (
         trend &&
@@ -593,9 +542,7 @@ const campaignAction = computed(() => {
             title: 'Hentikan Campaign',
             description: `Traffic naik ${formatNumber(trend.viewsGrowth)} views${
                 trend.engagementGrowth > 0
-                    ? ` dan ${formatNumber(
-                          trend.engagementGrowth,
-                      )} interaksi`
+                    ? ` dan ${formatNumber(trend.engagementGrowth)} interaksi`
                     : ''
             }, tetapi penjualan harian tidak mengalami peningkatan selama ${trend.noImprovementDays} hari terakhir (orders dan GMV stagnan atau menurun). Campaign hanya menghasilkan traffic tanpa hasil penjualan, sehingga sebaiknya dihentikan.`,
             actions: [
@@ -606,9 +553,8 @@ const campaignAction = computed(() => {
             ],
             cta: 'Review & Stop Campaign',
             class: 'bg-red-500/10 text-red-600 dark:text-red-400',
-            iconClass:
-                'bg-red-500/10 text-red-600 dark:text-red-400',
-        }
+            iconClass: 'bg-red-500/10 text-red-600 dark:text-red-400',
+        };
     }
 
     if (
@@ -632,11 +578,9 @@ const campaignAction = computed(() => {
                 'Siapkan opsi penghentian jika penjualan tidak membaik',
             ],
             cta: 'Review Performance',
-            class:
-                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-            iconClass:
-                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-        }
+            class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+            iconClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+        };
     }
 
     if (roas.value >= 3) {
@@ -653,11 +597,10 @@ const campaignAction = computed(() => {
                 'Pertimbangkan memperpanjang kerja sama',
             ],
             cta: 'Scale Campaign',
-            class:
-                'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+            class: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
             iconClass:
                 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-        }
+        };
     }
 
     if (roas.value >= 1.5) {
@@ -676,7 +619,7 @@ const campaignAction = computed(() => {
             cta: 'Optimize Campaign',
             class: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
             iconClass: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-        }
+        };
     }
 
     if (roas.value >= 1) {
@@ -693,11 +636,9 @@ const campaignAction = computed(() => {
                 'Pantau performa sebelum menambah budget',
             ],
             cta: 'Review Performance',
-            class:
-                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-            iconClass:
-                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-        }
+            class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+            iconClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+        };
     }
 
     return {
@@ -716,18 +657,18 @@ const campaignAction = computed(() => {
         cta: 'Investigate Campaign',
         class: 'bg-red-500/10 text-red-600 dark:text-red-400',
         iconClass: 'bg-red-500/10 text-red-600 dark:text-red-400',
-    }
-})
+    };
+});
 
 const metricConfig = computed(() => {
     const configs: Record<
         ChartMetric,
         {
-            label: string
-            icon: typeof Eye
-            color: string
-            value: number
-            formatted: string
+            label: string;
+            icon: typeof Eye;
+            color: string;
+            value: number;
+            formatted: string;
         }
     > = {
         views: {
@@ -765,17 +706,15 @@ const metricConfig = computed(() => {
             value: roi.value,
             formatted: formatRoi(roi.value),
         },
-    }
+    };
 
-    return configs[selectedMetric.value]
-})
+    return configs[selectedMetric.value];
+});
 
 const chartData = computed(() => {
-    const histories = [
-        ...(props.campaign.performance_histories ?? []),
-    ].sort((a, b) =>
-        a.performance_date.localeCompare(b.performance_date),
-    )
+    const histories = [...(props.campaign.performance_histories ?? [])].sort(
+        (a, b) => a.performance_date.localeCompare(b.performance_date),
+    );
 
     // Fallback jika backend belum mengirim riwayat snapshot.
     const records: PerformanceHistory[] =
@@ -784,30 +723,30 @@ const chartData = computed(() => {
             : props.campaign.performances.map((item) => ({
                   ...item,
                   performance_date: '',
-              }))
+              }));
 
     return records.map((item, index) => {
-        let value = 0
+        let value = 0;
 
         switch (selectedMetric.value) {
             case 'gmv':
-                value = Number(item.gmv || 0)
-                break
+                value = Number(item.gmv || 0);
+                break;
 
             case 'orders':
-                value = Number(item.orders || 0)
-                break
+                value = Number(item.orders || 0);
+                break;
 
             case 'roas':
-                value = Number(item.roas || 0)
-                break
+                value = Number(item.roas || 0);
+                break;
 
             case 'roi':
-                value = Number(item.roi || 0)
-                break
+                value = Number(item.roi || 0);
+                break;
 
             default:
-                value = Number(item.views || 0)
+                value = Number(item.views || 0);
         }
 
         return {
@@ -815,12 +754,12 @@ const chartData = computed(() => {
                 ? formatDate(item.performance_date)
                 : `Record ${index + 1}`,
             value,
-        }
-    })
-})
+        };
+    });
+});
 
 const performanceChartOption = computed(() => {
-    const config = metricConfig.value
+    const config = metricConfig.value;
 
     return {
         animation: true,
@@ -834,30 +773,30 @@ const performanceChartOption = computed(() => {
                 fontSize: 12,
             },
             formatter: (params: any[]) => {
-                const point = params[0]
+                const point = params[0];
 
-                if (!point) return ''
+                if (!point) return '';
 
-                let formatted = String(point.value)
+                let formatted = String(point.value);
 
                 if (selectedMetric.value === 'views') {
-                    formatted = formatNumber(point.value)
+                    formatted = formatNumber(point.value);
                 }
 
                 if (selectedMetric.value === 'gmv') {
-                    formatted = formatRupiah(point.value)
+                    formatted = formatRupiah(point.value);
                 }
 
                 if (selectedMetric.value === 'orders') {
-                    formatted = formatNumber(point.value)
+                    formatted = formatNumber(point.value);
                 }
 
                 if (selectedMetric.value === 'roas') {
-                    formatted = formatRoas(point.value)
+                    formatted = formatRoas(point.value);
                 }
 
                 if (selectedMetric.value === 'roi') {
-                    formatted = formatRoi(point.value)
+                    formatted = formatRoi(point.value);
                 }
 
                 return `
@@ -869,7 +808,7 @@ const performanceChartOption = computed(() => {
                             ${config.label}: ${formatted}
                         </div>
                     </div>
-                `
+                `;
             },
         },
         grid: {
@@ -881,9 +820,7 @@ const performanceChartOption = computed(() => {
         },
         xAxis: {
             type: 'category',
-            data: chartData.value.map(
-                (item) => item.label,
-            ),
+            data: chartData.value.map((item) => item.label),
             boundaryGap: false,
             axisTick: {
                 show: false,
@@ -911,18 +848,18 @@ const performanceChartOption = computed(() => {
                 fontSize: 11,
                 formatter: (value: number) => {
                     if (selectedMetric.value === 'gmv') {
-                        return formatCompact(value)
+                        return formatCompact(value);
                     }
 
                     if (selectedMetric.value === 'roas') {
-                        return `${value}x`
+                        return `${value}x`;
                     }
 
                     if (selectedMetric.value === 'roi') {
-                        return `${value}%`
+                        return `${value}%`;
                     }
 
-                    return formatCompact(value)
+                    return formatCompact(value);
                 },
             },
             splitLine: {
@@ -936,9 +873,7 @@ const performanceChartOption = computed(() => {
             {
                 name: config.label,
                 type: 'line',
-                data: chartData.value.map(
-                    (item) => item.value,
-                ),
+                data: chartData.value.map((item) => item.value),
                 smooth: true,
                 symbol: 'circle',
                 symbolSize: 9,
@@ -958,59 +893,52 @@ const performanceChartOption = computed(() => {
                 },
             },
         ],
-    }
-})
+    };
+});
 
 const selectMetric = async (metric: ChartMetric) => {
-    selectedMetric.value = metric
+    selectedMetric.value = metric;
 
-    await nextTick()
+    await nextTick();
 
     chartSection.value?.scrollIntoView({
         behavior: 'smooth',
         block: 'center',
-    })
-}
+    });
+};
 
 const togglePerformance = (id: number) => {
-    expandedPerformance.value =
-        expandedPerformance.value === id
-            ? null
-            : id
-}
+    expandedPerformance.value = expandedPerformance.value === id ? null : id;
+};
 
 const confirmDelete = () => {
-    deleting.value = true
+    deleting.value = true;
 
     router.delete(`/campaigns/${props.campaign.id}`, {
         onFinish: () => {
-            deleting.value = false
-            showDeleteModal.value = false
+            deleting.value = false;
+            showDeleteModal.value = false;
         },
-    })
-}
+    });
+};
 </script>
 
 <template>
-    <div
-        class="app-textured-bg min-h-full w-full px-4 py-6 sm:px-6 lg:px-8"
-    >
+    <div class="app-textured-bg min-h-full w-full px-4 py-6 sm:px-6 lg:px-8">
         <!-- HEADER -->
         <div class="mb-6">
             <div class="mb-4 flex items-center gap-2 text-sm">
                 <Link
                     href="/campaigns"
-                    class="inline-flex items-center gap-1.5 text-muted-foreground transition-colors hover:text-foreground"
+                    class="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
                 >
                     <ArrowLeft class="h-4 w-4" />
                     Campaign
                 </Link>
 
-                <ChevronRight
-                    class="h-4 w-4 text-muted-foreground/40"
-                />
+                <ChevronRight class="text-muted-foreground/40 h-4 w-4" />
 
-                <span class="truncate text-foreground">
+                <span class="text-foreground truncate">
                     {{ campaign.campaign_name }}
                 </span>
             </div>
@@ -1041,7 +969,7 @@ const confirmDelete = () => {
                             </span>
                         </div>
 
-                        <p class="mt-1 text-sm text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-sm">
                             {{ campaign.product_name }}
                             ·
                             {{ campaign.platform }}
@@ -1054,7 +982,7 @@ const confirmDelete = () => {
                 <div class="flex items-center gap-2">
                     <Link
                         :href="`/campaigns/${campaign.id}/edit`"
-                        class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted hover:shadow-md"
+                        class="border-border bg-card hover:bg-muted inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                     >
                         <Pencil class="h-4 w-4" />
                         Edit Campaign
@@ -1074,11 +1002,11 @@ const confirmDelete = () => {
 
         <!-- COMMAND CENTER -->
         <div
-            class="mb-5 overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition-shadow duration-300 hover:shadow-md"
+            class="border-border bg-card mb-5 overflow-hidden rounded-2xl border shadow-sm transition-shadow duration-300 hover:shadow-md"
         >
-            <div class="relative overflow-hidden border-b border-border p-6">
+            <div class="border-border relative overflow-hidden border-b p-6">
                 <div
-                    class="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-sky-500/10 blur-3xl"
+                    class="pointer-events-none absolute -top-20 -right-20 h-60 w-60 rounded-full bg-sky-500/10 blur-3xl"
                 />
 
                 <div
@@ -1086,7 +1014,7 @@ const confirmDelete = () => {
                 >
                     <div class="flex min-w-0 items-center gap-4">
                         <div
-                            class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-muted font-semibold text-muted-foreground ring-4 ring-muted/40 transition-transform duration-300 hover:scale-105"
+                            class="bg-muted text-muted-foreground ring-muted/40 flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl font-semibold ring-4 transition-transform duration-300 hover:scale-105"
                         >
                             <img
                                 v-if="campaign.creator?.profile_image"
@@ -1106,7 +1034,7 @@ const confirmDelete = () => {
 
                         <div class="min-w-0">
                             <p
-                                class="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+                                class="text-muted-foreground text-xs font-medium tracking-wide uppercase"
                             >
                                 Creator / KOL
                             </p>
@@ -1123,14 +1051,14 @@ const confirmDelete = () => {
                                 </span>
                             </div>
 
-                            <p class="text-sm text-muted-foreground">
+                            <p class="text-muted-foreground text-sm">
                                 @{{ campaign.creator?.username }}
                             </p>
                         </div>
                     </div>
 
                     <div class="lg:text-right">
-                        <p class="text-xs text-muted-foreground">
+                        <p class="text-muted-foreground text-xs">
                             Agreed Price
                         </p>
 
@@ -1138,7 +1066,7 @@ const confirmDelete = () => {
                             {{ formatRupiah(campaign.agreed_price) }}
                         </p>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             {{ campaign.deliverable }}
                         </p>
                     </div>
@@ -1147,14 +1075,17 @@ const confirmDelete = () => {
 
             <!-- QUICK KPI -->
             <div
-                class="grid grid-cols-2 divide-x divide-y divide-border md:grid-cols-4 md:divide-y-0"
+                class="divide-border grid grid-cols-2 divide-x divide-y md:grid-cols-4 md:divide-y-0"
             >
                 <button
                     type="button"
-                    class="group p-5 text-left transition-colors hover:bg-muted/30"
-                    @click="activeTab = 'performance'; selectMetric('views')"
+                    class="group hover:bg-muted/30 p-5 text-left transition-colors"
+                    @click="
+                        activeTab = 'performance';
+                        selectMetric('views');
+                    "
                 >
-                    <div class="flex items-center gap-2 text-muted-foreground">
+                    <div class="text-muted-foreground flex items-center gap-2">
                         <Eye
                             class="h-4 w-4 transition-transform duration-200 group-hover:scale-110"
                         />
@@ -1165,17 +1096,21 @@ const confirmDelete = () => {
                         {{ hasPerformance ? formatCompact(views) : '-' }}
                     </p>
 
-                    <p class="mt-1 text-[11px] text-muted-foreground">
-                        {{ hasPerformance ? formatNumber(views) : 'Belum tersedia' }}
+                    <p class="text-muted-foreground mt-1 text-[11px]">
+                        {{
+                            hasPerformance
+                                ? formatNumber(views)
+                                : 'Belum tersedia'
+                        }}
                     </p>
                 </button>
 
                 <button
                     type="button"
-                    class="group p-5 text-left transition-colors hover:bg-muted/30"
+                    class="group hover:bg-muted/30 p-5 text-left transition-colors"
                     @click="activeTab = 'performance'"
                 >
-                    <div class="flex items-center gap-2 text-muted-foreground">
+                    <div class="text-muted-foreground flex items-center gap-2">
                         <Activity
                             class="h-4 w-4 transition-transform duration-200 group-hover:scale-110"
                         />
@@ -1183,23 +1118,22 @@ const confirmDelete = () => {
                     </div>
 
                     <p class="mt-2 text-xl font-bold">
-                        {{ hasPerformance ? formatPercent(engagementRate) : '-' }}
+                        {{
+                            hasPerformance ? formatPercent(engagementRate) : '-'
+                        }}
                     </p>
 
-                    <p
-                        class="mt-1 text-[11px]"
-                        :class="engagementStatusClass"
-                    >
+                    <p class="mt-1 text-[11px]" :class="engagementStatusClass">
                         {{ hasPerformance ? engagementStatus : 'No Data' }}
                     </p>
                 </button>
 
                 <button
                     type="button"
-                    class="group p-5 text-left transition-colors hover:bg-muted/30"
+                    class="group hover:bg-muted/30 p-5 text-left transition-colors"
                     @click="activeTab = 'performance'"
                 >
-                    <div class="flex items-center gap-2 text-muted-foreground">
+                    <div class="text-muted-foreground flex items-center gap-2">
                         <ShoppingBag
                             class="h-4 w-4 transition-transform duration-200 group-hover:scale-110"
                         />
@@ -1210,17 +1144,24 @@ const confirmDelete = () => {
                         {{ hasPerformance ? formatNumber(orders) : '-' }}
                     </p>
 
-                    <p class="mt-1 text-[11px] text-muted-foreground">
-                        {{ hasPerformance ? `${formatNumber(buyers)} buyers` : 'Belum tersedia' }}
+                    <p class="text-muted-foreground mt-1 text-[11px]">
+                        {{
+                            hasPerformance
+                                ? `${formatNumber(buyers)} buyers`
+                                : 'Belum tersedia'
+                        }}
                     </p>
                 </button>
 
                 <button
                     type="button"
-                    class="group p-5 text-left transition-colors hover:bg-muted/30"
-                    @click="activeTab = 'performance'; selectMetric('roas')"
+                    class="group hover:bg-muted/30 p-5 text-left transition-colors"
+                    @click="
+                        activeTab = 'performance';
+                        selectMetric('roas');
+                    "
                 >
-                    <div class="flex items-center gap-2 text-muted-foreground">
+                    <div class="text-muted-foreground flex items-center gap-2">
                         <TrendingUp
                             class="h-4 w-4 transition-transform duration-200 group-hover:scale-110"
                         />
@@ -1247,7 +1188,7 @@ const confirmDelete = () => {
 
         <!-- TABS -->
         <div
-            class="mb-5 flex w-fit items-center gap-1 rounded-xl border border-border bg-card p-1 shadow-sm"
+            class="border-border bg-card mb-5 flex w-fit items-center gap-1 rounded-xl border p-1 shadow-sm"
         >
             <button
                 type="button"
@@ -1286,7 +1227,7 @@ const confirmDelete = () => {
             <div class="space-y-5">
                 <!-- PERFORMANCE HEALTH -->
                 <div
-                    class="rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md"
+                    class="border-border bg-card rounded-xl border p-5 shadow-sm transition-all duration-200 hover:shadow-md"
                 >
                     <div class="flex items-start justify-between gap-4">
                         <div>
@@ -1298,7 +1239,7 @@ const confirmDelete = () => {
                                 </h2>
                             </div>
 
-                            <p class="mt-1 text-xs text-muted-foreground">
+                            <p class="text-muted-foreground mt-1 text-xs">
                                 Ringkasan performa aktual campaign.
                             </p>
                         </div>
@@ -1318,11 +1259,14 @@ const confirmDelete = () => {
                         <!-- ROAS -->
                         <button
                             type="button"
-                            class="rounded-xl border border-transparent bg-muted/40 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-500/20 hover:bg-muted/70"
-                            @click="activeTab = 'performance'; selectMetric('roas')"
+                            class="bg-muted/40 hover:bg-muted/70 rounded-xl border border-transparent p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-500/20"
+                            @click="
+                                activeTab = 'performance';
+                                selectMetric('roas');
+                            "
                         >
                             <div class="flex items-center justify-between">
-                                <span class="text-xs text-muted-foreground">
+                                <span class="text-muted-foreground text-xs">
                                     ROAS
                                 </span>
 
@@ -1333,7 +1277,9 @@ const confirmDelete = () => {
                                 {{ formatRoas(roas) }}
                             </p>
 
-                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-background">
+                            <div
+                                class="bg-background mt-3 h-1.5 overflow-hidden rounded-full"
+                            >
                                 <div
                                     class="h-full rounded-full bg-sky-600 transition-all duration-700"
                                     :style="{
@@ -1345,7 +1291,7 @@ const confirmDelete = () => {
                                 />
                             </div>
 
-                            <p class="mt-2 text-[11px] text-muted-foreground">
+                            <p class="text-muted-foreground mt-2 text-[11px]">
                                 {{ roasStatus.description }}
                             </p>
                         </button>
@@ -1353,11 +1299,14 @@ const confirmDelete = () => {
                         <!-- ROI -->
                         <button
                             type="button"
-                            class="rounded-xl border border-transparent bg-muted/40 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/20 hover:bg-muted/70"
-                            @click="activeTab = 'performance'; selectMetric('roi')"
+                            class="bg-muted/40 hover:bg-muted/70 rounded-xl border border-transparent p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-emerald-500/20"
+                            @click="
+                                activeTab = 'performance';
+                                selectMetric('roi');
+                            "
                         >
                             <div class="flex items-center justify-between">
-                                <span class="text-xs text-muted-foreground">
+                                <span class="text-muted-foreground text-xs">
                                     ROI
                                 </span>
 
@@ -1376,7 +1325,9 @@ const confirmDelete = () => {
                                 {{ formatRoi(roi) }}
                             </p>
 
-                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-background">
+                            <div
+                                class="bg-background mt-3 h-1.5 overflow-hidden rounded-full"
+                            >
                                 <div
                                     class="h-full rounded-full transition-all duration-700"
                                     :class="
@@ -1393,7 +1344,7 @@ const confirmDelete = () => {
                                 />
                             </div>
 
-                            <p class="mt-2 text-[11px] text-muted-foreground">
+                            <p class="text-muted-foreground mt-2 text-[11px]">
                                 GMV dibandingkan dengan nilai campaign.
                             </p>
                         </button>
@@ -1401,11 +1352,11 @@ const confirmDelete = () => {
                         <!-- ENGAGEMENT -->
                         <button
                             type="button"
-                            class="rounded-xl border border-transparent bg-muted/40 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-500/20 hover:bg-muted/70"
+                            class="bg-muted/40 hover:bg-muted/70 rounded-xl border border-transparent p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-500/20"
                             @click="activeTab = 'performance'"
                         >
                             <div class="flex items-center justify-between">
-                                <span class="text-xs text-muted-foreground">
+                                <span class="text-muted-foreground text-xs">
                                     Engagement
                                 </span>
 
@@ -1416,7 +1367,9 @@ const confirmDelete = () => {
                                 {{ formatPercent(engagementRate) }}
                             </p>
 
-                            <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-background">
+                            <div
+                                class="bg-background mt-3 h-1.5 overflow-hidden rounded-full"
+                            >
                                 <div
                                     class="h-full rounded-full bg-sky-600 transition-all duration-700"
                                     :style="{
@@ -1428,7 +1381,7 @@ const confirmDelete = () => {
                                 />
                             </div>
 
-                            <p class="mt-2 text-[11px] text-muted-foreground">
+                            <p class="text-muted-foreground mt-2 text-[11px]">
                                 {{ formatNumber(engagementTotal) }}
                                 total interactions.
                             </p>
@@ -1437,17 +1390,17 @@ const confirmDelete = () => {
 
                     <div
                         v-else
-                        class="mt-5 rounded-xl border border-dashed border-border bg-muted/20 p-8 text-center"
+                        class="border-border bg-muted/20 mt-5 rounded-xl border border-dashed p-8 text-center"
                     >
                         <BarChart3
-                            class="mx-auto h-8 w-8 text-muted-foreground/50"
+                            class="text-muted-foreground/50 mx-auto h-8 w-8"
                         />
 
                         <p class="mt-3 text-sm font-medium">
                             Belum ada data performance
                         </p>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             Tambahkan performance untuk mulai melihat
                             intelligence campaign.
                         </p>
@@ -1456,9 +1409,9 @@ const confirmDelete = () => {
 
                 <!-- CAMPAIGN INFORMATION -->
                 <div
-                    class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                    class="border-border bg-card overflow-hidden rounded-xl border shadow-sm"
                 >
-                    <div class="border-b border-border p-5">
+                    <div class="border-border border-b p-5">
                         <div class="flex items-center gap-3">
                             <div
                                 class="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600"
@@ -1471,16 +1424,16 @@ const confirmDelete = () => {
                                     Informasi Campaign
                                 </h2>
 
-                                <p class="text-xs text-muted-foreground">
+                                <p class="text-muted-foreground text-xs">
                                     Detail kerja sama
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="grid gap-px bg-border sm:grid-cols-2">
+                    <div class="bg-border grid gap-px sm:grid-cols-2">
                         <div class="bg-card p-5">
-                            <p class="text-xs text-muted-foreground">
+                            <p class="text-muted-foreground text-xs">
                                 Nama Campaign
                             </p>
 
@@ -1490,9 +1443,7 @@ const confirmDelete = () => {
                         </div>
 
                         <div class="bg-card p-5">
-                            <p class="text-xs text-muted-foreground">
-                                Produk
-                            </p>
+                            <p class="text-muted-foreground text-xs">Produk</p>
 
                             <p class="mt-1 font-medium">
                                 {{ campaign.product_name }}
@@ -1500,7 +1451,7 @@ const confirmDelete = () => {
                         </div>
 
                         <div class="bg-card p-5">
-                            <p class="text-xs text-muted-foreground">
+                            <p class="text-muted-foreground text-xs">
                                 Platform
                             </p>
 
@@ -1510,7 +1461,7 @@ const confirmDelete = () => {
                         </div>
 
                         <div class="bg-card p-5">
-                            <p class="text-xs text-muted-foreground">
+                            <p class="text-muted-foreground text-xs">
                                 Deliverable
                             </p>
 
@@ -1523,7 +1474,7 @@ const confirmDelete = () => {
 
                 <!-- NOTES -->
                 <div
-                    class="rounded-xl border border-border bg-card p-5 shadow-sm"
+                    class="border-border bg-card rounded-xl border p-5 shadow-sm"
                 >
                     <div class="flex items-center gap-3">
                         <div
@@ -1533,11 +1484,9 @@ const confirmDelete = () => {
                         </div>
 
                         <div>
-                            <h2 class="text-sm font-semibold">
-                                Notes
-                            </h2>
+                            <h2 class="text-sm font-semibold">Notes</h2>
 
-                            <p class="text-xs text-muted-foreground">
+                            <p class="text-muted-foreground text-xs">
                                 Catatan internal campaign
                             </p>
                         </div>
@@ -1545,15 +1494,12 @@ const confirmDelete = () => {
 
                     <p
                         v-if="campaign.notes"
-                        class="mt-4 whitespace-pre-line text-sm leading-6 text-muted-foreground"
+                        class="text-muted-foreground mt-4 text-sm leading-6 whitespace-pre-line"
                     >
                         {{ campaign.notes }}
                     </p>
 
-                    <p
-                        v-else
-                        class="mt-4 text-sm text-muted-foreground"
-                    >
+                    <p v-else class="text-muted-foreground mt-4 text-sm">
                         Tidak ada catatan untuk campaign ini.
                     </p>
                 </div>
@@ -1563,7 +1509,7 @@ const confirmDelete = () => {
             <div class="space-y-5">
                 <!-- CREATOR -->
                 <div
-                    class="rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md"
+                    class="border-border bg-card rounded-xl border p-5 shadow-sm transition-all duration-200 hover:shadow-md"
                 >
                     <div class="flex items-center justify-between">
                         <div>
@@ -1571,21 +1517,18 @@ const confirmDelete = () => {
                                 Creator Snapshot
                             </h2>
 
-                            <p class="mt-1 text-xs text-muted-foreground">
+                            <p class="text-muted-foreground mt-1 text-xs">
                                 Creator yang digunakan campaign.
                             </p>
                         </div>
 
-                        <Users class="h-4 w-4 text-muted-foreground" />
+                        <Users class="text-muted-foreground h-4 w-4" />
                     </div>
 
-                    <div
-                        v-if="campaign.creator"
-                        class="mt-5"
-                    >
+                    <div v-if="campaign.creator" class="mt-5">
                         <div class="flex items-center gap-3">
                             <div
-                                class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted font-semibold text-muted-foreground"
+                                class="bg-muted text-muted-foreground flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full font-semibold"
                             >
                                 <img
                                     v-if="campaign.creator.profile_image"
@@ -1608,7 +1551,9 @@ const confirmDelete = () => {
                                     {{ campaign.creator.name }}
                                 </p>
 
-                                <p class="truncate text-xs text-muted-foreground">
+                                <p
+                                    class="text-muted-foreground truncate text-xs"
+                                >
                                     @{{ campaign.creator.username }}
                                 </p>
 
@@ -1622,7 +1567,7 @@ const confirmDelete = () => {
 
                         <Link
                             :href="`/creators/${campaign.creator.id}`"
-                            class="mt-5 flex w-full items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted hover:shadow-sm"
+                            class="border-border hover:bg-muted mt-5 flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                         >
                             Lihat Profil Creator
                             <ArrowUpRight class="h-3.5 w-3.5" />
@@ -1632,22 +1577,18 @@ const confirmDelete = () => {
 
                 <!-- DEAL -->
                 <div
-                    class="rounded-xl border border-border bg-card p-5 shadow-sm"
+                    class="border-border bg-card rounded-xl border p-5 shadow-sm"
                 >
                     <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="text-sm font-semibold">
-                                Deal
-                            </h2>
+                            <h2 class="text-sm font-semibold">Deal</h2>
 
-                            <p class="mt-1 text-xs text-muted-foreground">
+                            <p class="text-muted-foreground mt-1 text-xs">
                                 Nilai kerja sama campaign.
                             </p>
                         </div>
 
-                        <CircleDollarSign
-                            class="h-5 w-5 text-sky-600"
-                        />
+                        <CircleDollarSign class="h-5 w-5 text-sky-600" />
                     </div>
 
                     <p class="mt-5 text-2xl font-bold">
@@ -1664,15 +1605,13 @@ const confirmDelete = () => {
 
                 <!-- TIMELINE -->
                 <div
-                    class="rounded-xl border border-border bg-card p-5 shadow-sm"
+                    class="border-border bg-card rounded-xl border p-5 shadow-sm"
                 >
                     <div class="flex items-center justify-between">
                         <div>
-                            <h2 class="text-sm font-semibold">
-                                Timeline
-                            </h2>
+                            <h2 class="text-sm font-semibold">Timeline</h2>
 
-                            <p class="mt-1 text-xs text-muted-foreground">
+                            <p class="text-muted-foreground mt-1 text-xs">
                                 {{ campaignDuration }} hari
                             </p>
                         </div>
@@ -1689,11 +1628,11 @@ const confirmDelete = () => {
                                     <Check class="h-3.5 w-3.5" />
                                 </div>
 
-                                <div class="mt-1 h-8 w-px bg-border" />
+                                <div class="bg-border mt-1 h-8 w-px" />
                             </div>
 
                             <div>
-                                <p class="text-[11px] text-muted-foreground">
+                                <p class="text-muted-foreground text-[11px]">
                                     Mulai
                                 </p>
 
@@ -1705,13 +1644,13 @@ const confirmDelete = () => {
 
                         <div class="flex gap-3">
                             <div
-                                class="flex h-7 w-7 items-center justify-center rounded-full bg-muted text-muted-foreground"
+                                class="bg-muted text-muted-foreground flex h-7 w-7 items-center justify-center rounded-full"
                             >
                                 <Clock3 class="h-3.5 w-3.5" />
                             </div>
 
                             <div>
-                                <p class="text-[11px] text-muted-foreground">
+                                <p class="text-muted-foreground text-[11px]">
                                     Selesai
                                 </p>
 
@@ -1728,7 +1667,7 @@ const confirmDelete = () => {
                             </div>
 
                             <div>
-                                <p class="text-[11px] text-muted-foreground">
+                                <p class="text-muted-foreground text-[11px]">
                                     Snapshot Performance Terakhir
                                 </p>
 
@@ -1736,8 +1675,9 @@ const confirmDelete = () => {
                                     {{
                                         formatDate(
                                             campaign.performance_histories?.[
-                                                campaign.performance_histories.length - 1
-                                            ]?.performance_date
+                                                campaign.performance_histories
+                                                    .length - 1
+                                            ]?.performance_date,
                                         )
                                     }}
                                 </p>
@@ -1749,40 +1689,46 @@ const confirmDelete = () => {
                 <!-- COST EFFICIENCY -->
                 <div
                     v-if="hasPerformance"
-                    class="rounded-xl border border-border bg-card p-5 shadow-sm"
+                    class="border-border bg-card rounded-xl border p-5 shadow-sm"
                 >
                     <div class="flex items-center gap-2">
                         <WalletCards class="h-4 w-4 text-sky-600" />
 
-                        <h2 class="text-sm font-semibold">
-                            Cost Efficiency
-                        </h2>
+                        <h2 class="text-sm font-semibold">Cost Efficiency</h2>
                     </div>
 
                     <div class="mt-5 space-y-4">
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-muted-foreground">
+                            <span class="text-muted-foreground text-xs">
                                 Cost / View
                             </span>
 
                             <span class="text-sm font-semibold">
-                                {{ formatEfficiencyRupiah(performance!.cost_per_view) }}
+                                {{
+                                    formatEfficiencyRupiah(
+                                        performance!.cost_per_view,
+                                    )
+                                }}
                             </span>
                         </div>
 
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-muted-foreground">
+                            <span class="text-muted-foreground text-xs">
                                 Cost / Order
                             </span>
 
                             <span class="text-sm font-semibold">
-                                {{ formatEfficiencyRupiah(performance!.cost_per_order) }}
+                                {{
+                                    formatEfficiencyRupiah(
+                                        performance!.cost_per_order,
+                                    )
+                                }}
                             </span>
                         </div>
 
-                        <div class="border-t border-border pt-4">
+                        <div class="border-border border-t pt-4">
                             <div class="flex items-center justify-between">
-                                <span class="text-xs text-muted-foreground">
+                                <span class="text-muted-foreground text-xs">
                                     ROAS
                                 </span>
 
@@ -1800,14 +1746,9 @@ const confirmDelete = () => {
         </div>
 
         <!-- PERFORMANCE -->
-        <div
-            v-else
-            class="space-y-5"
-        >
+        <div v-else class="space-y-5">
             <!-- HEADER -->
-            <div
-                class="rounded-xl border border-border bg-card p-5 shadow-sm"
-            >
+            <div class="border-border bg-card rounded-xl border p-5 shadow-sm">
                 <div
                     class="flex flex-col justify-between gap-4 md:flex-row md:items-center"
                 >
@@ -1820,7 +1761,7 @@ const confirmDelete = () => {
                             </h2>
                         </div>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             Eksplorasi performa aktual campaign secara lebih
                             mendalam.
                         </p>
@@ -1830,7 +1771,7 @@ const confirmDelete = () => {
                         <Link
                             v-if="hasPerformance"
                             :href="`/campaigns/${campaign.id}/performance/${campaign.performances[0].id}/edit`"
-                            class="inline-flex items-center gap-2 rounded-lg border border-border px-3.5 py-2 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted hover:shadow-sm"
+                            class="border-border hover:bg-muted inline-flex items-center gap-2 rounded-lg border px-3.5 py-2 text-xs font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                         >
                             <Pencil class="h-3.5 w-3.5" />
                             Edit Performance
@@ -1850,7 +1791,7 @@ const confirmDelete = () => {
             <!-- NO PERFORMANCE -->
             <div
                 v-if="!hasPerformance"
-                class="rounded-xl border border-dashed border-border bg-card p-12 text-center"
+                class="border-border bg-card rounded-xl border border-dashed p-12 text-center"
             >
                 <div
                     class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-sky-500/10 text-sky-600"
@@ -1858,11 +1799,9 @@ const confirmDelete = () => {
                     <BarChart3 class="h-6 w-6" />
                 </div>
 
-                <h3 class="mt-4 font-semibold">
-                    Belum ada performance
-                </h3>
+                <h3 class="mt-4 font-semibold">Belum ada performance</h3>
 
-                <p class="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
+                <p class="text-muted-foreground mx-auto mt-2 max-w-md text-sm">
                     Masukkan data aktual campaign untuk melihat views,
                     engagement, conversion, GMV, ROAS, dan ROI.
                 </p>
@@ -1878,13 +1817,15 @@ const confirmDelete = () => {
             <template v-else>
                 <!-- PERFORMANCE HEALTH -->
                 <div
-                    class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                    class="border-border bg-card overflow-hidden rounded-xl border shadow-sm"
                 >
                     <div class="grid lg:grid-cols-[1fr_280px]">
                         <div class="p-6">
                             <div class="flex items-start justify-between gap-4">
                                 <div>
-                                    <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                                    <p
+                                        class="text-muted-foreground text-xs font-medium tracking-wide uppercase"
+                                    >
                                         Campaign Health
                                     </p>
 
@@ -1892,11 +1833,13 @@ const confirmDelete = () => {
                                         Performance Intelligence
                                     </h3>
 
-                                    <p class="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
+                                    <p
+                                        class="text-muted-foreground mt-2 max-w-xl text-sm leading-6"
+                                    >
                                         Ringkasan kondisi campaign berdasarkan
-                                        ROAS, ROI, engagement, conversion
-                                        rate, dan tren penjualan harian dari
-                                        data performance yang tersedia.
+                                        ROAS, ROI, engagement, conversion rate,
+                                        dan tren penjualan harian dari data
+                                        performance yang tersedia.
                                     </p>
                                 </div>
 
@@ -1909,9 +1852,13 @@ const confirmDelete = () => {
                             </div>
 
                             <div class="mt-6">
-                                <div class="mb-2 flex items-end justify-between">
+                                <div
+                                    class="mb-2 flex items-end justify-between"
+                                >
                                     <div>
-                                        <span class="text-xs text-muted-foreground">
+                                        <span
+                                            class="text-muted-foreground text-xs"
+                                        >
                                             Health Score
                                         </span>
 
@@ -1920,7 +1867,9 @@ const confirmDelete = () => {
                                             :class="performanceHealthClass"
                                         >
                                             {{ performanceHealth }}
-                                            <span class="text-base font-medium text-muted-foreground">
+                                            <span
+                                                class="text-muted-foreground text-base font-medium"
+                                            >
                                                 / 100
                                             </span>
                                         </p>
@@ -1934,7 +1883,9 @@ const confirmDelete = () => {
                                     </span>
                                 </div>
 
-                                <div class="h-2 overflow-hidden rounded-full bg-muted">
+                                <div
+                                    class="bg-muted h-2 overflow-hidden rounded-full"
+                                >
                                     <div
                                         class="h-full rounded-full bg-sky-600 transition-all duration-700"
                                         :style="{
@@ -1955,11 +1906,11 @@ const confirmDelete = () => {
                         </div>
 
                         <div
-                            class="border-t border-border bg-muted/20 p-6 lg:border-l lg:border-t-0"
+                            class="border-border bg-muted/20 border-t p-6 lg:border-t-0 lg:border-l"
                         >
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p class="text-xs text-muted-foreground">
+                                    <p class="text-muted-foreground text-xs">
                                         ROAS
                                     </p>
 
@@ -1969,7 +1920,7 @@ const confirmDelete = () => {
                                 </div>
 
                                 <div>
-                                    <p class="text-xs text-muted-foreground">
+                                    <p class="text-muted-foreground text-xs">
                                         ROI
                                     </p>
 
@@ -1982,7 +1933,7 @@ const confirmDelete = () => {
                                 </div>
 
                                 <div>
-                                    <p class="text-xs text-muted-foreground">
+                                    <p class="text-muted-foreground text-xs">
                                         Engagement
                                     </p>
 
@@ -1992,7 +1943,7 @@ const confirmDelete = () => {
                                 </div>
 
                                 <div>
-                                    <p class="text-xs text-muted-foreground">
+                                    <p class="text-muted-foreground text-xs">
                                         Conversion
                                     </p>
 
@@ -2007,7 +1958,7 @@ const confirmDelete = () => {
 
                 <!-- ACTION CENTER -->
                 <div
-                    class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                    class="border-border bg-card overflow-hidden rounded-xl border shadow-sm"
                 >
                     <div class="grid lg:grid-cols-[minmax(0,1fr)_280px]">
                         <!-- MAIN ACTION -->
@@ -2021,10 +1972,20 @@ const confirmDelete = () => {
                                 </div>
 
                                 <div class="min-w-0">
-                                    <div class="flex flex-wrap items-center gap-2">
+                                    <div
+                                        class="flex flex-wrap items-center gap-2"
+                                    >
                                         <p
-                                            class="text-[11px] font-semibold uppercase tracking-[0.12em]"
-                                            :class="campaignAction.class.split(' ').find((item) => item.startsWith('text-'))"
+                                            class="text-[11px] font-semibold tracking-[0.12em] uppercase"
+                                            :class="
+                                                campaignAction.class
+                                                    .split(' ')
+                                                    .find((item) =>
+                                                        item.startsWith(
+                                                            'text-',
+                                                        ),
+                                                    )
+                                            "
                                         >
                                             {{ campaignAction.eyebrow }}
                                         </p>
@@ -2037,12 +1998,14 @@ const confirmDelete = () => {
                                         </span>
                                     </div>
 
-                                    <h3 class="mt-2 text-xl font-bold tracking-tight">
+                                    <h3
+                                        class="mt-2 text-xl font-bold tracking-tight"
+                                    >
                                         {{ campaignAction.title }}
                                     </h3>
 
                                     <p
-                                        class="mt-2 max-w-2xl text-sm leading-6 text-muted-foreground"
+                                        class="text-muted-foreground mt-2 max-w-2xl text-sm leading-6"
                                     >
                                         {{ campaignAction.description }}
                                     </p>
@@ -2051,7 +2014,9 @@ const confirmDelete = () => {
 
                             <!-- RECOMMENDED ACTIONS -->
                             <div class="mt-6">
-                                <p class="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                                <p
+                                    class="text-muted-foreground text-xs font-semibold tracking-wide uppercase"
+                                >
                                     Recommended Actions
                                 </p>
 
@@ -2059,7 +2024,7 @@ const confirmDelete = () => {
                                     <div
                                         v-for="action in campaignAction.actions"
                                         :key="action"
-                                        class="flex items-start gap-2.5 rounded-lg border border-border bg-muted/20 px-3.5 py-3 transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted/40"
+                                        class="border-border bg-muted/20 hover:bg-muted/40 flex items-start gap-2.5 rounded-lg border px-3.5 py-3 transition-all duration-200 hover:-translate-y-0.5"
                                     >
                                         <div
                                             class="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
@@ -2067,7 +2032,9 @@ const confirmDelete = () => {
                                             <Check class="h-3 w-3" />
                                         </div>
 
-                                        <span class="text-xs leading-5 text-muted-foreground">
+                                        <span
+                                            class="text-muted-foreground text-xs leading-5"
+                                        >
                                             {{ action }}
                                         </span>
                                     </div>
@@ -2077,9 +2044,9 @@ const confirmDelete = () => {
 
                         <!-- ACTION SUMMARY -->
                         <div
-                            class="border-t border-border bg-muted/20 p-6 lg:border-l lg:border-t-0"
+                            class="border-border bg-muted/20 border-t p-6 lg:border-t-0 lg:border-l"
                         >
-                            <p class="text-xs text-muted-foreground">
+                            <p class="text-muted-foreground text-xs">
                                 Current Return
                             </p>
 
@@ -2091,14 +2058,14 @@ const confirmDelete = () => {
                                     {{ formatRoas(roas) }}
                                 </p>
 
-                                <p class="mt-1 text-xs text-muted-foreground">
+                                <p class="text-muted-foreground mt-1 text-xs">
                                     ROAS
                                 </p>
                             </div>
 
-                            <div class="mt-5 border-t border-border pt-5">
+                            <div class="border-border mt-5 border-t pt-5">
                                 <div class="flex items-center justify-between">
-                                    <span class="text-xs text-muted-foreground">
+                                    <span class="text-muted-foreground text-xs">
                                         GMV
                                     </span>
 
@@ -2107,8 +2074,10 @@ const confirmDelete = () => {
                                     </span>
                                 </div>
 
-                                <div class="mt-3 flex items-center justify-between">
-                                    <span class="text-xs text-muted-foreground">
+                                <div
+                                    class="mt-3 flex items-center justify-between"
+                                >
+                                    <span class="text-muted-foreground text-xs">
                                         ROI
                                     </span>
 
@@ -2149,11 +2118,11 @@ const confirmDelete = () => {
                 <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
                     <button
                         type="button"
-                        class="group rounded-xl border border-border bg-card p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                        class="group border-border bg-card rounded-xl border p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                         @click="selectMetric('views')"
                     >
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-muted-foreground">
+                            <span class="text-muted-foreground text-xs">
                                 Total Views
                             </span>
 
@@ -2166,18 +2135,18 @@ const confirmDelete = () => {
                             {{ formatCompact(views) }}
                         </p>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             {{ formatNumber(views) }} views
                         </p>
                     </button>
 
                     <button
                         type="button"
-                        class="group rounded-xl border border-border bg-card p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                        class="group border-border bg-card rounded-xl border p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                         @click="selectMetric('views')"
                     >
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-muted-foreground">
+                            <span class="text-muted-foreground text-xs">
                                 Engagement
                             </span>
 
@@ -2190,21 +2159,18 @@ const confirmDelete = () => {
                             {{ formatPercent(engagementRate) }}
                         </p>
 
-                        <p
-                            class="mt-1 text-xs"
-                            :class="engagementStatusClass"
-                        >
+                        <p class="mt-1 text-xs" :class="engagementStatusClass">
                             {{ engagementStatus }}
                         </p>
                     </button>
 
                     <button
                         type="button"
-                        class="group rounded-xl border border-border bg-card p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                        class="group border-border bg-card rounded-xl border p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                         @click="selectMetric('gmv')"
                     >
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-muted-foreground">
+                            <span class="text-muted-foreground text-xs">
                                 GMV
                             </span>
 
@@ -2217,18 +2183,18 @@ const confirmDelete = () => {
                             {{ formatRupiah(gmv) }}
                         </p>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             Revenue generated
                         </p>
                     </button>
 
                     <button
                         type="button"
-                        class="group rounded-xl border border-border bg-card p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                        class="group border-border bg-card rounded-xl border p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                         @click="selectMetric('roas')"
                     >
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-muted-foreground">
+                            <span class="text-muted-foreground text-xs">
                                 ROAS
                             </span>
 
@@ -2241,21 +2207,18 @@ const confirmDelete = () => {
                             {{ formatRoas(roas) }}
                         </p>
 
-                        <p
-                            class="mt-1 text-xs"
-                            :class="roasStatus.textClass"
-                        >
+                        <p class="mt-1 text-xs" :class="roasStatus.textClass">
                             {{ roasStatus.label }}
                         </p>
                     </button>
 
                     <button
                         type="button"
-                        class="group rounded-xl border border-border bg-card p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                        class="group border-border bg-card rounded-xl border p-5 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                         @click="selectMetric('roi')"
                     >
                         <div class="flex items-center justify-between">
-                            <span class="text-xs text-muted-foreground">
+                            <span class="text-muted-foreground text-xs">
                                 ROI
                             </span>
 
@@ -2274,10 +2237,7 @@ const confirmDelete = () => {
                             {{ formatRoi(roi) }}
                         </p>
 
-                        <p
-                            class="mt-1 text-xs"
-                            :class="roiStatus.class"
-                        >
+                        <p class="mt-1 text-xs" :class="roiStatus.class">
                             {{ roiStatus.label }}
                         </p>
                     </button>
@@ -2286,9 +2246,9 @@ const confirmDelete = () => {
                 <!-- TREND -->
                 <div
                     ref="chartSection"
-                    class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                    class="border-border bg-card overflow-hidden rounded-xl border shadow-sm"
                 >
-                    <div class="border-b border-border p-5">
+                    <div class="border-border border-b p-5">
                         <div
                             class="flex flex-col justify-between gap-4 lg:flex-row lg:items-center"
                         >
@@ -2301,14 +2261,19 @@ const confirmDelete = () => {
                                             Performance Trend
                                         </h3>
 
-                                        <p class="mt-1 text-xs text-muted-foreground">
-                                            Eksplorasi metric performance campaign.
+                                        <p
+                                            class="text-muted-foreground mt-1 text-xs"
+                                        >
+                                            Eksplorasi metric performance
+                                            campaign.
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
-                            <div class="flex flex-wrap gap-1 rounded-lg bg-muted p-1">
+                            <div
+                                class="bg-muted flex flex-wrap gap-1 rounded-lg p-1"
+                            >
                                 <button
                                     v-for="metric in [
                                         { key: 'views', label: 'Views' },
@@ -2326,9 +2291,7 @@ const confirmDelete = () => {
                                             : 'text-muted-foreground hover:text-foreground'
                                     "
                                     @click="
-                                        selectMetric(
-                                            metric.key as ChartMetric,
-                                        )
+                                        selectMetric(metric.key as ChartMetric)
                                     "
                                 >
                                     {{ metric.label }}
@@ -2339,10 +2302,7 @@ const confirmDelete = () => {
 
                     <div class="grid lg:grid-cols-[1fr_220px]">
                         <div class="p-5">
-                            <div
-                                class="w-full"
-                                style="height: 320px"
-                            >
+                            <div class="w-full" style="height: 320px">
                                 <PerformanceChart
                                     :option="performanceChartOption"
                                 />
@@ -2350,9 +2310,9 @@ const confirmDelete = () => {
                         </div>
 
                         <div
-                            class="border-t border-border bg-muted/20 p-5 lg:border-l lg:border-t-0"
+                            class="border-border bg-muted/20 border-t p-5 lg:border-t-0 lg:border-l"
                         >
-                            <p class="text-xs text-muted-foreground">
+                            <p class="text-muted-foreground text-xs">
                                 Selected Metric
                             </p>
 
@@ -2377,8 +2337,10 @@ const confirmDelete = () => {
                                 </div>
                             </div>
 
-                            <div class="mt-6 border-t border-border pt-5">
-                                <p class="text-xs leading-5 text-muted-foreground">
+                            <div class="border-border mt-6 border-t pt-5">
+                                <p
+                                    class="text-muted-foreground text-xs leading-5"
+                                >
                                     Klik metric di atas untuk mengubah
                                     visualisasi dan mengeksplorasi data
                                     performance yang tersedia.
@@ -2392,7 +2354,7 @@ const confirmDelete = () => {
                 <div class="grid gap-5 lg:grid-cols-2">
                     <!-- ENGAGEMENT -->
                     <div
-                        class="rounded-xl border border-border bg-card p-5 shadow-sm"
+                        class="border-border bg-card rounded-xl border p-5 shadow-sm"
                     >
                         <div class="flex items-center justify-between">
                             <div>
@@ -2400,7 +2362,7 @@ const confirmDelete = () => {
                                     Engagement Breakdown
                                 </h3>
 
-                                <p class="mt-1 text-xs text-muted-foreground">
+                                <p class="text-muted-foreground mt-1 text-xs">
                                     Interaksi yang dihasilkan.
                                 </p>
                             </div>
@@ -2437,7 +2399,7 @@ const confirmDelete = () => {
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2">
                                         <span
-                                            class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-xs"
+                                            class="bg-muted flex h-7 w-7 items-center justify-center rounded-md text-xs"
                                         >
                                             {{ item.icon }}
                                         </span>
@@ -2452,7 +2414,9 @@ const confirmDelete = () => {
                                     </span>
                                 </div>
 
-                                <div class="mt-2 h-1.5 overflow-hidden rounded-full bg-muted">
+                                <div
+                                    class="bg-muted mt-2 h-1.5 overflow-hidden rounded-full"
+                                >
                                     <div
                                         class="h-full rounded-full bg-sky-600 transition-all duration-700"
                                         :style="{
@@ -2473,9 +2437,9 @@ const confirmDelete = () => {
                         </div>
 
                         <div
-                            class="mt-5 flex items-center justify-between border-t border-border pt-4"
+                            class="border-border mt-5 flex items-center justify-between border-t pt-4"
                         >
-                            <span class="text-xs text-muted-foreground">
+                            <span class="text-muted-foreground text-xs">
                                 Total interactions
                             </span>
 
@@ -2487,31 +2451,29 @@ const confirmDelete = () => {
 
                     <!-- CONVERSION -->
                     <div
-                        class="rounded-xl border border-border bg-card p-5 shadow-sm"
+                        class="border-border bg-card rounded-xl border p-5 shadow-sm"
                     >
                         <div class="flex items-center justify-between">
                             <div>
-                                <h3 class="font-semibold">
-                                    Conversion Funnel
-                                </h3>
+                                <h3 class="font-semibold">Conversion Funnel</h3>
 
-                                <p class="mt-1 text-xs text-muted-foreground">
+                                <p class="text-muted-foreground mt-1 text-xs">
                                     Perjalanan audience hingga order.
                                 </p>
                             </div>
 
-                            <MousePointerClick
-                                class="h-5 w-5 text-sky-600"
-                            />
+                            <MousePointerClick class="h-5 w-5 text-sky-600" />
                         </div>
 
                         <div class="mt-6">
                             <div
-                                class="relative overflow-hidden rounded-xl border border-border bg-muted/20 p-4 transition-all duration-200 hover:bg-muted/40"
+                                class="border-border bg-muted/20 hover:bg-muted/40 relative overflow-hidden rounded-xl border p-4 transition-all duration-200"
                             >
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-xs text-muted-foreground">
+                                        <p
+                                            class="text-muted-foreground text-xs"
+                                        >
                                             Views
                                         </p>
 
@@ -2520,14 +2482,16 @@ const confirmDelete = () => {
                                         </p>
                                     </div>
 
-                                    <Eye class="h-5 w-5 text-muted-foreground" />
+                                    <Eye
+                                        class="text-muted-foreground h-5 w-5"
+                                    />
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-3 py-2 pl-5">
-                                <div class="h-5 w-px bg-border" />
+                                <div class="bg-border h-5 w-px" />
 
-                                <span class="text-[11px] text-muted-foreground">
+                                <span class="text-muted-foreground text-[11px]">
                                     CTR
                                     {{
                                         views > 0
@@ -2538,11 +2502,13 @@ const confirmDelete = () => {
                             </div>
 
                             <div
-                                class="rounded-xl border border-border bg-muted/20 p-4 transition-all duration-200 hover:bg-muted/40"
+                                class="border-border bg-muted/20 hover:bg-muted/40 rounded-xl border p-4 transition-all duration-200"
                             >
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-xs text-muted-foreground">
+                                        <p
+                                            class="text-muted-foreground text-xs"
+                                        >
                                             Clicks
                                         </p>
 
@@ -2551,14 +2517,16 @@ const confirmDelete = () => {
                                         </p>
                                     </div>
 
-                                    <MousePointerClick class="h-5 w-5 text-muted-foreground" />
+                                    <MousePointerClick
+                                        class="text-muted-foreground h-5 w-5"
+                                    />
                                 </div>
                             </div>
 
                             <div class="flex items-center gap-3 py-2 pl-5">
-                                <div class="h-5 w-px bg-border" />
+                                <div class="bg-border h-5 w-px" />
 
-                                <span class="text-[11px] text-muted-foreground">
+                                <span class="text-muted-foreground text-[11px]">
                                     Conversion
                                     {{ formatPercent(conversionRate) }}
                                 </span>
@@ -2569,7 +2537,9 @@ const confirmDelete = () => {
                             >
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <p class="text-xs text-muted-foreground">
+                                        <p
+                                            class="text-muted-foreground text-xs"
+                                        >
                                             Orders
                                         </p>
 
@@ -2584,9 +2554,9 @@ const confirmDelete = () => {
                         </div>
 
                         <div
-                            class="mt-5 flex items-center justify-between border-t border-border pt-4"
+                            class="border-border mt-5 flex items-center justify-between border-t pt-4"
                         >
-                            <span class="text-xs text-muted-foreground">
+                            <span class="text-muted-foreground text-xs">
                                 Buyers
                             </span>
 
@@ -2599,50 +2569,60 @@ const confirmDelete = () => {
 
                 <!-- EFFICIENCY -->
                 <div
-                    class="rounded-xl border border-border bg-card p-5 shadow-sm"
+                    class="border-border bg-card rounded-xl border p-5 shadow-sm"
                 >
                     <div class="flex items-center gap-2">
                         <WalletCards class="h-5 w-5 text-sky-600" />
 
                         <div>
-                            <h3 class="font-semibold">
-                                Campaign Efficiency
-                            </h3>
+                            <h3 class="font-semibold">Campaign Efficiency</h3>
 
-                            <p class="mt-1 text-xs text-muted-foreground">
+                            <p class="text-muted-foreground mt-1 text-xs">
                                 Efisiensi biaya dan return campaign.
                             </p>
                         </div>
                     </div>
 
                     <div class="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-                        <div class="rounded-lg bg-muted/40 p-4 transition-all duration-200 hover:-translate-y-0.5">
-                            <p class="text-xs text-muted-foreground">
-                                GMV
-                            </p>
+                        <div
+                            class="bg-muted/40 rounded-lg p-4 transition-all duration-200 hover:-translate-y-0.5"
+                        >
+                            <p class="text-muted-foreground text-xs">GMV</p>
 
                             <p class="mt-2 text-lg font-bold">
                                 {{ formatRupiah(gmv) }}
                             </p>
                         </div>
 
-                        <div class="rounded-lg bg-muted/40 p-4 transition-all duration-200 hover:-translate-y-0.5">
-                            <p class="text-xs text-muted-foreground">
+                        <div
+                            class="bg-muted/40 rounded-lg p-4 transition-all duration-200 hover:-translate-y-0.5"
+                        >
+                            <p class="text-muted-foreground text-xs">
                                 Cost / View
                             </p>
 
                             <p class="mt-2 text-lg font-bold">
-                                {{ formatEfficiencyRupiah(performance.cost_per_view) }}
+                                {{
+                                    formatEfficiencyRupiah(
+                                        performance.cost_per_view,
+                                    )
+                                }}
                             </p>
                         </div>
 
-                        <div class="rounded-lg bg-muted/40 p-4 transition-all duration-200 hover:-translate-y-0.5">
-                            <p class="text-xs text-muted-foreground">
+                        <div
+                            class="bg-muted/40 rounded-lg p-4 transition-all duration-200 hover:-translate-y-0.5"
+                        >
+                            <p class="text-muted-foreground text-xs">
                                 Cost / Order
                             </p>
 
                             <p class="mt-2 text-lg font-bold">
-                                {{ formatEfficiencyRupiah(performance.cost_per_order) }}
+                                {{
+                                    formatEfficiencyRupiah(
+                                        performance.cost_per_order,
+                                    )
+                                }}
                             </p>
                         </div>
 
@@ -2651,9 +2631,7 @@ const confirmDelete = () => {
                             class="rounded-lg bg-sky-500/10 p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:bg-sky-500/15"
                             @click="selectMetric('roas')"
                         >
-                            <p class="text-xs text-muted-foreground">
-                                ROAS
-                            </p>
+                            <p class="text-muted-foreground text-xs">ROAS</p>
 
                             <p class="mt-2 text-lg font-bold text-sky-600">
                                 {{ formatRoas(roas) }}
@@ -2670,9 +2648,7 @@ const confirmDelete = () => {
                             "
                             @click="selectMetric('roi')"
                         >
-                            <p class="text-xs text-muted-foreground">
-                                ROI
-                            </p>
+                            <p class="text-muted-foreground text-xs">ROI</p>
 
                             <p
                                 class="mt-2 text-lg font-bold"
@@ -2690,35 +2666,38 @@ const confirmDelete = () => {
 
                 <!-- PERFORMANCE RECORDS -->
                 <div
-                    class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                    class="border-border bg-card overflow-hidden rounded-xl border shadow-sm"
                 >
-                    <div class="border-b border-border p-5">
+                    <div class="border-border border-b p-5">
                         <div class="flex items-center justify-between gap-4">
                             <div>
                                 <h3 class="font-semibold">
                                     Performance Records
                                 </h3>
 
-                                <p class="mt-1 text-xs text-muted-foreground">
+                                <p class="text-muted-foreground mt-1 text-xs">
                                     Riwayat data performance campaign.
                                 </p>
                             </div>
 
                             <span
-                                class="rounded-full bg-muted px-2.5 py-1 text-xs font-medium"
+                                class="bg-muted rounded-full px-2.5 py-1 text-xs font-medium"
                             >
-                                {{ campaign.performance_histories?.length ?? campaign.performances.length }} record
+                                {{
+                                    campaign.performance_histories?.length ??
+                                    campaign.performances.length
+                                }}
+                                record
                             </span>
                         </div>
                     </div>
 
-                    <div class="divide-y divide-border">
+                    <div class="divide-border divide-y">
                         <div
-                            v-for="(item, index) in (
-                                campaign.performance_histories?.length
-                                    ? campaign.performance_histories
-                                    : campaign.performances
-                            )"
+                            v-for="(item, index) in campaign
+                                .performance_histories?.length
+                                ? campaign.performance_histories
+                                : campaign.performances"
                             :key="item.id"
                             class="transition-colors"
                             :class="
@@ -2729,7 +2708,7 @@ const confirmDelete = () => {
                         >
                             <button
                                 type="button"
-                                class="w-full px-5 py-5 text-left transition-colors hover:bg-muted/30"
+                                class="hover:bg-muted/30 w-full px-5 py-5 text-left transition-colors"
                                 @click="togglePerformance(item.id)"
                             >
                                 <div
@@ -2746,29 +2725,45 @@ const confirmDelete = () => {
                                             <p class="text-sm font-semibold">
                                                 Performance #{{ index + 1 }}
                                             </p>
-                                            
+
                                             <p
                                                 v-if="item.performance_date"
-                                                class="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground"
+                                                class="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs"
                                             >
-                                                <CalendarDays class="h-3.5 w-3.5" />
-                                                {{ formatDate(item.performance_date) }}
+                                                <CalendarDays
+                                                    class="h-3.5 w-3.5"
+                                                />
+                                                {{
+                                                    formatDate(
+                                                        item.performance_date,
+                                                    )
+                                                }}
                                             </p>
 
                                             <p
-                                                v-if="'performance_date' in item && item.performance_date"
-                                                class="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground"
+                                                v-if="
+                                                    'performance_date' in
+                                                        item &&
+                                                    item.performance_date
+                                                "
+                                                class="text-muted-foreground mt-1 flex items-center gap-1.5 text-xs"
                                             >
-                                                <CalendarDays class="h-3.5 w-3.5" />
-                                                {{ formatDate(item.performance_date) }}
+                                                <CalendarDays
+                                                    class="h-3.5 w-3.5"
+                                                />
+                                                {{
+                                                    formatDate(
+                                                        item.performance_date,
+                                                    )
+                                                }}
                                             </p>
-                                            <p class="mt-1 text-xs text-muted-foreground">
+                                            <p
+                                                class="text-muted-foreground mt-1 text-xs"
+                                            >
                                                 {{ formatNumber(item.views) }}
-                                                views
-                                                ·
+                                                views ·
                                                 {{ formatNumber(item.orders) }}
-                                                orders
-                                                ·
+                                                orders ·
                                                 {{ formatNumber(item.buyers) }}
                                                 buyers
                                             </p>
@@ -2777,17 +2772,23 @@ const confirmDelete = () => {
 
                                     <div class="flex items-center gap-6">
                                         <div class="hidden text-right sm:block">
-                                            <p class="text-[11px] text-muted-foreground">
+                                            <p
+                                                class="text-muted-foreground text-[11px]"
+                                            >
                                                 GMV
                                             </p>
 
-                                            <p class="mt-1 text-sm font-semibold">
+                                            <p
+                                                class="mt-1 text-sm font-semibold"
+                                            >
                                                 {{ formatRupiah(item.gmv) }}
                                             </p>
                                         </div>
 
                                         <div class="text-right">
-                                            <p class="text-[11px] text-muted-foreground">
+                                            <p
+                                                class="text-muted-foreground text-[11px]"
+                                            >
                                                 ROAS
                                             </p>
 
@@ -2804,7 +2805,9 @@ const confirmDelete = () => {
                                         </div>
 
                                         <div class="hidden text-right sm:block">
-                                            <p class="text-[11px] text-muted-foreground">
+                                            <p
+                                                class="text-muted-foreground text-[11px]"
+                                            >
                                                 ROI
                                             </p>
 
@@ -2821,7 +2824,7 @@ const confirmDelete = () => {
                                         </div>
 
                                         <ChevronDown
-                                            class="h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200"
+                                            class="text-muted-foreground h-4 w-4 shrink-0 transition-transform duration-200"
                                             :class="
                                                 expandedPerformance === item.id
                                                     ? 'rotate-180'
@@ -2835,11 +2838,15 @@ const confirmDelete = () => {
                             <!-- EXPANDED -->
                             <div
                                 v-if="expandedPerformance === item.id"
-                                class="border-t border-border bg-muted/20 px-5 py-5"
+                                class="border-border bg-muted/20 border-t px-5 py-5"
                             >
-                                <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                <div
+                                    class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+                                >
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Views
                                         </p>
 
@@ -2848,28 +2855,42 @@ const confirmDelete = () => {
                                         </p>
                                     </div>
 
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Engagement
                                         </p>
 
                                         <p class="mt-2 font-semibold">
-                                            {{ formatPercent(item.engagement_rate) }}
+                                            {{
+                                                formatPercent(
+                                                    item.engagement_rate,
+                                                )
+                                            }}
                                         </p>
                                     </div>
 
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Conversion
                                         </p>
 
                                         <p class="mt-2 font-semibold">
-                                            {{ formatPercent(item.conversion_rate) }}
+                                            {{
+                                                formatPercent(
+                                                    item.conversion_rate,
+                                                )
+                                            }}
                                         </p>
                                     </div>
 
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Buyers
                                         </p>
 
@@ -2879,9 +2900,13 @@ const confirmDelete = () => {
                                     </div>
                                 </div>
 
-                                <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                <div
+                                    class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+                                >
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Likes
                                         </p>
 
@@ -2890,8 +2915,10 @@ const confirmDelete = () => {
                                         </p>
                                     </div>
 
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Comments
                                         </p>
 
@@ -2900,8 +2927,10 @@ const confirmDelete = () => {
                                         </p>
                                     </div>
 
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Shares
                                         </p>
 
@@ -2910,8 +2939,10 @@ const confirmDelete = () => {
                                         </p>
                                     </div>
 
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Saves
                                         </p>
 
@@ -2921,9 +2952,13 @@ const confirmDelete = () => {
                                     </div>
                                 </div>
 
-                                <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                <div
+                                    class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+                                >
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Clicks
                                         </p>
 
@@ -2932,8 +2967,10 @@ const confirmDelete = () => {
                                         </p>
                                     </div>
 
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             GMV
                                         </p>
 
@@ -2942,23 +2979,35 @@ const confirmDelete = () => {
                                         </p>
                                     </div>
 
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Cost / View
                                         </p>
 
                                         <p class="mt-2 font-semibold">
-                                            {{ formatEfficiencyRupiah(item.cost_per_view) }}
+                                            {{
+                                                formatEfficiencyRupiah(
+                                                    item.cost_per_view,
+                                                )
+                                            }}
                                         </p>
                                     </div>
 
-                                    <div class="rounded-lg bg-card p-4">
-                                        <p class="text-[11px] text-muted-foreground">
+                                    <div class="bg-card rounded-lg p-4">
+                                        <p
+                                            class="text-muted-foreground text-[11px]"
+                                        >
                                             Cost / Order
                                         </p>
 
                                         <p class="mt-2 font-semibold">
-                                            {{ formatEfficiencyRupiah(item.cost_per_order) }}
+                                            {{
+                                                formatEfficiencyRupiah(
+                                                    item.cost_per_order,
+                                                )
+                                            }}
                                         </p>
                                     </div>
                                 </div>
@@ -2976,7 +3025,7 @@ const confirmDelete = () => {
             @click.self="showDeleteModal = false"
         >
             <div
-                class="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl"
+                class="border-border bg-card w-full max-w-md rounded-2xl border p-6 shadow-xl"
             >
                 <div class="flex items-start justify-between gap-4">
                     <div>
@@ -2990,9 +3039,9 @@ const confirmDelete = () => {
                             Hapus campaign?
                         </h3>
 
-                        <p class="mt-2 text-sm leading-6 text-muted-foreground">
+                        <p class="text-muted-foreground mt-2 text-sm leading-6">
                             Campaign
-                            <span class="font-medium text-foreground">
+                            <span class="text-foreground font-medium">
                                 "{{ campaign.campaign_name }}"
                             </span>
                             akan dihapus dan tidak dapat dikembalikan.
@@ -3001,7 +3050,7 @@ const confirmDelete = () => {
 
                     <button
                         type="button"
-                        class="rounded-lg p-2 text-muted-foreground transition-all duration-200 hover:scale-105 hover:bg-muted hover:text-foreground"
+                        class="text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition-all duration-200 hover:scale-105"
                         @click="showDeleteModal = false"
                     >
                         <X class="h-4 w-4" />
@@ -3011,7 +3060,7 @@ const confirmDelete = () => {
                 <div class="mt-6 flex justify-end gap-2">
                     <button
                         type="button"
-                        class="rounded-lg border border-border px-4 py-2 text-sm font-medium transition-colors hover:bg-muted"
+                        class="border-border hover:bg-muted rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
                         @click="showDeleteModal = false"
                     >
                         Batal
@@ -3025,11 +3074,7 @@ const confirmDelete = () => {
                     >
                         <Trash2 class="h-4 w-4" />
 
-                        {{
-                            deleting
-                                ? 'Menghapus...'
-                                : 'Hapus Campaign'
-                        }}
+                        {{ deleting ? 'Menghapus...' : 'Hapus Campaign' }}
                     </button>
                 </div>
             </div>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, useForm, usePage, router } from '@inertiajs/vue3'
+import { Head, useForm, usePage, router } from '@inertiajs/vue3';
 import {
     Upload,
     FileSpreadsheet,
@@ -10,233 +10,223 @@ import {
     AlertCircle,
     Clock3,
     Database,
-} from '@lucide/vue'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+} from '@lucide/vue';
+import { onBeforeUnmount, onMounted, ref } from 'vue';
 
 type ImportProgress = {
-    id: number
-    status: 'queued' | 'processing' | 'scoring' | 'completed' | 'failed'
-    progress: number
-    total_rows: number
-    processed_rows: number
-    successful_rows: number
-    skipped_rows: number
-    error_rows: number
-    started_at: string | null
-    completed_at: string | null
-    error_message: string | null
-}
+    id: number;
+    status: 'queued' | 'processing' | 'scoring' | 'completed' | 'failed';
+    progress: number;
+    total_rows: number;
+    processed_rows: number;
+    successful_rows: number;
+    skipped_rows: number;
+    error_rows: number;
+    started_at: string | null;
+    completed_at: string | null;
+    error_message: string | null;
+};
 
 const page = usePage<{
     flash?: {
-        success?: string
-        error?: string
-        import_batch_id?: number
-    }
-}>()
+        success?: string;
+        error?: string;
+        import_batch_id?: number;
+    };
+}>();
 
 const getYesterday = () => {
-    const date = new Date()
+    const date = new Date();
 
-    date.setDate(date.getDate() - 1)
+    date.setDate(date.getDate() - 1);
 
-    const year = date.getFullYear()
-    const month = String(date.getMonth() + 1).padStart(2, '0')
-    const day = String(date.getDate()).padStart(2, '0')
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
 
-    return `${year}-${month}-${day}`
-}
+    return `${year}-${month}-${day}`;
+};
 
 const form = useForm({
     file: null as File | null,
     period_start: getYesterday(),
     period_end: getYesterday(),
-})
+});
 
-const showProgress = ref(false)
-const importProgress = ref<ImportProgress | null>(null)
-const progressError = ref('')
-const elapsedSeconds = ref(0)
+const showProgress = ref(false);
+const importProgress = ref<ImportProgress | null>(null);
+const progressError = ref('');
+const elapsedSeconds = ref(0);
 
-let progressTimer: ReturnType<typeof setInterval> | null = null
-let elapsedTimer: ReturnType<typeof setInterval> | null = null
-let dismissTimer: ReturnType<typeof setTimeout> | null = null
+let progressTimer: ReturnType<typeof setInterval> | null = null;
+let elapsedTimer: ReturnType<typeof setInterval> | null = null;
+let dismissTimer: ReturnType<typeof setTimeout> | null = null;
 
 const stopProgressPolling = () => {
     if (progressTimer) {
-        clearInterval(progressTimer)
-        progressTimer = null
+        clearInterval(progressTimer);
+        progressTimer = null;
     }
 
     if (elapsedTimer) {
-        clearInterval(elapsedTimer)
-        elapsedTimer = null
+        clearInterval(elapsedTimer);
+        elapsedTimer = null;
     }
-}
+};
 
 const formatNumber = (value: number) => {
-    return new Intl.NumberFormat('id-ID').format(value)
-}
+    return new Intl.NumberFormat('id-ID').format(value);
+};
 
 const formatTime = (seconds: number) => {
     if (seconds < 60) {
-        return `${seconds} detik`
+        return `${seconds} detik`;
     }
 
-    const minutes = Math.floor(seconds / 60)
-    const remainingSeconds = seconds % 60
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
 
     if (minutes < 60) {
-        return `${minutes}m ${remainingSeconds}d`
+        return `${minutes}m ${remainingSeconds}d`;
     }
 
-    const hours = Math.floor(minutes / 60)
-    const remainingMinutes = minutes % 60
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
 
-    return `${hours}j ${remainingMinutes}m`
-}
+    return `${hours}j ${remainingMinutes}m`;
+};
 
 const estimatedRemaining = () => {
-    const current = importProgress.value
+    const current = importProgress.value;
 
     if (!current || current.processed_rows <= 0 || current.progress >= 100) {
-        return null
+        return null;
     }
 
-    const elapsed = elapsedSeconds.value
+    const elapsed = elapsedSeconds.value;
 
     if (elapsed <= 0) {
-        return null
+        return null;
     }
 
-    const rowsPerSecond = current.processed_rows / elapsed
+    const rowsPerSecond = current.processed_rows / elapsed;
     const remainingRows = Math.max(
         current.total_rows - current.processed_rows,
         0,
-    )
+    );
 
     if (rowsPerSecond <= 0) {
-        return null
+        return null;
     }
 
-    return Math.max(
-        1,
-        Math.ceil(remainingRows / rowsPerSecond),
-    )
-}
+    return Math.max(1, Math.ceil(remainingRows / rowsPerSecond));
+};
 
 const statusLabel = () => {
     switch (importProgress.value?.status) {
         case 'queued':
-            return 'Menunggu proses...'
+            return 'Menunggu proses...';
         case 'processing':
-            return 'Memproses data Seller Center...'
+            return 'Memproses data Seller Center...';
         case 'scoring':
-            return 'Menghitung intelligence score...'
+            return 'Menghitung intelligence score...';
         case 'completed':
-            return 'Import selesai'
+            return 'Import selesai';
         case 'failed':
-            return 'Import gagal'
+            return 'Import gagal';
         default:
-            return 'Menyiapkan import...'
+            return 'Menyiapkan import...';
     }
-}
+};
 
 const statusDescription = () => {
     switch (importProgress.value?.status) {
         case 'queued':
-            return 'Data sudah masuk antrean dan segera diproses.'
+            return 'Data sudah masuk antrean dan segera diproses.';
         case 'processing':
-            return 'Data affiliate sedang dibaca dan disimpan.'
+            return 'Data affiliate sedang dibaca dan disimpan.';
         case 'scoring':
-            return 'Data berhasil diimport. Sistem sedang menghitung scoring.'
+            return 'Data berhasil diimport. Sistem sedang menghitung scoring.';
         case 'completed':
-            return 'Seluruh proses import dan scoring telah selesai.'
+            return 'Seluruh proses import dan scoring telah selesai.';
         case 'failed':
-            return 'Terjadi masalah saat memproses data import.'
+            return 'Terjadi masalah saat memproses data import.';
         default:
-            return 'Menyiapkan proses import.'
+            return 'Menyiapkan proses import.';
     }
-}
+};
 
 const checkProgress = async (batchId: number) => {
     try {
-        const response = await fetch(
-            `/imports/${batchId}/progress`,
-            {
-                headers: {
-                    Accept: 'application/json',
-                },
+        const response = await fetch(`/imports/${batchId}/progress`, {
+            headers: {
+                Accept: 'application/json',
             },
-        )
+        });
 
         if (!response.ok) {
-            throw new Error('Gagal mengambil progress import.')
+            throw new Error('Gagal mengambil progress import.');
         }
 
-        const data: ImportProgress = await response.json()
+        const data: ImportProgress = await response.json();
 
-        importProgress.value = data
+        importProgress.value = data;
 
-        if (
-            data.status === 'completed' ||
-            data.status === 'failed'
-        ) {
-            stopProgressPolling()
+        if (data.status === 'completed' || data.status === 'failed') {
+            stopProgressPolling();
 
             if (dismissTimer) {
-                clearTimeout(dismissTimer)
+                clearTimeout(dismissTimer);
             }
 
             dismissTimer = setTimeout(() => {
-                dismissProgress()
-            }, 2000)
+                dismissProgress();
+            }, 2000);
         }
     } catch (error) {
-        console.error(error)
+        console.error(error);
         progressError.value =
-            'Progress belum dapat diperbarui. Mencoba kembali...'
+            'Progress belum dapat diperbarui. Mencoba kembali...';
     }
-}
+};
 
 const startProgressPolling = (batchId: number) => {
-    stopProgressPolling()
+    stopProgressPolling();
 
-    showProgress.value = true
-    progressError.value = ''
+    showProgress.value = true;
+    progressError.value = '';
 
-    checkProgress(batchId)
+    checkProgress(batchId);
 
     progressTimer = setInterval(() => {
-        checkProgress(batchId)
-    }, 1000)
+        checkProgress(batchId);
+    }, 1000);
 
     elapsedTimer = setInterval(() => {
         if (
             importProgress.value?.status === 'queued' ||
             importProgress.value?.status === 'processing'
         ) {
-            elapsedSeconds.value++
+            elapsedSeconds.value++;
         }
-    }, 1000)
-}
-
+    }, 1000);
+};
 
 const resumeActiveImport = async () => {
     // Pulihkan ID dari browser terlebih dahulu agar tidak perlu
     // menunggu endpoint /imports/active.
-    const savedBatchId = localStorage.getItem(ACTIVE_IMPORT_KEY)
+    const savedBatchId = localStorage.getItem(ACTIVE_IMPORT_KEY);
 
     if (savedBatchId) {
-        const id = Number(savedBatchId)
+        const id = Number(savedBatchId);
 
         if (Number.isInteger(id) && id > 0) {
-            showProgress.value = true
-            startProgressPolling(id)
-            return
+            showProgress.value = true;
+            startProgressPolling(id);
+            return;
         }
 
-        localStorage.removeItem(ACTIVE_IMPORT_KEY)
+        localStorage.removeItem(ACTIVE_IMPORT_KEY);
     }
 
     // Fallback jika browser belum menyimpan ID batch.
@@ -245,106 +235,104 @@ const resumeActiveImport = async () => {
             headers: {
                 Accept: 'application/json',
             },
-        })
+        });
 
-        if (!response.ok) return
+        if (!response.ok) return;
 
-        const data: { id: number | null } = await response.json()
+        const data: { id: number | null } = await response.json();
 
         if (data.id) {
-            localStorage.setItem(ACTIVE_IMPORT_KEY, String(data.id))
-            showProgress.value = true
-            startProgressPolling(data.id)
+            localStorage.setItem(ACTIVE_IMPORT_KEY, String(data.id));
+            showProgress.value = true;
+            startProgressPolling(data.id);
         }
     } catch (error) {
-        console.error('Gagal memulihkan progress import:', error)
+        console.error('Gagal memulihkan progress import:', error);
     }
-}
-
+};
 
 const dismissProgress = () => {
-    stopProgressPolling()
-    showProgress.value = false
-    importProgress.value = null
-    progressError.value = ''
-    elapsedSeconds.value = 0
-    localStorage.removeItem(ACTIVE_IMPORT_KEY)
+    stopProgressPolling();
+    showProgress.value = false;
+    importProgress.value = null;
+    progressError.value = '';
+    elapsedSeconds.value = 0;
+    localStorage.removeItem(ACTIVE_IMPORT_KEY);
 
     if (dismissTimer) {
-        clearTimeout(dismissTimer)
-        dismissTimer = null
+        clearTimeout(dismissTimer);
+        dismissTimer = null;
     }
-}
+};
 
-
-const ACTIVE_IMPORT_KEY = 'creator_affiliate_active_batch'
+const ACTIVE_IMPORT_KEY = 'creator_affiliate_active_batch';
 
 const submit = () => {
-    progressError.value = ''
+    progressError.value = '';
 
-    stopProgressPolling()
+    stopProgressPolling();
 
     if (dismissTimer) {
-        clearTimeout(dismissTimer)
-        dismissTimer = null
+        clearTimeout(dismissTimer);
+        dismissTimer = null;
     }
 
-    showProgress.value = false
-    importProgress.value = null
-    elapsedSeconds.value = 0
-    localStorage.removeItem(ACTIVE_IMPORT_KEY)
-    form.clearErrors()
+    showProgress.value = false;
+    importProgress.value = null;
+    elapsedSeconds.value = 0;
+    localStorage.removeItem(ACTIVE_IMPORT_KEY);
+    form.clearErrors();
 
     form.post('/imports/affiliate', {
         forceFormData: true,
         preserveScroll: true,
 
         onSuccess: () => {
-            const batchId = page.props.flash?.import_batch_id
+            const batchId = page.props.flash?.import_batch_id;
 
             if (batchId) {
-                const id = Number(batchId)
+                const id = Number(batchId);
 
-                localStorage.setItem(ACTIVE_IMPORT_KEY, String(id))
-                startProgressPolling(id)
+                localStorage.setItem(ACTIVE_IMPORT_KEY, String(id));
+                startProgressPolling(id);
             }
 
-            form.file = null
-            const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]')
+            form.file = null;
+            const fileInput =
+                document.querySelector<HTMLInputElement>('input[type="file"]');
             if (fileInput) {
-                fileInput.value = ''
+                fileInput.value = '';
             }
         },
         onError: () => {
-            form.file = null
-            const fileInput = document.querySelector<HTMLInputElement>('input[type="file"]')
+            form.file = null;
+            const fileInput =
+                document.querySelector<HTMLInputElement>('input[type="file"]');
             if (fileInput) {
-                fileInput.value = ''
+                fileInput.value = '';
             }
         },
-    })
-}
-
+    });
+};
 
 onMounted(() => {
-    resumeActiveImport()
-})
+    resumeActiveImport();
+});
 
 onBeforeUnmount(() => {
-    stopProgressPolling()
+    stopProgressPolling();
 
     if (dismissTimer) {
-        clearTimeout(dismissTimer)
-        dismissTimer = null
+        clearTimeout(dismissTimer);
+        dismissTimer = null;
     }
-})
-
+});
 </script>
 
 <template>
     <Head title="Import Data" />
 
-    <div class="app-textured-bg min-h-full p-4 text-foreground md:p-6">
+    <div class="app-textured-bg text-foreground min-h-full p-4 md:p-6">
         <!-- Header -->
         <div class="mb-6">
             <div class="flex items-center gap-4">
@@ -352,7 +340,7 @@ onBeforeUnmount(() => {
                 <button
                     type="button"
                     @click="router.visit('/dashboard')"
-                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted"
+                    class="border-border bg-card hover:bg-muted inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition"
                     title="Kembali ke Dashboard"
                 >
                     <ArrowLeft class="h-5 w-5" />
@@ -364,7 +352,7 @@ onBeforeUnmount(() => {
                         Import Data
                     </h1>
 
-                    <p class="mt-1 text-sm text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-sm">
                         Import data performance affiliate dari Seller Center.
                     </p>
                 </div>
@@ -386,21 +374,22 @@ onBeforeUnmount(() => {
         >
             {{ page.props.flash.error }}
         </div>
-        
 
         <!-- Import Card -->
-        <div class="flex min-h-[720px] flex-col rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div
+            class="border-border bg-card flex min-h-[720px] flex-col rounded-xl border p-6 shadow-sm"
+        >
             <div class="mb-6 flex items-center gap-3">
-                <div class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                    <FileSpreadsheet class="h-5 w-5 text-primary" />
+                <div
+                    class="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg"
+                >
+                    <FileSpreadsheet class="text-primary h-5 w-5" />
                 </div>
 
                 <div>
-                    <h2 class="font-semibold">
-                        Import Seller Center
-                    </h2>
+                    <h2 class="font-semibold">Import Seller Center</h2>
 
-                    <p class="text-sm text-muted-foreground">
+                    <p class="text-muted-foreground text-sm">
                         Upload file Excel atau CSV hasil export Seller Center.
                     </p>
                 </div>
@@ -414,9 +403,9 @@ onBeforeUnmount(() => {
                     </label>
 
                     <label
-                        class="flex min-h-[230px] flex-1 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 px-6 py-10 text-center transition hover:bg-muted/50"
+                        class="border-border bg-muted/30 hover:bg-muted/50 flex min-h-[230px] flex-1 cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed px-6 py-10 text-center transition"
                     >
-                        <Upload class="mb-3 h-8 w-8 text-muted-foreground" />
+                        <Upload class="text-muted-foreground mb-3 h-8 w-8" />
 
                         <span class="text-sm font-medium">
                             {{
@@ -426,7 +415,7 @@ onBeforeUnmount(() => {
                             }}
                         </span>
 
-                        <span class="mt-1 text-xs text-muted-foreground">
+                        <span class="text-muted-foreground mt-1 text-xs">
                             XLSX, XLS, atau CSV · Maksimal 20 MB
                         </span>
 
@@ -435,15 +424,14 @@ onBeforeUnmount(() => {
                             class="hidden"
                             accept=".xlsx,.xls,.csv"
                             @change="
-                                form.file = ($event.target as HTMLInputElement).files?.[0] ?? null
+                                form.file =
+                                    ($event.target as HTMLInputElement)
+                                        .files?.[0] ?? null
                             "
                         />
                     </label>
 
-                    <p
-                        v-if="form.errors.file"
-                        class="text-sm text-destructive"
-                    >
+                    <p v-if="form.errors.file" class="text-destructive text-sm">
                         {{ form.errors.file }}
                     </p>
                 </div>
@@ -459,22 +447,22 @@ onBeforeUnmount(() => {
 
                     <div class="relative">
                         <CalendarDays
-                            class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+                            class="absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-gray-400"
                         />
 
                         <input
                             id="period_start"
                             v-model="form.period_start"
                             type="date"
-                            class="w-full rounded-xl border border-gray-200 bg-white py-3 pl-10 pr-4 text-sm text-gray-900 outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
+                            class="focus:border-primary focus:ring-primary/10 w-full rounded-xl border border-gray-200 bg-white py-3 pr-4 pl-10 text-sm text-gray-900 transition outline-none focus:ring-2 dark:border-gray-700 dark:bg-gray-900 dark:text-white"
                             :disabled="form.processing"
                             @change="form.period_end = form.period_start"
                         />
                     </div>
 
                     <p class="text-xs text-gray-500 dark:text-gray-400">
-                        Menunjukkan tanggal performa data Seller Center.
-                        Default menggunakan H-1.
+                        Menunjukkan tanggal performa data Seller Center. Default
+                        menggunakan H-1.
                     </p>
 
                     <p
@@ -502,18 +490,26 @@ onBeforeUnmount(() => {
                         />
 
                         <div>
-                            <p class="text-sm font-semibold text-blue-900 dark:text-blue-200">
+                            <p
+                                class="text-sm font-semibold text-blue-900 dark:text-blue-200"
+                            >
                                 Daily Performance Snapshot
                             </p>
 
-                            <p class="mt-1 text-sm leading-6 text-blue-700 dark:text-blue-300">
-                                Setiap import disimpan sebagai snapshot performa untuk satu
-                                tanggal. Tanggal data tidak mengikuti waktu upload file.
+                            <p
+                                class="mt-1 text-sm leading-6 text-blue-700 dark:text-blue-300"
+                            >
+                                Setiap import disimpan sebagai snapshot performa
+                                untuk satu tanggal. Tanggal data tidak mengikuti
+                                waktu upload file.
                             </p>
 
-                            <p class="mt-2 text-xs leading-5 text-blue-600 dark:text-blue-400">
-                                Jika file tanggal sebelumnya baru tersedia kemudian, pilih
-                                tanggal performa yang sesuai saat melakukan import.
+                            <p
+                                class="mt-2 text-xs leading-5 text-blue-600 dark:text-blue-400"
+                            >
+                                Jika file tanggal sebelumnya baru tersedia
+                                kemudian, pilih tanggal performa yang sesuai
+                                saat melakukan import.
                             </p>
                         </div>
                     </div>
@@ -525,28 +521,21 @@ onBeforeUnmount(() => {
                         type="submit"
                         :disabled="form.processing"
                         class="inline-flex shrink-0 items-center gap-2 rounded-lg bg-sky-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-sky-700"
-                >
+                    >
                         <Loader2
                             v-if="form.processing"
                             class="h-4 w-4 animate-spin"
                         />
 
-                        <Upload
-                            v-else
-                            class="h-4 w-4"
-                        />
+                        <Upload v-else class="h-4 w-4" />
 
-                        {{
-                            form.processing
-                                ? 'Memproses...'
-                                : 'Import Data'
-                        }}
+                        {{ form.processing ? 'Memproses...' : 'Import Data' }}
                     </button>
                 </div>
             </form>
         </div>
     </div>
-        <!-- Import Progress -->
+    <!-- Import Progress -->
     <Transition
         enter-active-class="transition duration-300 ease-out"
         enter-from-class="translate-y-4 opacity-0"
@@ -555,175 +544,192 @@ onBeforeUnmount(() => {
         leave-from-class="translate-y-0 opacity-100"
         leave-to-class="translate-y-4 opacity-0"
     >
-        <div v-if="showProgress" class="fixed inset-x-0 bottom-5 z-50 mx-auto w-[calc(100%-2rem)] max-w-2xl">
-             <div v-if="importProgress">
+        <div
+            v-if="showProgress"
+            class="fixed inset-x-0 bottom-5 z-50 mx-auto w-[calc(100%-2rem)] max-w-2xl"
+        >
+            <div v-if="importProgress">
                 <div
-                class="overflow-hidden rounded-2xl border border-border bg-card shadow-2xl"
-            >
-                <!-- Header -->
-                <div class="flex items-start justify-between gap-4 p-5">
-                    <div class="flex items-start gap-3">
-                        <div
-                            class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
-                            :class="
-                                importProgress.status === 'completed'
-                                    ? 'bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400'
-                                    : importProgress.status === 'failed'
-                                      ? 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400'
-                                      : 'bg-sky-100 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400'
-                            "
-                        >
-                            <CheckCircle2
-                                v-if="importProgress.status === 'completed'"
-                                class="h-5 w-5"
-                            />
+                    class="border-border bg-card overflow-hidden rounded-2xl border shadow-2xl"
+                >
+                    <!-- Header -->
+                    <div class="flex items-start justify-between gap-4 p-5">
+                        <div class="flex items-start gap-3">
+                            <div
+                                class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl"
+                                :class="
+                                    importProgress.status === 'completed'
+                                        ? 'bg-green-100 text-green-600 dark:bg-green-950/40 dark:text-green-400'
+                                        : importProgress.status === 'failed'
+                                          ? 'bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400'
+                                          : 'bg-sky-100 text-sky-600 dark:bg-sky-950/40 dark:text-sky-400'
+                                "
+                            >
+                                <CheckCircle2
+                                    v-if="importProgress.status === 'completed'"
+                                    class="h-5 w-5"
+                                />
 
-                            <AlertCircle
-                                v-else-if="importProgress.status === 'failed'"
-                                class="h-5 w-5"
-                            />
+                                <AlertCircle
+                                    v-else-if="
+                                        importProgress.status === 'failed'
+                                    "
+                                    class="h-5 w-5"
+                                />
 
-                            <Loader2
-                                v-else
-                                class="h-5 w-5 animate-spin"
-                            />
+                                <Loader2 v-else class="h-5 w-5 animate-spin" />
+                            </div>
+
+                            <div>
+                                <h3 class="font-semibold">
+                                    {{ statusLabel() }}
+                                </h3>
+
+                                <p class="text-muted-foreground mt-0.5 text-sm">
+                                    {{ statusDescription() }}
+                                </p>
+                            </div>
                         </div>
 
-                        <div>
-                            <h3 class="font-semibold">
-                                {{ statusLabel() }}
-                            </h3>
+                        <span
+                            class="text-2xl font-bold tracking-tight"
+                            :class="
+                                importProgress.status === 'completed'
+                                    ? 'text-green-600 dark:text-green-400'
+                                    : importProgress.status === 'failed'
+                                      ? 'text-red-600 dark:text-red-400'
+                                      : 'text-sky-600 dark:text-sky-400'
+                            "
+                        >
+                            {{ importProgress.progress }}%
+                        </span>
+                    </div>
 
-                            <p class="mt-0.5 text-sm text-muted-foreground">
-                                {{ statusDescription() }}
+                    <!-- Progress -->
+                    <div class="px-5">
+                        <div class="bg-muted h-3 overflow-hidden rounded-full">
+                            <div
+                                class="h-full rounded-full transition-all duration-500 ease-out"
+                                :class="
+                                    importProgress.status === 'completed'
+                                        ? 'bg-green-500'
+                                        : importProgress.status === 'failed'
+                                          ? 'bg-red-500'
+                                          : 'bg-sky-500'
+                                "
+                                :style="{
+                                    width: `${importProgress.progress}%`,
+                                }"
+                            ></div>
+                        </div>
+
+                        <div
+                            class="text-muted-foreground mt-2 flex items-center justify-between text-xs"
+                        >
+                            <span>
+                                {{
+                                    formatNumber(importProgress.processed_rows)
+                                }}
+                                /
+                                {{ formatNumber(importProgress.total_rows) }}
+                                rows
+                            </span>
+
+                            <span
+                                v-if="
+                                    estimatedRemaining() !== null &&
+                                    importProgress.status === 'processing'
+                                "
+                                class="inline-flex items-center gap-1"
+                            >
+                                <Clock3 class="h-3.5 w-3.5" />
+                                ~{{ formatTime(estimatedRemaining()!) }} tersisa
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Statistics -->
+                    <div class="grid grid-cols-3 gap-3 p-5">
+                        <div class="bg-muted/50 rounded-xl p-3">
+                            <div
+                                class="text-muted-foreground flex items-center gap-2 text-xs"
+                            >
+                                <CheckCircle2 class="h-3.5 w-3.5" />
+                                Berhasil
+                            </div>
+
+                            <p class="mt-1 text-lg font-semibold">
+                                {{
+                                    formatNumber(importProgress.successful_rows)
+                                }}
+                            </p>
+                        </div>
+
+                        <div class="bg-muted/50 rounded-xl p-3">
+                            <div
+                                class="text-muted-foreground flex items-center gap-2 text-xs"
+                            >
+                                <Database class="h-3.5 w-3.5" />
+                                Dilewati
+                            </div>
+
+                            <p class="mt-1 text-lg font-semibold">
+                                {{ formatNumber(importProgress.skipped_rows) }}
+                            </p>
+                        </div>
+
+                        <div class="bg-muted/50 rounded-xl p-3">
+                            <div
+                                class="text-muted-foreground flex items-center gap-2 text-xs"
+                            >
+                                <AlertCircle class="h-3.5 w-3.5" />
+                                Error
+                            </div>
+
+                            <p class="mt-1 text-lg font-semibold">
+                                {{ formatNumber(importProgress.error_rows) }}
                             </p>
                         </div>
                     </div>
 
-                    <span
-                        class="text-2xl font-bold tracking-tight"
-                        :class="
-                            importProgress.status === 'completed'
-                                ? 'text-green-600 dark:text-green-400'
-                                : importProgress.status === 'failed'
-                                  ? 'text-red-600 dark:text-red-400'
-                                  : 'text-sky-600 dark:text-sky-400'
-                        "
+                    <!-- Error -->
+                    <div
+                        v-if="progressError"
+                        class="border-border text-muted-foreground border-t px-5 py-3 text-xs"
                     >
-                        {{ importProgress.progress }}%
-                    </span>
-                </div>
-
-                <!-- Progress -->
-                <div class="px-5">
-                    <div class="h-3 overflow-hidden rounded-full bg-muted">
-                        <div
-                            class="h-full rounded-full transition-all duration-500 ease-out"
-                            :class="
-                                importProgress.status === 'completed'
-                                    ? 'bg-green-500'
-                                    : importProgress.status === 'failed'
-                                      ? 'bg-red-500'
-                                      : 'bg-sky-500'
-                            "
-                            :style="{
-                                width: `${importProgress.progress}%`,
-                            }"
-                        ></div>
+                        {{ progressError }}
                     </div>
 
                     <div
-                        class="mt-2 flex items-center justify-between text-xs text-muted-foreground"
+                        v-if="
+                            importProgress.status === 'failed' &&
+                            importProgress.error_message
+                        "
+                        class="border-t border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400"
                     >
-                        <span>
-                            {{ formatNumber(importProgress.processed_rows) }}
-                            /
-                            {{ formatNumber(importProgress.total_rows) }}
-                            rows
-                        </span>
-
-                        <span
-                            v-if="
-                                estimatedRemaining() !== null &&
-                                importProgress.status === 'processing'
-                            "
-                            class="inline-flex items-center gap-1"
-                        >
-                            <Clock3 class="h-3.5 w-3.5" />
-                            ~{{ formatTime(estimatedRemaining()!) }} tersisa
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Statistics -->
-                <div class="grid grid-cols-3 gap-3 p-5">
-                    <div class="rounded-xl bg-muted/50 p-3">
-                        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                            <CheckCircle2 class="h-3.5 w-3.5" />
-                            Berhasil
-                        </div>
-
-                        <p class="mt-1 text-lg font-semibold">
-                            {{ formatNumber(importProgress.successful_rows) }}
-                        </p>
+                        {{ importProgress.error_message }}
                     </div>
 
-                    <div class="rounded-xl bg-muted/50 p-3">
-                        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                            <Database class="h-3.5 w-3.5" />
-                            Dilewati
-                        </div>
-
-                        <p class="mt-1 text-lg font-semibold">
-                            {{ formatNumber(importProgress.skipped_rows) }}
-                        </p>
+                    <!-- Completed -->
+                    <div
+                        v-if="importProgress.status === 'completed'"
+                        class="border-t border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400"
+                    >
+                        ✓ Data berhasil diimport dan scoring telah selesai.
                     </div>
-
-                    <div class="rounded-xl bg-muted/50 p-3">
-                        <div class="flex items-center gap-2 text-xs text-muted-foreground">
-                            <AlertCircle class="h-3.5 w-3.5" />
-                            Error
-                        </div>
-
-                        <p class="mt-1 text-lg font-semibold">
-                            {{ formatNumber(importProgress.error_rows) }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- Error -->
-                <div
-                    v-if="progressError"
-                    class="border-t border-border px-5 py-3 text-xs text-muted-foreground"
-                >
-                    {{ progressError }}
-                </div>
-
-                <div
-                    v-if="
-                        importProgress.status === 'failed' &&
-                        importProgress.error_message
-                    "
-                    class="border-t border-red-200 bg-red-50 px-5 py-3 text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-400"
-                >
-                    {{ importProgress.error_message }}
-                </div>
-
-                <!-- Completed -->
-                <div
-                    v-if="importProgress.status === 'completed'"
-                    class="border-t border-green-200 bg-green-50 px-5 py-3 text-sm text-green-700 dark:border-green-900 dark:bg-green-950/30 dark:text-green-400"
-                >
-                    ✓ Data berhasil diimport dan scoring telah selesai.
                 </div>
             </div>
-            </div>
-            <div v-else class="rounded-2xl border border-border bg-card p-5 shadow-2xl">
+            <div
+                v-else
+                class="border-border bg-card rounded-2xl border p-5 shadow-2xl"
+            >
                 <div class="flex items-center gap-3">
                     <Loader2 class="h-5 w-5 animate-spin text-sky-600" />
                     <div>
-                        <p class="font-semibold">Memulihkan progres import...</p>
-                        <p class="text-sm text-muted-foreground">
+                        <p class="font-semibold">
+                            Memulihkan progres import...
+                        </p>
+                        <p class="text-muted-foreground text-sm">
                             Mengambil status terbaru dari server.
                         </p>
                     </div>

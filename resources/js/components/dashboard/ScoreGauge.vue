@@ -8,9 +8,7 @@ const props = defineProps<{
     caption?: string;
 }>();
 
-const score = computed(() =>
-    Math.min(100, Math.max(0, props.value ?? 0)),
-);
+const score = computed(() => Math.min(100, Math.max(0, props.value ?? 0)));
 
 const display = useCountUp(() => score.value);
 
@@ -19,9 +17,7 @@ const circumference = 2 * Math.PI * radius;
 
 const animate = ref(false);
 
-const dashOffset = computed(
-    () => circumference * (1 - score.value / 100),
-);
+const dashOffset = computed(() => circumference * (1 - score.value / 100));
 
 const currentOffset = computed(() =>
     animate.value ? dashOffset.value : circumference,

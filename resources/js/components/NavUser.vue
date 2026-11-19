@@ -38,7 +38,6 @@ const hasProfilePhoto = computed(
         typeof user.value?.profile_photo === 'string' &&
         user.value.profile_photo.trim() !== '',
 );
-
 </script>
 
 <template>
@@ -49,12 +48,12 @@ const hasProfilePhoto = computed(
                 <DropdownMenuTrigger as-child>
                     <SidebarMenuButton
                         size="lg"
-                        class="group relative overflow-hidden rounded-xl border border-transparent bg-transparent px-2.5 transition-all duration-200 hover:border-sidebar-border hover:bg-sidebar-accent/70 data-[state=open]:border-sidebar-border data-[state=open]:bg-sidebar-accent data-[state=open]:shadow-sm"
+                        class="group hover:border-sidebar-border hover:bg-sidebar-accent/70 data-[state=open]:border-sidebar-border data-[state=open]:bg-sidebar-accent relative overflow-hidden rounded-xl border border-transparent bg-transparent px-2.5 transition-all duration-200 data-[state=open]:shadow-sm"
                         data-test="sidebar-menu-button"
                     >
                         <!-- Subtle active indicator -->
                         <span
-                            class="absolute left-0 top-1/2 h-6 w-0.5 -translate-y-1/2 rounded-full bg-primary opacity-0 transition-all duration-200 group-data-[state=open]:opacity-100"
+                            class="bg-primary absolute top-1/2 left-0 h-6 w-0.5 -translate-y-1/2 rounded-full opacity-0 transition-all duration-200 group-data-[state=open]:opacity-100"
                         />
 
                         <!-- User -->
@@ -64,7 +63,7 @@ const hasProfilePhoto = computed(
 
                         <!-- Account icon / chevron -->
                         <div
-                            class="ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent/70 text-sidebar-foreground/60 transition-all duration-200 group-hover:bg-sidebar-accent group-hover:text-sidebar-foreground group-data-[state=open]:bg-primary/10 group-data-[state=open]:text-primary"
+                            class="bg-sidebar-accent/70 text-sidebar-foreground/60 group-hover:bg-sidebar-accent group-hover:text-sidebar-foreground group-data-[state=open]:bg-primary/10 group-data-[state=open]:text-primary ml-2 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg transition-all duration-200"
                         >
                             <ChevronsUpDown
                                 class="size-3.5 transition-transform duration-200 group-data-[state=open]:rotate-180"
@@ -75,7 +74,7 @@ const hasProfilePhoto = computed(
 
                 <!-- User Dropdown -->
                 <DropdownMenuContent
-                    class="w-(--reka-dropdown-menu-trigger-width) min-w-60 overflow-hidden rounded-xl border border-border/70 bg-popover p-1.5 shadow-xl"
+                    class="border-border/70 bg-popover w-(--reka-dropdown-menu-trigger-width) min-w-60 overflow-hidden rounded-xl border p-1.5 shadow-xl"
                     :side="
                         isMobile
                             ? 'bottom'
@@ -88,10 +87,10 @@ const hasProfilePhoto = computed(
                 >
                     <!-- Account Header -->
                     <div
-                        class="mb-1 flex items-center gap-3 rounded-lg bg-muted/50 px-3 py-3"
+                        class="bg-muted/50 mb-1 flex items-center gap-3 rounded-lg px-3 py-3"
                     >
                         <div
-                            class="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-border bg-muted shadow-sm"
+                            class="border-border bg-muted h-10 w-10 shrink-0 overflow-hidden rounded-xl border shadow-sm"
                         >
                             <img
                                 v-if="hasProfilePhoto"
@@ -102,7 +101,7 @@ const hasProfilePhoto = computed(
 
                             <div
                                 v-else
-                                class="flex h-full w-full items-center justify-center bg-primary/10 text-sm font-semibold text-primary"
+                                class="bg-primary/10 text-primary flex h-full w-full items-center justify-center text-sm font-semibold"
                             >
                                 {{ user.name.charAt(0).toUpperCase() }}
                             </div>
@@ -115,7 +114,7 @@ const hasProfilePhoto = computed(
 
                             <p
                                 v-if="user.email"
-                                class="truncate text-xs text-muted-foreground"
+                                class="text-muted-foreground truncate text-xs"
                             >
                                 {{ user.email }}
                             </p>

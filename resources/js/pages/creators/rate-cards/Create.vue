@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { Head, Link, useForm } from '@inertiajs/vue3'
+import { computed } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
 import {
     ArrowLeft,
     CalendarDays,
@@ -14,21 +14,21 @@ import {
     User,
     ChevronLeft,
     X,
-} from '@lucide/vue'
+} from '@lucide/vue';
 
 interface Creator {
-    id: number
-    name: string
-    username: string
-    platform: string
-    category: string
-    followers: number
-    profile_image?: string | null
+    id: number;
+    name: string;
+    username: string;
+    platform: string;
+    category: string;
+    followers: number;
+    profile_image?: string | null;
 }
 
 const props = defineProps<{
-    creator: Creator
-}>()
+    creator: Creator;
+}>();
 
 const form = useForm({
     platform: props.creator.platform ?? 'TikTok',
@@ -38,7 +38,7 @@ const form = useForm({
     duration: null as number | null,
     revision: null as number | null,
     notes: '',
-})
+});
 
 const platforms = [
     {
@@ -56,7 +56,7 @@ const platforms = [
         label: 'YouTube',
         short: 'YT',
     },
-]
+];
 
 const deliverables = [
     'Video',
@@ -67,7 +67,7 @@ const deliverables = [
     'Feed Post',
     'Reels',
     'Shorts',
-]
+];
 
 const usageRights = [
     {
@@ -95,59 +95,55 @@ const usageRights = [
         label: 'Unlimited',
         description: 'Hak penggunaan tanpa batas waktu.',
     },
-]
+];
 
-const revisionOptions = [0, 1, 2, 3, 4]
+const revisionOptions = [0, 1, 2, 3, 4];
 
 const selectedUsageRight = computed(() => {
-    return usageRights.find(
-        (item) => item.value === form.usage_rights,
-    )
-})
+    return usageRights.find((item) => item.value === form.usage_rights);
+});
 
 const creatorPhoto = computed(() => {
     if (!props.creator.profile_image) {
-        return null
+        return null;
     }
 
-    return `/storage/${props.creator.profile_image}`
-})
+    return `/storage/${props.creator.profile_image}`;
+});
 
 const creatorInitial = computed(() => {
     return props.creator.name
         ? props.creator.name.charAt(0).toUpperCase()
-        : 'C'
-})
+        : 'C';
+});
 
 const formattedPrice = computed(() => {
     if (!form.price) {
-        return 'Rp 0'
+        return 'Rp 0';
     }
 
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         maximumFractionDigits: 0,
-    }).format(form.price)
-})
+    }).format(form.price);
+});
 
 const formattedFollowers = computed(() => {
-    return new Intl.NumberFormat('id-ID').format(
-        props.creator.followers ?? 0,
-    )
-})
+    return new Intl.NumberFormat('id-ID').format(props.creator.followers ?? 0);
+});
 
 const estimatedCostPerView = computed(() => {
     if (!form.price || !props.creator.followers) {
-        return null
+        return null;
     }
 
-    return form.price / props.creator.followers
-})
+    return form.price / props.creator.followers;
+});
 
 const formattedCostPerView = computed(() => {
     if (estimatedCostPerView.value === null) {
-        return '—'
+        return '—';
     }
 
     return new Intl.NumberFormat('id-ID', {
@@ -155,37 +151,35 @@ const formattedCostPerView = computed(() => {
         currency: 'IDR',
         minimumFractionDigits: 1,
         maximumFractionDigits: 2,
-    }).format(estimatedCostPerView.value)
-})
+    }).format(estimatedCostPerView.value);
+});
 
 const isReady = computed(() => {
     return Boolean(
-        form.platform &&
-        form.deliverable &&
-        form.price &&
-        form.price > 0,
-    )
-})
+        form.platform && form.deliverable && form.price && form.price > 0,
+    );
+});
 
 const submit = () => {
     form.post(`/creators/${props.creator.id}/rate-cards`, {
         preserveScroll: true,
-    })
-}
+    });
+};
 </script>
 
 <template>
     <Head :title="`Tambah Rate Card - ${creator.name}`" />
 
-    <div class="app-textured-bg min-h-full p-4 text-foreground md:p-6">
+    <div class="app-textured-bg text-foreground min-h-full p-4 md:p-6">
         <div class="space-y-6">
-
             <!-- Header -->
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div
+                class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+            >
                 <div class="flex items-start gap-3">
                     <Link
                         :href="`/creators/${creator.id}`"
-                        class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-background transition-all duration-200 hover:-translate-x-0.5 hover:bg-muted"
+                        class="border-border bg-background hover:bg-muted mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border transition-all duration-200 hover:-translate-x-0.5"
                     >
                         <ArrowLeft class="h-4 w-4" />
                     </Link>
@@ -195,7 +189,7 @@ const submit = () => {
                             Tambah Rate Card
                         </h1>
 
-                        <p class="mt-1 text-sm text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-sm">
                             Tambahkan harga dan ketentuan kerja sama creator.
                         </p>
                     </div>
@@ -204,7 +198,7 @@ const submit = () => {
                 <div class="flex items-center gap-2">
                     <Link
                         :href="`/creators/${creator.id}`"
-                        class="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted"
+                        class="border-border bg-background hover:bg-muted inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5"
                     >
                         <X class="h-4 w-4" />
                         Batal
@@ -213,7 +207,7 @@ const submit = () => {
                     <button
                         type="button"
                         :disabled="form.processing || !isReady"
-                        class="inline-flex h-9 items-center gap-2 rounded-lg bg-sky-600 px-4 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
+                        class="text-primary-foreground inline-flex h-9 items-center gap-2 rounded-lg bg-sky-600 px-4 text-sm font-medium shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
                         @click="submit"
                     >
                         <Save class="h-4 w-4" />
@@ -229,11 +223,11 @@ const submit = () => {
 
             <!-- Creator -->
             <section
-                class="rounded-xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md"
+                class="border-border bg-card rounded-xl border p-5 shadow-sm transition-all duration-200 hover:shadow-md"
             >
                 <div class="flex items-center gap-4">
                     <div
-                        class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-muted text-sm font-semibold text-muted-foreground"
+                        class="border-border bg-muted text-muted-foreground flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border text-sm font-semibold"
                     >
                         <img
                             v-if="creatorPhoto"
@@ -260,12 +254,14 @@ const submit = () => {
                             </span>
                         </div>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             @{{ creator.username }}
                         </p>
 
-                        <div class="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
-                            <span class="rounded-md bg-muted px-2 py-1">
+                        <div
+                            class="text-muted-foreground mt-2 flex flex-wrap items-center gap-2 text-[11px]"
+                        >
+                            <span class="bg-muted rounded-md px-2 py-1">
                                 {{ creator.platform }}
                             </span>
 
@@ -277,9 +273,7 @@ const submit = () => {
 
                             <span>•</span>
 
-                            <span>
-                                {{ formattedFollowers }} followers
-                            </span>
+                            <span> {{ formattedFollowers }} followers </span>
                         </div>
                     </div>
                 </div>
@@ -287,18 +281,16 @@ const submit = () => {
 
             <!-- Main -->
             <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-
                 <!-- Form -->
                 <div class="space-y-6">
-
                     <!-- Rate Card -->
                     <section
-                        class="rounded-xl border border-border bg-card shadow-sm"
+                        class="border-border bg-card rounded-xl border shadow-sm"
                     >
-                        <div class="border-b border-border px-5 py-4">
+                        <div class="border-border border-b px-5 py-4">
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary"
+                                    class="bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-lg"
                                 >
                                     <Tag class="h-4 w-4" />
                                 </div>
@@ -308,7 +300,7 @@ const submit = () => {
                                         Rate Card
                                     </h2>
 
-                                    <p class="text-xs text-muted-foreground">
+                                    <p class="text-muted-foreground text-xs">
                                         Tentukan harga berdasarkan deliverable.
                                     </p>
                                 </div>
@@ -316,7 +308,6 @@ const submit = () => {
                         </div>
 
                         <div class="space-y-5 p-5">
-
                             <!-- Platform -->
                             <div class="space-y-2">
                                 <label class="text-xs font-medium">
@@ -337,7 +328,7 @@ const submit = () => {
                                         @click="form.platform = platform.value"
                                     >
                                         <span
-                                            class="flex h-7 w-7 items-center justify-center rounded-md bg-muted text-[10px] font-bold"
+                                            class="bg-muted flex h-7 w-7 items-center justify-center rounded-md text-[10px] font-bold"
                                         >
                                             {{ platform.short }}
                                         </span>
@@ -347,7 +338,9 @@ const submit = () => {
                                         </span>
 
                                         <Check
-                                            v-if="form.platform === platform.value"
+                                            v-if="
+                                                form.platform === platform.value
+                                            "
                                             class="ml-auto h-3.5 w-3.5"
                                         />
                                     </button>
@@ -355,7 +348,7 @@ const submit = () => {
 
                                 <p
                                     v-if="form.errors.platform"
-                                    class="text-xs text-destructive"
+                                    class="text-destructive text-xs"
                                 >
                                     {{ form.errors.platform }}
                                 </p>
@@ -369,7 +362,7 @@ const submit = () => {
 
                                 <select
                                     v-model="form.deliverable"
-                                    class="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                    class="border-input bg-background focus:border-primary focus:ring-primary/10 h-10 w-full rounded-lg border px-3 text-sm transition-all outline-none focus:ring-2"
                                 >
                                     <option value="">
                                         Pilih jenis deliverable
@@ -386,7 +379,7 @@ const submit = () => {
 
                                 <p
                                     v-if="form.errors.deliverable"
-                                    class="text-xs text-destructive"
+                                    class="text-destructive text-xs"
                                 >
                                     {{ form.errors.deliverable }}
                                 </p>
@@ -400,7 +393,7 @@ const submit = () => {
 
                                 <div class="relative">
                                     <span
-                                        class="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-muted-foreground"
+                                        class="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2 text-sm font-medium"
                                     >
                                         Rp
                                     </span>
@@ -410,17 +403,17 @@ const submit = () => {
                                         type="number"
                                         min="0"
                                         placeholder="0"
-                                        class="h-11 w-full rounded-lg border border-input bg-background pl-10 pr-3 text-sm font-medium outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                        class="border-input bg-background focus:border-primary focus:ring-primary/10 h-11 w-full rounded-lg border pr-3 pl-10 text-sm font-medium transition-all outline-none focus:ring-2"
                                     />
                                 </div>
 
-                                <p class="text-[11px] text-muted-foreground">
+                                <p class="text-muted-foreground text-[11px]">
                                     {{ formattedPrice }}
                                 </p>
 
                                 <p
                                     v-if="form.errors.price"
-                                    class="text-xs text-destructive"
+                                    class="text-destructive text-xs"
                                 >
                                     {{ form.errors.price }}
                                 </p>
@@ -447,7 +440,7 @@ const submit = () => {
                                     >
                                         <div class="flex items-center gap-2">
                                             <span
-                                                class="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-muted"
+                                                class="bg-muted flex h-7 w-7 shrink-0 items-center justify-center rounded-md"
                                             >
                                                 <LinkIcon class="h-3.5 w-3.5" />
                                             </span>
@@ -457,12 +450,17 @@ const submit = () => {
                                             </span>
 
                                             <Check
-                                                v-if="form.usage_rights === item.value"
-                                                class="ml-auto h-3.5 w-3.5 text-primary"
+                                                v-if="
+                                                    form.usage_rights ===
+                                                    item.value
+                                                "
+                                                class="text-primary ml-auto h-3.5 w-3.5"
                                             />
                                         </div>
 
-                                        <p class="mt-2 text-[10px] leading-relaxed text-muted-foreground">
+                                        <p
+                                            class="text-muted-foreground mt-2 text-[10px] leading-relaxed"
+                                        >
                                             {{ item.description }}
                                         </p>
                                     </button>
@@ -471,7 +469,6 @@ const submit = () => {
 
                             <!-- Duration + Revision -->
                             <div class="grid gap-5 sm:grid-cols-2">
-
                                 <!-- Duration -->
                                 <div class="space-y-2">
                                     <label class="text-xs font-medium">
@@ -481,7 +478,7 @@ const submit = () => {
                                     <div class="flex gap-2">
                                         <div class="relative flex-1">
                                             <CalendarDays
-                                                class="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                                class="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
                                             />
 
                                             <input
@@ -489,18 +486,20 @@ const submit = () => {
                                                 type="number"
                                                 min="0"
                                                 placeholder="30"
-                                                class="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                                class="border-input bg-background focus:border-primary focus:ring-primary/10 h-10 w-full rounded-lg border pr-3 pl-9 text-sm transition-all outline-none focus:ring-2"
                                             />
                                         </div>
 
-                                        <div class="flex h-10 items-center rounded-lg border border-border bg-muted px-3 text-xs text-muted-foreground">
+                                        <div
+                                            class="border-border bg-muted text-muted-foreground flex h-10 items-center rounded-lg border px-3 text-xs"
+                                        >
                                             Days
                                         </div>
                                     </div>
 
                                     <p
                                         v-if="form.errors.duration"
-                                        class="text-xs text-destructive"
+                                        class="text-destructive text-xs"
                                     >
                                         {{ form.errors.duration }}
                                     </p>
@@ -531,7 +530,7 @@ const submit = () => {
 
                                     <p
                                         v-if="form.errors.revision"
-                                        class="text-xs text-destructive"
+                                        class="text-destructive text-xs"
                                     >
                                         {{ form.errors.revision }}
                                     </p>
@@ -542,12 +541,12 @@ const submit = () => {
 
                     <!-- Notes -->
                     <section
-                        class="rounded-xl border border-border bg-card shadow-sm"
+                        class="border-border bg-card rounded-xl border shadow-sm"
                     >
-                        <div class="border-b border-border px-5 py-4">
+                        <div class="border-border border-b px-5 py-4">
                             <div class="flex items-center gap-3">
                                 <div
-                                    class="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground"
+                                    class="bg-muted text-muted-foreground flex h-9 w-9 items-center justify-center rounded-lg"
                                 >
                                     <FileText class="h-4 w-4" />
                                 </div>
@@ -557,7 +556,7 @@ const submit = () => {
                                         Notes & Ketentuan
                                     </h2>
 
-                                    <p class="text-xs text-muted-foreground">
+                                    <p class="text-muted-foreground text-xs">
                                         Tambahkan informasi tambahan.
                                     </p>
                                 </div>
@@ -569,11 +568,12 @@ const submit = () => {
                                 v-model="form.notes"
                                 rows="5"
                                 placeholder="Contoh: Harga sudah termasuk 1x revisi, belum termasuk usage ads..."
-                                class="w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                class="border-input bg-background focus:border-primary focus:ring-primary/10 w-full resize-none rounded-lg border px-3 py-2.5 text-sm transition-all outline-none focus:ring-2"
                             />
 
-                            <p class="mt-2 text-[11px] text-muted-foreground">
-                                Gunakan bagian ini untuk ketentuan yang tidak tercakup di field lainnya.
+                            <p class="text-muted-foreground mt-2 text-[11px]">
+                                Gunakan bagian ini untuk ketentuan yang tidak
+                                tercakup di field lainnya.
                             </p>
                         </div>
                     </section>
@@ -582,34 +582,39 @@ const submit = () => {
                 <!-- Preview -->
                 <aside class="lg:sticky lg:top-6 lg:self-start">
                     <section
-                        class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+                        class="border-border bg-card overflow-hidden rounded-xl border shadow-sm"
                     >
-                        <div class="border-b border-border px-5 py-4">
+                        <div class="border-border border-b px-5 py-4">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                                    <p
+                                        class="text-muted-foreground text-[11px] font-semibold tracking-wider uppercase"
+                                    >
                                         Live Preview
                                     </p>
 
-                                    <p class="mt-1 text-xs text-muted-foreground">
+                                    <p
+                                        class="text-muted-foreground mt-1 text-xs"
+                                    >
                                         Preview rate card.
                                     </p>
                                 </div>
 
-                                <Sparkles class="h-4 w-4 text-primary" />
+                                <Sparkles class="text-primary h-4 w-4" />
                             </div>
                         </div>
 
                         <div class="p-5">
-
                             <!-- Card -->
                             <div
-                                class="rounded-xl border border-border bg-background p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
+                                class="border-border bg-background rounded-xl border p-4 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md"
                             >
-                                <div class="flex items-start justify-between gap-3">
+                                <div
+                                    class="flex items-start justify-between gap-3"
+                                >
                                     <div class="flex items-center gap-3">
                                         <div
-                                            class="flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg bg-muted text-xs font-semibold"
+                                            class="bg-muted flex h-10 w-10 items-center justify-center overflow-hidden rounded-lg text-xs font-semibold"
                                         >
                                             <img
                                                 v-if="creatorPhoto"
@@ -624,25 +629,33 @@ const submit = () => {
                                         </div>
 
                                         <div class="min-w-0">
-                                            <p class="truncate text-xs font-semibold">
+                                            <p
+                                                class="truncate text-xs font-semibold"
+                                            >
                                                 {{ creator.name }}
                                             </p>
 
-                                            <p class="truncate text-[10px] text-muted-foreground">
+                                            <p
+                                                class="text-muted-foreground truncate text-[10px]"
+                                            >
                                                 @{{ creator.username }}
                                             </p>
                                         </div>
                                     </div>
 
-                                    <span class="rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-medium text-emerald-600 dark:text-emerald-400">
+                                    <span
+                                        class="rounded-full bg-emerald-500/10 px-2 py-1 text-[9px] font-medium text-emerald-600 dark:text-emerald-400"
+                                    >
                                         ACTIVE
                                     </span>
                                 </div>
 
-                                <div class="my-4 border-t border-border" />
+                                <div class="border-border my-4 border-t" />
 
                                 <div>
-                                    <p class="text-[10px] uppercase tracking-wider text-muted-foreground">
+                                    <p
+                                        class="text-muted-foreground text-[10px] tracking-wider uppercase"
+                                    >
                                         {{ form.platform || 'Platform' }}
                                     </p>
 
@@ -650,14 +663,17 @@ const submit = () => {
                                         {{ form.deliverable || 'Deliverable' }}
                                     </p>
 
-                                    <p class="mt-3 text-xl font-bold tracking-tight">
+                                    <p
+                                        class="mt-3 text-xl font-bold tracking-tight"
+                                    >
                                         {{ formattedPrice }}
                                     </p>
                                 </div>
 
                                 <div class="mt-4 space-y-2.5">
-
-                                    <div class="flex items-center justify-between text-xs">
+                                    <div
+                                        class="flex items-center justify-between text-xs"
+                                    >
                                         <span class="text-muted-foreground">
                                             Usage Rights
                                         </span>
@@ -667,7 +683,9 @@ const submit = () => {
                                         </span>
                                     </div>
 
-                                    <div class="flex items-center justify-between text-xs">
+                                    <div
+                                        class="flex items-center justify-between text-xs"
+                                    >
                                         <span class="text-muted-foreground">
                                             Duration
                                         </span>
@@ -681,7 +699,9 @@ const submit = () => {
                                         </span>
                                     </div>
 
-                                    <div class="flex items-center justify-between text-xs">
+                                    <div
+                                        class="flex items-center justify-between text-xs"
+                                    >
                                         <span class="text-muted-foreground">
                                             Revision
                                         </span>
@@ -698,9 +718,13 @@ const submit = () => {
                             </div>
 
                             <!-- Analytics -->
-                            <div class="mt-4 rounded-xl border border-border bg-muted/30 p-4">
+                            <div
+                                class="border-border bg-muted/30 mt-4 rounded-xl border p-4"
+                            >
                                 <div class="mb-3 flex items-center gap-2">
-                                    <div class="flex h-7 w-7 items-center justify-center rounded-md bg-primary/10 text-primary">
+                                    <div
+                                        class="bg-primary/10 text-primary flex h-7 w-7 items-center justify-center rounded-md"
+                                    >
                                         <Sparkles class="h-3.5 w-3.5" />
                                     </div>
 
@@ -709,15 +733,19 @@ const submit = () => {
                                             Deal Intelligence
                                         </p>
 
-                                        <p class="text-[10px] text-muted-foreground">
+                                        <p
+                                            class="text-muted-foreground text-[10px]"
+                                        >
                                             Estimasi berdasarkan data creator
                                         </p>
                                     </div>
                                 </div>
 
                                 <div class="grid grid-cols-2 gap-2">
-                                    <div class="rounded-lg bg-background p-3">
-                                        <p class="text-[10px] text-muted-foreground">
+                                    <div class="bg-background rounded-lg p-3">
+                                        <p
+                                            class="text-muted-foreground text-[10px]"
+                                        >
                                             Followers
                                         </p>
 
@@ -726,8 +754,10 @@ const submit = () => {
                                         </p>
                                     </div>
 
-                                    <div class="rounded-lg bg-background p-3">
-                                        <p class="text-[10px] text-muted-foreground">
+                                    <div class="bg-background rounded-lg p-3">
+                                        <p
+                                            class="text-muted-foreground text-[10px]"
+                                        >
                                             Cost / Follower
                                         </p>
 
@@ -741,10 +771,15 @@ const submit = () => {
                                     v-if="!isReady"
                                     class="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/20 bg-amber-500/5 p-3"
                                 >
-                                    <Clock3 class="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600" />
+                                    <Clock3
+                                        class="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-600"
+                                    />
 
-                                    <p class="text-[10px] leading-relaxed text-muted-foreground">
-                                        Lengkapi platform, deliverable, dan harga untuk melihat estimasi deal.
+                                    <p
+                                        class="text-muted-foreground text-[10px] leading-relaxed"
+                                    >
+                                        Lengkapi platform, deliverable, dan
+                                        harga untuk melihat estimasi deal.
                                     </p>
                                 </div>
 
@@ -752,24 +787,29 @@ const submit = () => {
                                     v-else
                                     class="mt-3 flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3"
                                 >
-                                    <Check class="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                                    <Check
+                                        class="h-3.5 w-3.5 shrink-0 text-emerald-600"
+                                    />
 
-                                    <p class="text-[10px] leading-relaxed text-muted-foreground">
+                                    <p
+                                        class="text-muted-foreground text-[10px] leading-relaxed"
+                                    >
                                         Rate card siap dianalisis.
                                     </p>
                                 </div>
                             </div>
-
                         </div>
                     </section>
                 </aside>
             </div>
 
             <!-- Bottom action -->
-            <div class="flex items-center justify-between border-t border-border pt-5">
+            <div
+                class="border-border flex items-center justify-between border-t pt-5"
+            >
                 <Link
                     :href="`/creators/${creator.id}`"
-                    class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium transition hover:bg-muted"
+                    class="border-border bg-card hover:bg-muted inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition"
                 >
                     <ChevronLeft class="h-4 w-4" />
                     Kembali
@@ -778,15 +818,11 @@ const submit = () => {
                 <button
                     type="button"
                     :disabled="form.processing || !isReady"
-                    class="inline-flex h-10 items-center gap-2 rounded-lg bg-sky-600 px-5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
+                    class="text-primary-foreground inline-flex h-10 items-center gap-2 rounded-lg bg-sky-600 px-5 text-sm font-medium shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md disabled:pointer-events-none disabled:opacity-50"
                     @click="submit"
                 >
                     <Save class="h-4 w-4" />
-                    {{
-                        form.processing
-                            ? 'Menyimpan...'
-                            : 'Simpan Rate Card'
-                    }}
+                    {{ form.processing ? 'Menyimpan...' : 'Simpan Rate Card' }}
                 </button>
             </div>
         </div>

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
+import { computed, ref } from 'vue';
+import { Head, Link, router } from '@inertiajs/vue3';
 import {
     ArrowLeft,
     ArrowUpRight,
@@ -20,174 +20,162 @@ import {
     Users,
     Video,
     XCircle,
-} from '@lucide/vue'
+} from '@lucide/vue';
 
 interface CreatorContent {
-    id: number
-    content_date: string
-    content_url: string | null
-    content_type: string | null
-    views: number
-    likes: number
-    comments: number
-    shares: number
+    id: number;
+    content_date: string;
+    content_url: string | null;
+    content_type: string | null;
+    views: number;
+    likes: number;
+    comments: number;
+    shares: number;
 }
 
 interface CreatorRateCard {
-    id: number
-    platform: string
-    deliverable: string
-    price: string | number
-    duration: string | null
-    revision: number
-    usage_rights: string | null
-    valid_until: string | null
-    notes: string | null
+    id: number;
+    platform: string;
+    deliverable: string;
+    price: string | number;
+    duration: string | null;
+    revision: number;
+    usage_rights: string | null;
+    valid_until: string | null;
+    notes: string | null;
 }
 
 interface Creator {
-    id: number
-    name: string
-    username: string
-    platform: string
-    category: string
-    followers: number
-    audience_gender: string[] | null
-    audience_age: string[] | null
-    audience_location: string[] | null
-    profile_link: string | null
-    profile_image: string | null
-    status: 'active' | 'inactive'
-    notes: string | null
-    created_at: string
-    updated_at: string
+    id: number;
+    name: string;
+    username: string;
+    platform: string;
+    category: string;
+    followers: number;
+    audience_gender: string[] | null;
+    audience_age: string[] | null;
+    audience_location: string[] | null;
+    profile_link: string | null;
+    profile_image: string | null;
+    status: 'active' | 'inactive';
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
 }
 
 const props = defineProps<{
-    creator: Creator
-    contents: CreatorContent[]
-    rateCards: CreatorRateCard[]
-}>()
+    creator: Creator;
+    contents: CreatorContent[];
+    rateCards: CreatorRateCard[];
+}>();
 
-const showNotes = ref(false)
-const openRateCard = ref<number | null>(null)
+const showNotes = ref(false);
+const openRateCard = ref<number | null>(null);
 
 const average = (values: number[]) => {
     if (values.length === 0) {
-        return 0
+        return 0;
     }
 
     return Math.round(
         values.reduce((total, value) => total + value, 0) / values.length,
-    )
-}
+    );
+};
 
 const averageViews = computed(() =>
     average(props.contents.map((content) => content.views)),
-)
+);
 
 const averageLikes = computed(() =>
     average(props.contents.map((content) => content.likes)),
-)
+);
 
 const averageComments = computed(() =>
     average(props.contents.map((content) => content.comments)),
-)
+);
 
 const averageShares = computed(() =>
     average(props.contents.map((content) => content.shares)),
-)
+);
 
 const engagementRate = computed(() => {
     const totalViews = props.contents.reduce(
         (total, content) => total + content.views,
         0,
-    )
+    );
 
     const totalEngagement = props.contents.reduce(
         (total, content) =>
-            total +
-            content.likes +
-            content.comments +
-            content.shares,
+            total + content.likes + content.comments + content.shares,
         0,
-    )
+    );
 
     if (totalViews === 0) {
-        return 0
+        return 0;
     }
 
-    return (totalEngagement / totalViews) * 100
-})
+    return (totalEngagement / totalViews) * 100;
+});
 
 const formatNumber = (value: number) => {
-    return value.toLocaleString('id-ID')
-}
+    return value.toLocaleString('id-ID');
+};
 
 const formatCompact = (value: number) => {
     if (value >= 1_000_000) {
         return `${(value / 1_000_000).toFixed(
             value % 1_000_000 === 0 ? 0 : 1,
-        )}M`
+        )}M`;
     }
 
     if (value >= 1_000) {
-        return `${(value / 1_000).toFixed(
-            value % 1_000 === 0 ? 0 : 1,
-        )}K`
+        return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}K`;
     }
 
-    return value.toLocaleString('id-ID')
-}
+    return value.toLocaleString('id-ID');
+};
 
 const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('id-ID', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
-    })
-}
+    });
+};
 
 const formatPrice = (price: string | number) => {
-    return `Rp ${Number(price).toLocaleString('id-ID')}`
-}
+    return `Rp ${Number(price).toLocaleString('id-ID')}`;
+};
 
 const isExpired = (date: string | null) => {
     if (!date) {
-        return false
+        return false;
     }
 
-    return new Date(date).getTime() < new Date().getTime()
-}
+    return new Date(date).getTime() < new Date().getTime();
+};
 
 const toggleRateCard = (id: number) => {
-    openRateCard.value =
-        openRateCard.value === id ? null : id
-}
+    openRateCard.value = openRateCard.value === id ? null : id;
+};
 
 const deleteContent = (id: number) => {
     if (confirm('Yakin ingin menghapus konten ini?')) {
-        router.delete(
-            `/creators/${props.creator.id}/contents/${id}`,
-        )
+        router.delete(`/creators/${props.creator.id}/contents/${id}`);
     }
-}
+};
 
 const deleteRateCard = (id: number) => {
     if (confirm('Yakin ingin menghapus rate card ini?')) {
-        router.delete(
-            `/creators/${props.creator.id}/rate-cards/${id}`,
-        )
+        router.delete(`/creators/${props.creator.id}/rate-cards/${id}`);
     }
-}
+};
 </script>
 
 <template>
     <Head :title="`Detail - ${creator.name}`" />
 
-    <div
-        class="app-textured-bg min-h-full p-4 text-foreground md:p-6"
-    >
+    <div class="app-textured-bg text-foreground min-h-full p-4 md:p-6">
         <!-- ====================================================== -->
         <!-- HEADER -->
         <!-- ====================================================== -->
@@ -199,30 +187,32 @@ const deleteRateCard = (id: number) => {
                 <!-- Left -->
                 <div class="flex min-w-0 items-center gap-3">
                     <Link
-                        :href="$page.props.fromDashboard ? '/dashboard' : '/creators'"
-                        class="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border bg-card text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                        :href="
+                            $page.props.fromDashboard
+                                ? '/dashboard'
+                                : '/creators'
+                        "
+                        class="border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border transition"
                     >
                         <ArrowLeft class="h-4 w-4" />
                     </Link>
 
                     <div class="min-w-0">
                         <div class="flex items-center gap-2">
-                            <span class="text-sm text-muted-foreground">
+                            <span class="text-muted-foreground text-sm">
                                 Creator / KOL
                             </span>
 
-                            <span class="text-muted-foreground">
-                                /
-                            </span>
+                            <span class="text-muted-foreground"> / </span>
 
                             <span
-                                class="truncate text-sm font-medium text-foreground"
+                                class="text-foreground truncate text-sm font-medium"
                             >
                                 {{ creator.name }}
                             </span>
                         </div>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             Creator intelligence profile dan informasi
                             kolaborasi.
                         </p>
@@ -241,7 +231,7 @@ const deleteRateCard = (id: number) => {
 
                     <Link
                         :href="`/creators/${creator.id}/edit`"
-                        class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium text-foreground transition hover:bg-muted"
+                        class="border-border bg-card text-foreground hover:bg-muted inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition"
                     >
                         <Pencil class="h-4 w-4" />
                         Edit
@@ -255,7 +245,7 @@ const deleteRateCard = (id: number) => {
         <!-- ====================================================== -->
 
         <div
-            class="mb-4 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+            class="border-border bg-card mb-4 overflow-hidden rounded-xl border shadow-sm"
         >
             <div class="p-5 md:p-6">
                 <div
@@ -265,7 +255,7 @@ const deleteRateCard = (id: number) => {
                     <div class="flex min-w-0 items-center gap-4">
                         <!-- Photo -->
                         <div
-                            class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-muted text-sm font-semibold text-muted-foreground"
+                            class="bg-muted text-muted-foreground flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full text-sm font-semibold"
                         >
                             <img
                                 v-if="creator.profile_image"
@@ -276,7 +266,7 @@ const deleteRateCard = (id: number) => {
 
                             <span
                                 v-else
-                                class="text-2xl font-semibold text-muted-foreground"
+                                class="text-muted-foreground text-2xl font-semibold"
                             >
                                 {{ creator.name.charAt(0).toUpperCase() }}
                             </span>
@@ -301,28 +291,26 @@ const deleteRateCard = (id: number) => {
 
                                 <span
                                     v-else
-                                    class="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                                    class="bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium"
                                 >
                                     <XCircle class="h-3.5 w-3.5" />
                                     Inactive
                                 </span>
                             </div>
 
-                            <p class="mt-1 text-sm text-muted-foreground">
+                            <p class="text-muted-foreground mt-1 text-sm">
                                 @{{ creator.username }}
                             </p>
 
-                            <div
-                                class="mt-3 flex flex-wrap items-center gap-2"
-                            >
+                            <div class="mt-3 flex flex-wrap items-center gap-2">
                                 <span
-                                    class="rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-foreground"
+                                    class="bg-muted text-foreground rounded-md px-2.5 py-1 text-xs font-medium"
                                 >
                                     {{ creator.platform }}
                                 </span>
 
                                 <span
-                                    class="rounded-md bg-muted px-2.5 py-1 text-xs font-medium text-muted-foreground"
+                                    class="bg-muted text-muted-foreground rounded-md px-2.5 py-1 text-xs font-medium"
                                 >
                                     {{ creator.category }}
                                 </span>
@@ -332,10 +320,10 @@ const deleteRateCard = (id: number) => {
 
                     <!-- Followers -->
                     <div
-                        class="flex items-center gap-5 border-t border-border pt-4 lg:border-l lg:border-t-0 lg:pl-6 lg:pt-0"
+                        class="border-border flex items-center gap-5 border-t pt-4 lg:border-t-0 lg:border-l lg:pt-0 lg:pl-6"
                     >
                         <div>
-                            <p class="text-xs text-muted-foreground">
+                            <p class="text-muted-foreground text-xs">
                                 Followers
                             </p>
 
@@ -345,7 +333,7 @@ const deleteRateCard = (id: number) => {
                                 {{ formatCompact(creator.followers) }}
                             </p>
 
-                            <p class="mt-0.5 text-xs text-muted-foreground">
+                            <p class="text-muted-foreground mt-0.5 text-xs">
                                 {{ formatNumber(creator.followers) }} followers
                             </p>
                         </div>
@@ -355,7 +343,7 @@ const deleteRateCard = (id: number) => {
                             :href="creator.profile_link"
                             target="_blank"
                             rel="noopener noreferrer"
-                            class="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-sm font-medium text-foreground transition hover:bg-muted"
+                            class="border-border bg-card text-foreground hover:bg-muted inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-sm font-medium transition"
                         >
                             <ExternalLink class="h-4 w-4" />
                             Profile
@@ -372,13 +360,11 @@ const deleteRateCard = (id: number) => {
         <div class="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
             <!-- Followers -->
             <div
-                class="group rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                class="group border-border bg-card hover:border-primary/30 rounded-xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-xs text-muted-foreground">
-                            Followers
-                        </p>
+                        <p class="text-muted-foreground text-xs">Followers</p>
 
                         <p class="mt-2 text-xl font-semibold">
                             {{ formatCompact(creator.followers) }}
@@ -386,20 +372,20 @@ const deleteRateCard = (id: number) => {
                     </div>
 
                     <div
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted transition-all duration-200 group-hover:scale-110 group-hover:bg-primary/10"
+                        class="bg-muted group-hover:bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-110"
                     >
-                        <Users class="h-4 w-4 text-muted-foreground" />
+                        <Users class="text-muted-foreground h-4 w-4" />
                     </div>
                 </div>
             </div>
 
             <!-- Average Views -->
             <div
-                class="group rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+                class="group border-border bg-card hover:border-primary/30 rounded-xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-xs text-muted-foreground">
+                        <p class="text-muted-foreground text-xs">
                             Average Views
                         </p>
 
@@ -409,20 +395,20 @@ const deleteRateCard = (id: number) => {
                     </div>
 
                     <div
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted transition-all duration-200 group-hover:scale-110 group-hover:bg-primary/10"
+                        class="bg-muted group-hover:bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-110"
                     >
-                        <Eye class="h-4 w-4 text-muted-foreground" />
+                        <Eye class="text-muted-foreground h-4 w-4" />
                     </div>
                 </div>
             </div>
 
             <!-- Engagement -->
-           <div
-                class="group rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+            <div
+                class="group border-border bg-card hover:border-primary/30 rounded-xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-xs text-muted-foreground">
+                        <p class="text-muted-foreground text-xs">
                             Engagement Rate
                         </p>
 
@@ -432,22 +418,20 @@ const deleteRateCard = (id: number) => {
                     </div>
 
                     <div
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted transition-all duration-200 group-hover:scale-110 group-hover:bg-primary/10"
+                        class="bg-muted group-hover:bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-110"
                     >
-                        <BarChart3
-                            class="h-4 w-4 text-muted-foreground"
-                        />
+                        <BarChart3 class="text-muted-foreground h-4 w-4" />
                     </div>
                 </div>
             </div>
 
             <!-- Contents -->
-           <div
-                class="group rounded-xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-md"
+            <div
+                class="group border-border bg-card hover:border-primary/30 rounded-xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
             >
                 <div class="flex items-start justify-between">
                     <div>
-                        <p class="text-xs text-muted-foreground">
+                        <p class="text-muted-foreground text-xs">
                             Recent Contents
                         </p>
 
@@ -457,9 +441,9 @@ const deleteRateCard = (id: number) => {
                     </div>
 
                     <div
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted transition-all duration-200 group-hover:scale-110 group-hover:bg-primary/10"
+                        class="bg-muted group-hover:bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg transition-all duration-200 group-hover:scale-110"
                     >
-                        <Video class="h-4 w-4 text-muted-foreground" />
+                        <Video class="text-muted-foreground h-4 w-4" />
                     </div>
                 </div>
             </div>
@@ -472,7 +456,7 @@ const deleteRateCard = (id: number) => {
         <div class="mb-5 grid gap-5 lg:grid-cols-5">
             <!-- Creator Information -->
             <div
-                class="rounded-xl border border-border bg-card p-5 shadow-sm lg:col-span-3"
+                class="border-border bg-card rounded-xl border p-5 shadow-sm lg:col-span-3"
             >
                 <div class="flex items-center justify-between">
                     <div>
@@ -480,23 +464,21 @@ const deleteRateCard = (id: number) => {
                             Creator Information
                         </h2>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             Informasi dasar creator.
                         </p>
                     </div>
 
                     <div
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted"
+                        class="bg-muted flex h-8 w-8 items-center justify-center rounded-lg"
                     >
-                        <FileText class="h-4 w-4 text-muted-foreground" />
+                        <FileText class="text-muted-foreground h-4 w-4" />
                     </div>
                 </div>
 
                 <div class="mt-5 grid gap-5 sm:grid-cols-2">
                     <div>
-                        <p class="text-xs text-muted-foreground">
-                            Name
-                        </p>
+                        <p class="text-muted-foreground text-xs">Name</p>
 
                         <p class="mt-1 text-sm font-medium">
                             {{ creator.name }}
@@ -504,9 +486,7 @@ const deleteRateCard = (id: number) => {
                     </div>
 
                     <div>
-                        <p class="text-xs text-muted-foreground">
-                            Username
-                        </p>
+                        <p class="text-muted-foreground text-xs">Username</p>
 
                         <p class="mt-1 text-sm font-medium">
                             @{{ creator.username }}
@@ -514,9 +494,7 @@ const deleteRateCard = (id: number) => {
                     </div>
 
                     <div>
-                        <p class="text-xs text-muted-foreground">
-                            Platform
-                        </p>
+                        <p class="text-muted-foreground text-xs">Platform</p>
 
                         <p class="mt-1 text-sm font-medium">
                             {{ creator.platform }}
@@ -524,9 +502,7 @@ const deleteRateCard = (id: number) => {
                     </div>
 
                     <div>
-                        <p class="text-xs text-muted-foreground">
-                            Category
-                        </p>
+                        <p class="text-muted-foreground text-xs">Category</p>
 
                         <p class="mt-1 text-sm font-medium">
                             {{ creator.category }}
@@ -534,7 +510,7 @@ const deleteRateCard = (id: number) => {
                     </div>
 
                     <div>
-                        <p class="text-xs text-muted-foreground">
+                        <p class="text-muted-foreground text-xs">
                             Creator Since
                         </p>
 
@@ -544,7 +520,7 @@ const deleteRateCard = (id: number) => {
                     </div>
 
                     <div>
-                        <p class="text-xs text-muted-foreground">
+                        <p class="text-muted-foreground text-xs">
                             Last Updated
                         </p>
 
@@ -557,7 +533,7 @@ const deleteRateCard = (id: number) => {
 
             <!-- Audience -->
             <div
-                class="rounded-xl border border-border bg-card p-5 shadow-sm lg:col-span-2"
+                class="border-border bg-card rounded-xl border p-5 shadow-sm lg:col-span-2"
             >
                 <div class="flex items-center justify-between">
                     <div>
@@ -565,37 +541,35 @@ const deleteRateCard = (id: number) => {
                             Audience Profile
                         </h2>
 
-                        <p class="mt-1 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-xs">
                             Karakteristik audience creator.
                         </p>
                     </div>
 
                     <div
-                        class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted"
+                        class="bg-muted flex h-8 w-8 items-center justify-center rounded-lg"
                     >
-                        <Users class="h-4 w-4 text-muted-foreground" />
+                        <Users class="text-muted-foreground h-4 w-4" />
                     </div>
                 </div>
 
                 <div class="mt-5 space-y-4">
                     <!-- Gender -->
                     <div>
-                        <p class="mb-2 text-xs text-muted-foreground">
-                            Gender
-                        </p>
+                        <p class="text-muted-foreground mb-2 text-xs">Gender</p>
 
                         <div class="flex flex-wrap gap-2">
                             <span
                                 v-for="gender in creator.audience_gender || []"
                                 :key="gender"
-                                class="rounded-md bg-muted px-2.5 py-1.5 text-xs font-medium"
+                                class="bg-muted rounded-md px-2.5 py-1.5 text-xs font-medium"
                             >
                                 {{ gender }}
                             </span>
 
                             <span
                                 v-if="!creator.audience_gender?.length"
-                                class="text-sm text-muted-foreground"
+                                class="text-muted-foreground text-sm"
                             >
                                 Belum diisi
                             </span>
@@ -604,22 +578,20 @@ const deleteRateCard = (id: number) => {
 
                     <!-- Age -->
                     <div>
-                        <p class="mb-2 text-xs text-muted-foreground">
-                            Age
-                        </p>
+                        <p class="text-muted-foreground mb-2 text-xs">Age</p>
 
                         <div class="flex flex-wrap gap-2">
                             <span
                                 v-for="age in creator.audience_age || []"
                                 :key="age"
-                                class="rounded-md bg-muted px-2.5 py-1.5 text-xs font-medium"
+                                class="bg-muted rounded-md px-2.5 py-1.5 text-xs font-medium"
                             >
                                 {{ age }}
                             </span>
 
                             <span
                                 v-if="!creator.audience_age?.length"
-                                class="text-sm text-muted-foreground"
+                                class="text-muted-foreground text-sm"
                             >
                                 Belum diisi
                             </span>
@@ -628,23 +600,26 @@ const deleteRateCard = (id: number) => {
 
                     <!-- Location -->
                     <div>
-                        <p class="mb-2 text-xs text-muted-foreground">
+                        <p class="text-muted-foreground mb-2 text-xs">
                             Location
                         </p>
 
                         <div class="flex flex-wrap gap-2">
                             <span
-                                v-for="location in creator.audience_location || []"
+                                v-for="location in creator.audience_location ||
+                                []"
                                 :key="location"
-                                class="inline-flex items-center gap-1.5 rounded-md bg-muted px-2.5 py-1.5 text-xs font-medium"
+                                class="bg-muted inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium"
                             >
-                                <MapPin class="h-3.5 w-3.5 text-muted-foreground" />
+                                <MapPin
+                                    class="text-muted-foreground h-3.5 w-3.5"
+                                />
                                 {{ location }}
                             </span>
 
                             <span
                                 v-if="!creator.audience_location?.length"
-                                class="text-sm text-muted-foreground"
+                                class="text-muted-foreground text-sm"
                             >
                                 Belum diisi
                             </span>
@@ -658,49 +633,41 @@ const deleteRateCard = (id: number) => {
         <!-- PERFORMANCE -->
         <!-- ====================================================== -->
 
-        <div
-            class="mb-5 rounded-xl border border-border bg-card p-5 shadow-sm"
-        >
+        <div class="border-border bg-card mb-5 rounded-xl border p-5 shadow-sm">
             <div class="flex items-center justify-between">
                 <div>
                     <h2 class="text-base font-semibold">
                         Performance Overview
                     </h2>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Rata-rata berdasarkan {{ contents.length }}
                         konten terbaru yang tersimpan.
                     </p>
                 </div>
 
-                <BarChart3
-                    class="h-5 w-5 text-muted-foreground"
-                />
+                <BarChart3 class="text-muted-foreground h-5 w-5" />
             </div>
 
             <div class="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div class="rounded-lg border border-border bg-muted/20 p-4">
-                    <p class="text-xs text-muted-foreground">
-                        Average Views
-                    </p>
+                <div class="border-border bg-muted/20 rounded-lg border p-4">
+                    <p class="text-muted-foreground text-xs">Average Views</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatNumber(averageViews) }}
                     </p>
                 </div>
 
-                <div class="rounded-lg border border-border bg-muted/20 p-4">
-                    <p class="text-xs text-muted-foreground">
-                        Average Likes
-                    </p>
+                <div class="border-border bg-muted/20 rounded-lg border p-4">
+                    <p class="text-muted-foreground text-xs">Average Likes</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatNumber(averageLikes) }}
                     </p>
                 </div>
 
-                <div class="rounded-lg border border-border bg-muted/20 p-4">
-                    <p class="text-xs text-muted-foreground">
+                <div class="border-border bg-muted/20 rounded-lg border p-4">
+                    <p class="text-muted-foreground text-xs">
                         Average Comments
                     </p>
 
@@ -709,10 +676,8 @@ const deleteRateCard = (id: number) => {
                     </p>
                 </div>
 
-                <div class="rounded-lg border border-border bg-muted/20 p-4">
-                    <p class="text-xs text-muted-foreground">
-                        Average Shares
-                    </p>
+                <div class="border-border bg-muted/20 rounded-lg border p-4">
+                    <p class="text-muted-foreground text-xs">Average Shares</p>
 
                     <p class="mt-2 text-xl font-semibold">
                         {{ formatNumber(averageShares) }}
@@ -722,12 +687,10 @@ const deleteRateCard = (id: number) => {
 
             <!-- Engagement indicator -->
             <div
-                class="mt-3 flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-4 sm:flex-row sm:items-center sm:justify-between"
+                class="border-border bg-muted/20 mt-3 flex flex-col gap-3 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div>
-                    <p class="text-xs text-muted-foreground">
-                        Engagement Rate
-                    </p>
+                    <p class="text-muted-foreground text-xs">Engagement Rate</p>
 
                     <p class="mt-1 text-lg font-semibold">
                         {{ engagementRate.toFixed(2) }}%
@@ -738,18 +701,16 @@ const deleteRateCard = (id: number) => {
                     <div
                         class="mb-1.5 flex items-center justify-between text-xs"
                     >
-                        <span class="text-muted-foreground">
-                            Engagement
-                        </span>
+                        <span class="text-muted-foreground"> Engagement </span>
 
                         <span class="font-medium">
                             {{ engagementRate.toFixed(2) }}%
                         </span>
                     </div>
 
-                    <div class="h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div class="bg-muted h-1.5 overflow-hidden rounded-full">
                         <div
-                            class="h-full rounded-full bg-primary transition-all"
+                            class="bg-primary h-full rounded-full transition-all"
                             :style="{
                                 width: `${Math.min(engagementRate * 10, 100)}%`,
                             }"
@@ -764,17 +725,15 @@ const deleteRateCard = (id: number) => {
         <!-- ====================================================== -->
 
         <div
-            class="mb-5 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+            class="border-border bg-card mb-5 overflow-hidden rounded-xl border shadow-sm"
         >
             <div
-                class="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between"
+                class="border-border flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div>
-                    <h2 class="text-base font-semibold">
-                        Latest Contents
-                    </h2>
+                    <h2 class="text-base font-semibold">Latest Contents</h2>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Tujuh konten terbaru creator.
                     </p>
                 </div>
@@ -794,74 +753,81 @@ const deleteRateCard = (id: number) => {
                 class="flex flex-col items-center justify-center px-6 py-14 text-center"
             >
                 <div
-                    class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted"
+                    class="bg-muted mb-4 flex h-12 w-12 items-center justify-center rounded-xl"
                 >
-                    <Video class="h-6 w-6 text-muted-foreground" />
+                    <Video class="text-muted-foreground h-6 w-6" />
                 </div>
 
-                <h3 class="font-semibold">
-                    Belum ada konten
-                </h3>
+                <h3 class="font-semibold">Belum ada konten</h3>
 
-                <p class="mt-1 max-w-md text-sm text-muted-foreground">
-                    Tambahkan konten creator untuk mulai melihat
-                    performanya.
+                <p class="text-muted-foreground mt-1 max-w-md text-sm">
+                    Tambahkan konten creator untuk mulai melihat performanya.
                 </p>
 
                 <Link
                     :href="`/creators/${creator.id}/contents/create`"
-                    class="mt-5 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-primary-foreground"
+                    class="text-primary-foreground mt-5 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium"
                 >
                     <Plus class="h-4 w-4" />
-                    
                 </Link>
             </div>
 
             <!-- Table -->
-            <div
-                v-else
-                class="overflow-x-auto"
-            >
+            <div v-else class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead class="border-b border-border bg-muted/30 text-left">
+                    <thead class="border-border bg-muted/30 border-b text-left">
                         <tr>
-                            <th class="px-5 py-3.5 font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-5 py-3.5 font-medium"
+                            >
                                 Date
                             </th>
 
-                            <th class="px-5 py-3.5 font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-5 py-3.5 font-medium"
+                            >
                                 Type
                             </th>
 
-                            <th class="px-5 py-3.5 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-5 py-3.5 text-right font-medium"
+                            >
                                 Views
                             </th>
 
-                            <th class="px-5 py-3.5 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-5 py-3.5 text-right font-medium"
+                            >
                                 Likes
                             </th>
 
-                            <th class="px-5 py-3.5 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-5 py-3.5 text-right font-medium"
+                            >
                                 Comments
                             </th>
 
-                            <th class="px-5 py-3.5 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-5 py-3.5 text-right font-medium"
+                            >
                                 Shares
                             </th>
 
-                            <th class="px-5 py-3.5 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-5 py-3.5 text-right font-medium"
+                            >
                                 Action
                             </th>
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-border">
+                    <tbody class="divide-border divide-y">
                         <tr
                             v-for="content in contents"
                             :key="content.id"
-                            class="transition hover:bg-muted/20"
+                            class="hover:bg-muted/20 transition"
                         >
-                            <td class="px-5 py-3.5 text-foreground">
+                            <td class="text-foreground px-5 py-3.5">
                                 {{ formatDate(content.content_date) }}
                             </td>
 
@@ -873,10 +839,7 @@ const deleteRateCard = (id: number) => {
                                     {{ content.content_type }}
                                 </span>
 
-                                <span
-                                    v-else
-                                    class="text-muted-foreground"
-                                >
+                                <span v-else class="text-muted-foreground">
                                     —
                                 </span>
                             </td>
@@ -904,7 +867,7 @@ const deleteRateCard = (id: number) => {
                                         :href="content.content_url"
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        class="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                                        class="text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition"
                                         title="Open Content"
                                     >
                                         <ArrowUpRight class="h-4 w-4" />
@@ -912,7 +875,7 @@ const deleteRateCard = (id: number) => {
 
                                     <button
                                         type="button"
-                                        class="rounded-lg p-2 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
+                                        class="text-muted-foreground rounded-lg p-2 transition hover:bg-red-500/10 hover:text-red-500"
                                         title="Delete Content"
                                         @click="deleteContent(content.id)"
                                     >
@@ -931,17 +894,15 @@ const deleteRateCard = (id: number) => {
         <!-- ====================================================== -->
 
         <div
-            class="mb-5 overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+            class="border-border bg-card mb-5 overflow-hidden rounded-xl border shadow-sm"
         >
             <div
-                class="flex flex-col gap-3 border-b border-border p-5 sm:flex-row sm:items-center sm:justify-between"
+                class="border-border flex flex-col gap-3 border-b p-5 sm:flex-row sm:items-center sm:justify-between"
             >
                 <div>
-                    <h2 class="text-base font-semibold">
-                        Rate Cards
-                    </h2>
+                    <h2 class="text-base font-semibold">Rate Cards</h2>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Daftar harga kerja sama creator.
                     </p>
                 </div>
@@ -961,48 +922,42 @@ const deleteRateCard = (id: number) => {
                 class="flex flex-col items-center justify-center px-6 py-14 text-center"
             >
                 <div
-                    class="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-muted"
+                    class="bg-muted mb-4 flex h-12 w-12 items-center justify-center rounded-xl"
                 >
-                    <FileText class="h-6 w-6 text-muted-foreground" />
+                    <FileText class="text-muted-foreground h-6 w-6" />
                 </div>
 
-                <h3 class="font-semibold">
-                    Belum ada rate card
-                </h3>
+                <h3 class="font-semibold">Belum ada rate card</h3>
 
-                <p class="mt-1 max-w-md text-sm text-muted-foreground">
+                <p class="text-muted-foreground mt-1 max-w-md text-sm">
                     Tambahkan rate card untuk mengetahui harga kerja sama
                     creator.
                 </p>
 
                 <Link
                     :href="`/creators/${creator.id}/rate-cards/create`"
-                    class="mt-5 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-primary-foreground"
+                    class="text-primary-foreground mt-5 inline-flex items-center gap-2 rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium"
                 >
                     <Plus class="h-4 w-4" />
-                    
                 </Link>
             </div>
 
             <!-- Rate cards -->
-            <div
-                v-else
-                class="divide-y divide-border"
-            >
+            <div v-else class="divide-border divide-y">
                 <div
                     v-for="rateCard in rateCards"
                     :key="rateCard.id"
-                    class="transition hover:bg-muted/20"
+                    class="hover:bg-muted/20 transition"
                 >
                     <div
                         class="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between"
                     >
                         <div class="flex min-w-0 items-start gap-4">
                             <div
-                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted"
+                                class="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
                             >
                                 <FileText
-                                    class="h-4 w-4 text-muted-foreground"
+                                    class="text-muted-foreground h-4 w-4"
                                 />
                             </div>
 
@@ -1036,7 +991,7 @@ const deleteRateCard = (id: number) => {
                                 </h3>
 
                                 <div
-                                    class="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground"
+                                    class="text-muted-foreground mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs"
                                 >
                                     <span v-if="rateCard.duration">
                                         {{ rateCard.duration }}
@@ -1064,7 +1019,7 @@ const deleteRateCard = (id: number) => {
                             <div class="flex items-center gap-1">
                                 <button
                                     type="button"
-                                    class="rounded-lg p-2 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                                    class="text-muted-foreground hover:bg-muted hover:text-foreground rounded-lg p-2 transition"
                                     :title="
                                         openRateCard === rateCard.id
                                             ? 'Hide details'
@@ -1077,15 +1032,12 @@ const deleteRateCard = (id: number) => {
                                         class="h-4 w-4"
                                     />
 
-                                    <ChevronDown
-                                        v-else
-                                        class="h-4 w-4"
-                                    />
+                                    <ChevronDown v-else class="h-4 w-4" />
                                 </button>
 
                                 <button
                                     type="button"
-                                    class="rounded-lg p-2 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
+                                    class="text-muted-foreground rounded-lg p-2 transition hover:bg-red-500/10 hover:text-red-500"
                                     title="Delete Rate Card"
                                     @click="deleteRateCard(rateCard.id)"
                                 >
@@ -1098,11 +1050,11 @@ const deleteRateCard = (id: number) => {
                     <!-- Expand -->
                     <div
                         v-if="openRateCard === rateCard.id"
-                        class="border-t border-border bg-muted/20 px-5 py-4"
+                        class="border-border bg-muted/20 border-t px-5 py-4"
                     >
                         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                             <div>
-                                <p class="text-xs text-muted-foreground">
+                                <p class="text-muted-foreground text-xs">
                                     Usage Rights
                                 </p>
 
@@ -1112,7 +1064,7 @@ const deleteRateCard = (id: number) => {
                             </div>
 
                             <div>
-                                <p class="text-xs text-muted-foreground">
+                                <p class="text-muted-foreground text-xs">
                                     Duration
                                 </p>
 
@@ -1122,7 +1074,7 @@ const deleteRateCard = (id: number) => {
                             </div>
 
                             <div>
-                                <p class="text-xs text-muted-foreground">
+                                <p class="text-muted-foreground text-xs">
                                     Revision
                                 </p>
 
@@ -1135,11 +1087,11 @@ const deleteRateCard = (id: number) => {
                                 v-if="rateCard.notes"
                                 class="sm:col-span-2 lg:col-span-3"
                             >
-                                <p class="text-xs text-muted-foreground">
+                                <p class="text-muted-foreground text-xs">
                                     Notes
                                 </p>
 
-                                <p class="mt-1 whitespace-pre-wrap text-sm">
+                                <p class="mt-1 text-sm whitespace-pre-wrap">
                                     {{ rateCard.notes }}
                                 </p>
                             </div>
@@ -1155,15 +1107,13 @@ const deleteRateCard = (id: number) => {
 
         <div
             v-if="creator.notes || true"
-            class="mb-5 rounded-xl border border-border bg-card p-5 shadow-sm"
+            class="border-border bg-card mb-5 rounded-xl border p-5 shadow-sm"
         >
             <div class="flex items-center justify-between gap-4">
                 <div>
-                    <h2 class="text-base font-semibold">
-                        Notes
-                    </h2>
+                    <h2 class="text-base font-semibold">Notes</h2>
 
-                    <p class="mt-1 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-1 text-xs">
                         Catatan internal mengenai creator.
                     </p>
                 </div>
@@ -1171,37 +1121,31 @@ const deleteRateCard = (id: number) => {
                 <button
                     v-if="creator.notes"
                     type="button"
-                    class="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
+                    class="text-muted-foreground hover:bg-muted hover:text-foreground inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition"
                     @click="showNotes = !showNotes"
                 >
                     {{ showNotes ? 'Sembunyikan' : 'Lihat catatan' }}
 
-                    <ChevronUp
-                        v-if="showNotes"
-                        class="h-3.5 w-3.5"
-                    />
+                    <ChevronUp v-if="showNotes" class="h-3.5 w-3.5" />
 
-                    <ChevronDown
-                        v-else
-                        class="h-3.5 w-3.5"
-                    />
+                    <ChevronDown v-else class="h-3.5 w-3.5" />
                 </button>
             </div>
 
             <div
                 v-if="creator.notes"
-                class="mt-4 rounded-lg border border-border bg-muted/20 p-4"
+                class="border-border bg-muted/20 mt-4 rounded-lg border p-4"
             >
                 <p
                     v-if="showNotes"
-                    class="whitespace-pre-wrap text-sm leading-6 text-foreground"
+                    class="text-foreground text-sm leading-6 whitespace-pre-wrap"
                 >
                     {{ creator.notes }}
                 </p>
 
                 <p
                     v-else
-                    class="line-clamp-2 text-sm leading-6 text-muted-foreground"
+                    class="text-muted-foreground line-clamp-2 text-sm leading-6"
                 >
                     {{ creator.notes }}
                 </p>
@@ -1209,9 +1153,9 @@ const deleteRateCard = (id: number) => {
 
             <div
                 v-else
-                class="mt-4 rounded-lg border border-dashed border-border bg-muted/10 p-4"
+                class="border-border bg-muted/10 mt-4 rounded-lg border border-dashed p-4"
             >
-                <p class="text-sm text-muted-foreground">
+                <p class="text-muted-foreground text-sm">
                     Belum ada catatan untuk creator ini.
                 </p>
             </div>
@@ -1221,9 +1165,7 @@ const deleteRateCard = (id: number) => {
         <!-- ANALYSIS CTA -->
         <!-- ====================================================== -->
 
-        <div
-            class="rounded-xl border border-border bg-card p-5 shadow-sm"
-        >
+        <div class="border-border bg-card rounded-xl border p-5 shadow-sm">
             <div
                 class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >
@@ -1241,7 +1183,7 @@ const deleteRateCard = (id: number) => {
                             Creator Analysis
                         </h2>
 
-                        <p class="mt-1 max-w-xl text-sm text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 max-w-xl text-sm">
                             Evaluasi creator berdasarkan audience, engagement,
                             kualitas konten, dan potensi kolaborasi.
                         </p>

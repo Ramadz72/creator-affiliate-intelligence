@@ -1,6 +1,6 @@
 ﻿<script setup lang="ts">
-import { Form, Head, Link } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
+import { Form, Head, Link } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import {
     ArrowLeft,
     Check,
@@ -9,15 +9,15 @@ import {
     LockKeyhole,
     ShieldCheck,
     Sparkles,
-} from '@lucide/vue'
+} from '@lucide/vue';
 
-import InputError from '@/components/InputError.vue'
-import PasswordInput from '@/components/PasswordInput.vue'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Spinner } from '@/components/ui/spinner'
-import { update } from '@/routes/password'
+import InputError from '@/components/InputError.vue';
+import PasswordInput from '@/components/PasswordInput.vue';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Spinner } from '@/components/ui/spinner';
+import { update } from '@/routes/password';
 
 defineOptions({
     layout: {
@@ -25,17 +25,17 @@ defineOptions({
         description: 'Please enter your new password below',
         fullScreen: true,
     },
-})
+});
 
 const props = defineProps<{
-    token: string
-    email: string
-    passwordRules: string
-}>()
+    token: string;
+    email: string;
+    passwordRules: string;
+}>();
 
-const inputEmail = ref(props.email)
-const password = ref('')
-const passwordConfirmation = ref('')
+const inputEmail = ref(props.email);
+const password = ref('');
+const passwordConfirmation = ref('');
 
 const passwordChecks = computed(() => ({
     length: password.value.length >= 8,
@@ -43,11 +43,11 @@ const passwordChecks = computed(() => ({
     uppercase: /[A-Z]/.test(password.value),
     number: /[0-9]/.test(password.value),
     special: /[^A-Za-z0-9]/.test(password.value),
-}))
+}));
 
 const passwordScore = computed(() => {
-    return Object.values(passwordChecks.value).filter(Boolean).length
-})
+    return Object.values(passwordChecks.value).filter(Boolean).length;
+});
 
 const passwordStrength = computed(() => {
     if (!password.value) {
@@ -56,7 +56,7 @@ const passwordStrength = computed(() => {
             color: 'bg-slate-200',
             text: 'text-slate-400',
             width: '0%',
-        }
+        };
     }
 
     if (passwordScore.value <= 2) {
@@ -65,7 +65,7 @@ const passwordStrength = computed(() => {
             color: 'bg-rose-500',
             text: 'text-rose-500',
             width: '35%',
-        }
+        };
     }
 
     if (passwordScore.value === 3) {
@@ -74,7 +74,7 @@ const passwordStrength = computed(() => {
             color: 'bg-amber-500',
             text: 'text-amber-500',
             width: '60%',
-        }
+        };
     }
 
     if (passwordScore.value === 4) {
@@ -83,7 +83,7 @@ const passwordStrength = computed(() => {
             color: 'bg-sky-500',
             text: 'text-sky-500',
             width: '80%',
-        }
+        };
     }
 
     return {
@@ -91,27 +91,27 @@ const passwordStrength = computed(() => {
         color: 'bg-emerald-500',
         text: 'text-emerald-500',
         width: '100%',
-    }
-})
+    };
+});
 
 const passwordMatches = computed(() => {
     return (
         passwordConfirmation.value.length > 0 &&
         password.value === passwordConfirmation.value
-    )
-})
+    );
+});
 
 const formReady = computed(() => {
-    return passwordScore.value >= 4 && passwordMatches.value
-})
+    return passwordScore.value >= 4 && passwordMatches.value;
+});
 
 const progressWidth = computed(() => {
-    if (formReady.value) return '100%'
-    if (passwordScore.value >= 4 || passwordConfirmation.value) return '75%'
-    if (password.value) return '50%'
+    if (formReady.value) return '100%';
+    if (passwordScore.value >= 4 || passwordConfirmation.value) return '75%';
+    if (password.value) return '50%';
 
-    return '0%'
-})
+    return '0%';
+});
 
 const requirements = computed(() => [
     {
@@ -134,7 +134,7 @@ const requirements = computed(() => [
         label: 'Karakter khusus',
         valid: passwordChecks.value.special,
     },
-])
+]);
 </script>
 
 <template>
@@ -142,7 +142,6 @@ const requirements = computed(() => [
 
     <div class="min-h-screen bg-slate-950">
         <div class="grid min-h-screen lg:grid-cols-2">
-
             <!-- ================================================= -->
             <!-- LEFT : BRAND / SECURITY -->
             <!-- ================================================= -->
@@ -151,7 +150,7 @@ const requirements = computed(() => [
             >
                 <!-- Glow -->
                 <div
-                    class="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"
+                    class="absolute top-1/4 -left-32 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"
                 />
 
                 <div
@@ -187,7 +186,6 @@ const requirements = computed(() => [
 
                 <!-- Main -->
                 <div class="relative z-10 max-w-xl">
-
                     <div
                         class="mb-5 inline-flex items-center gap-2 rounded-full border border-sky-400/20 bg-sky-400/10 px-3 py-1.5 text-xs font-semibold text-sky-300"
                     >
@@ -197,25 +195,21 @@ const requirements = computed(() => [
                     </div>
 
                     <h1
-                        class="font-heading text-5xl font-extrabold leading-tight tracking-tight text-white xl:text-6xl"
+                        class="font-heading text-5xl leading-tight font-extrabold tracking-tight text-white xl:text-6xl"
                     >
                         Amankan akunmu dengan
-                        <span class="text-sky-400">
-                            password baru.
-                        </span>
+                        <span class="text-sky-400"> password baru. </span>
                     </h1>
 
                     <p
                         class="mt-6 max-w-lg text-lg leading-relaxed text-slate-400"
                     >
-                        Buat password baru yang kuat untuk menjaga
-                        akses ke Creator & Affiliate Intelligence
-                        tetap aman.
+                        Buat password baru yang kuat untuk menjaga akses ke
+                        Creator & Affiliate Intelligence tetap aman.
                     </p>
 
                     <!-- Security cards -->
                     <div class="mt-10 grid gap-4 sm:grid-cols-3">
-
                         <div
                             class="group rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:bg-white/10"
                         >
@@ -225,11 +219,11 @@ const requirements = computed(() => [
                                 <LockKeyhole class="size-4" />
                             </div>
 
-                            <p class="font-semibold text-white">
-                                Password
-                            </p>
+                            <p class="font-semibold text-white">Password</p>
 
-                            <p class="mt-1 text-xs leading-relaxed text-slate-400">
+                            <p
+                                class="mt-1 text-xs leading-relaxed text-slate-400"
+                            >
                                 Gunakan password yang unik.
                             </p>
                         </div>
@@ -243,11 +237,11 @@ const requirements = computed(() => [
                                 <ShieldCheck class="size-4" />
                             </div>
 
-                            <p class="font-semibold text-white">
-                                Secure
-                            </p>
+                            <p class="font-semibold text-white">Secure</p>
 
-                            <p class="mt-1 text-xs leading-relaxed text-slate-400">
+                            <p
+                                class="mt-1 text-xs leading-relaxed text-slate-400"
+                            >
                                 Lindungi akses akunmu.
                             </p>
                         </div>
@@ -261,15 +255,14 @@ const requirements = computed(() => [
                                 <Sparkles class="size-4" />
                             </div>
 
-                            <p class="font-semibold text-white">
-                                Ready
-                            </p>
+                            <p class="font-semibold text-white">Ready</p>
 
-                            <p class="mt-1 text-xs leading-relaxed text-slate-400">
+                            <p
+                                class="mt-1 text-xs leading-relaxed text-slate-400"
+                            >
                                 Login kembali setelah selesai.
                             </p>
                         </div>
-
                     </div>
                 </div>
 
@@ -290,7 +283,6 @@ const requirements = computed(() => [
                 class="relative flex min-h-screen items-center justify-center overflow-y-auto bg-white px-6 py-8 sm:px-10 lg:px-14 xl:px-20"
             >
                 <div class="w-full max-w-lg">
-
                     <!-- Back -->
                     <div class="mb-7">
                         <Link
@@ -316,7 +308,6 @@ const requirements = computed(() => [
 
                     <!-- Heading -->
                     <div class="mb-7">
-
                         <div
                             class="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-100 bg-sky-50 px-3 py-1.5 text-xs font-semibold text-sky-600"
                         >
@@ -331,13 +322,10 @@ const requirements = computed(() => [
                             Buat password baru
                         </h2>
 
-                        <p
-                            class="mt-3 text-sm leading-relaxed text-slate-500"
-                        >
-                            Buat password baru yang kuat untuk
-                            mengamankan kembali akun kamu.
+                        <p class="mt-3 text-sm leading-relaxed text-slate-500">
+                            Buat password baru yang kuat untuk mengamankan
+                            kembali akun kamu.
                         </p>
-
                     </div>
 
                     <!-- Account -->
@@ -352,7 +340,7 @@ const requirements = computed(() => [
 
                         <div class="min-w-0">
                             <p
-                                class="text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                                class="text-[11px] font-semibold tracking-wider text-slate-400 uppercase"
                             >
                                 Reset akun
                             </p>
@@ -367,12 +355,9 @@ const requirements = computed(() => [
 
                     <!-- Progress -->
                     <div class="mb-7">
-
-                        <div
-                            class="mb-2 flex items-center justify-between"
-                        >
+                        <div class="mb-2 flex items-center justify-between">
                             <span
-                                class="text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                                class="text-[11px] font-semibold tracking-wider text-slate-400 uppercase"
                             >
                                 Password setup
                             </span>
@@ -385,11 +370,7 @@ const requirements = computed(() => [
                                         : 'text-slate-400'
                                 "
                             >
-                                {{
-                                    formReady
-                                        ? 'Ready'
-                                        : 'Lengkapi password'
-                                }}
+                                {{ formReady ? 'Ready' : 'Lengkapi password' }}
                             </span>
                         </div>
 
@@ -401,7 +382,6 @@ const requirements = computed(() => [
                                 :style="{ width: progressWidth }"
                             />
                         </div>
-
                     </div>
 
                     <!-- ================================================= -->
@@ -409,11 +389,13 @@ const requirements = computed(() => [
                     <!-- ================================================= -->
                     <Form
                         v-bind="update.form()"
-                        :transform="(data) => ({
-                            ...data,
-                            token,
-                            email,
-                        })"
+                        :transform="
+                            (data) => ({
+                                ...data,
+                                token,
+                                email,
+                            })
+                        "
                         :reset-on-success="[
                             'password',
                             'password_confirmation',
@@ -421,12 +403,9 @@ const requirements = computed(() => [
                         v-slot="{ errors, processing }"
                         class="flex flex-col gap-6"
                     >
-
                         <div class="grid gap-5">
-
                             <!-- EMAIL -->
                             <div class="grid gap-2.5">
-
                                 <Label
                                     for="email"
                                     class="font-semibold text-slate-700"
@@ -435,7 +414,6 @@ const requirements = computed(() => [
                                 </Label>
 
                                 <div class="relative">
-
                                     <Input
                                         id="email"
                                         type="email"
@@ -447,18 +425,15 @@ const requirements = computed(() => [
                                     />
 
                                     <CheckCircle2
-                                        class="absolute right-3 top-1/2 size-4 -translate-y-1/2 text-emerald-500"
+                                        class="absolute top-1/2 right-3 size-4 -translate-y-1/2 text-emerald-500"
                                     />
-
                                 </div>
 
                                 <InputError :message="errors.email" />
-
                             </div>
 
                             <!-- PASSWORD -->
                             <div class="grid gap-2.5">
-
                                 <Label
                                     for="password"
                                     class="font-semibold text-slate-700"
@@ -484,11 +459,7 @@ const requirements = computed(() => [
                                 <InputError :message="errors.password" />
 
                                 <!-- Strength -->
-                                <div
-                                    v-if="password"
-                                    class="mt-1"
-                                >
-
+                                <div v-if="password" class="mt-1">
                                     <div
                                         class="mb-2 flex items-center justify-between"
                                     >
@@ -515,24 +486,19 @@ const requirements = computed(() => [
                                             }"
                                         />
                                     </div>
-
                                 </div>
 
                                 <!-- Requirements -->
                                 <div
                                     class="mt-2 rounded-xl border border-slate-100 bg-slate-50/70 p-3"
                                 >
-
                                     <p
                                         class="mb-2 text-xs font-semibold text-slate-600"
                                     >
                                         Password sebaiknya memiliki:
                                     </p>
 
-                                    <div
-                                        class="grid gap-1.5 sm:grid-cols-2"
-                                    >
-
+                                    <div class="grid gap-1.5 sm:grid-cols-2">
                                         <div
                                             v-for="item in requirements"
                                             :key="item.label"
@@ -543,7 +509,6 @@ const requirements = computed(() => [
                                                     : 'text-slate-400'
                                             "
                                         >
-
                                             <CheckCircle2
                                                 v-if="item.valid"
                                                 class="size-3.5 shrink-0"
@@ -555,18 +520,13 @@ const requirements = computed(() => [
                                             />
 
                                             {{ item.label }}
-
                                         </div>
-
                                     </div>
-
                                 </div>
-
                             </div>
 
                             <!-- CONFIRM -->
                             <div class="grid gap-2.5">
-
                                 <Label
                                     for="password_confirmation"
                                     class="font-semibold text-slate-700"
@@ -593,8 +553,7 @@ const requirements = computed(() => [
 
                                 <p
                                     v-if="
-                                        passwordConfirmation &&
-                                        passwordMatches
+                                        passwordConfirmation && passwordMatches
                                     "
                                     class="flex items-center gap-1.5 text-xs font-medium text-emerald-600"
                                 >
@@ -605,8 +564,7 @@ const requirements = computed(() => [
 
                                 <p
                                     v-else-if="
-                                        passwordConfirmation &&
-                                        !passwordMatches
+                                        passwordConfirmation && !passwordMatches
                                     "
                                     class="text-xs font-medium text-rose-500"
                                 >
@@ -616,14 +574,12 @@ const requirements = computed(() => [
                                 <InputError
                                     :message="errors.password_confirmation"
                                 />
-
                             </div>
 
                             <!-- SECURITY NOTE -->
                             <div
                                 class="flex gap-3 rounded-xl border border-sky-100 bg-sky-50/70 p-4"
                             >
-
                                 <div
                                     class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white text-sky-500 shadow-sm"
                                 >
@@ -631,7 +587,6 @@ const requirements = computed(() => [
                                 </div>
 
                                 <div>
-
                                     <p
                                         class="text-xs font-semibold text-sky-700"
                                     >
@@ -641,13 +596,11 @@ const requirements = computed(() => [
                                     <p
                                         class="mt-1 text-xs leading-relaxed text-sky-600/80"
                                     >
-                                        Gunakan password yang berbeda dari
-                                        akun lain dan hindari informasi pribadi
-                                        yang mudah ditebak.
+                                        Gunakan password yang berbeda dari akun
+                                        lain dan hindari informasi pribadi yang
+                                        mudah ditebak.
                                     </p>
-
                                 </div>
-
                             </div>
 
                             <!-- SUBMIT -->
@@ -657,11 +610,9 @@ const requirements = computed(() => [
                                 :disabled="processing"
                                 data-test="reset-password-button"
                             >
-
                                 <Spinner v-if="processing" />
 
                                 <template v-else>
-
                                     <Check
                                         v-if="formReady"
                                         class="mr-2 size-4"
@@ -672,11 +623,8 @@ const requirements = computed(() => [
                                             ? 'Update password'
                                             : 'Buat password baru'
                                     }}
-
                                 </template>
-
                             </Button>
-
                         </div>
 
                         <!-- Footer -->
@@ -692,9 +640,7 @@ const requirements = computed(() => [
                                 Kembali ke login
                             </Link>
                         </div>
-
                     </Form>
-
                 </div>
             </div>
         </div>

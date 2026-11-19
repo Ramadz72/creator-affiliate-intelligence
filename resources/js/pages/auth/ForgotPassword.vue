@@ -1,13 +1,7 @@
 ﻿<script setup lang="ts">
 import { Form, Head, Link } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
-import {
-    ArrowLeft,
-    Check,
-    CheckCircle2,
-    Mail,
-    ShieldCheck,
-} from '@lucide/vue';
+import { ArrowLeft, Check, CheckCircle2, Mail, ShieldCheck } from '@lucide/vue';
 
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -30,9 +24,7 @@ const emailIsValid = computed(() => {
         return false;
     }
 
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
-        emailValue.value,
-    );
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue.value);
 });
 </script>
 
@@ -41,7 +33,6 @@ const emailIsValid = computed(() => {
 
     <div class="min-h-screen bg-slate-950">
         <div class="grid min-h-screen lg:grid-cols-2">
-
             <!-- ================================================= -->
             <!-- LEFT : BRAND -->
             <!-- ================================================= -->
@@ -50,7 +41,7 @@ const emailIsValid = computed(() => {
             >
                 <!-- Glow -->
                 <div
-                    class="absolute -left-32 top-1/4 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"
+                    class="absolute top-1/4 -left-32 h-96 w-96 rounded-full bg-blue-500/20 blur-3xl"
                 />
 
                 <div
@@ -81,26 +72,24 @@ const emailIsValid = computed(() => {
                 <!-- Main content -->
                 <div class="relative z-10 max-w-xl">
                     <p
-                        class="mb-4 text-sm font-semibold uppercase tracking-[0.25em] text-sky-400"
+                        class="mb-4 text-sm font-semibold tracking-[0.25em] text-sky-400 uppercase"
                     >
                         Account Security
                     </p>
 
                     <h1
-                        class="font-heading text-5xl font-extrabold leading-tight tracking-tight text-white xl:text-6xl"
+                        class="font-heading text-5xl leading-tight font-extrabold tracking-tight text-white xl:text-6xl"
                     >
                         Amankan kembali
-                        <span class="text-sky-400">
-                            akses akun
-                        </span>
+                        <span class="text-sky-400"> akses akun </span>
                         kamu.
                     </h1>
 
                     <p
                         class="mt-6 max-w-lg text-lg leading-relaxed text-slate-400"
                     >
-                        Masukkan email akun kamu dan kami akan
-                        mengirimkan link untuk membuat password baru.
+                        Masukkan email akun kamu dan kami akan mengirimkan link
+                        untuk membuat password baru.
                     </p>
 
                     <!-- Security cards -->
@@ -110,15 +99,11 @@ const emailIsValid = computed(() => {
                         >
                             <Mail class="size-5 text-sky-400" />
 
-                            <p
-                                class="mt-3 text-sm font-bold text-white"
-                            >
+                            <p class="mt-3 text-sm font-bold text-white">
                                 Email
                             </p>
 
-                            <p
-                                class="mt-1 text-xs text-slate-400"
-                            >
+                            <p class="mt-1 text-xs text-slate-400">
                                 Verification
                             </p>
                         </div>
@@ -128,37 +113,23 @@ const emailIsValid = computed(() => {
                         >
                             <ShieldCheck class="size-5 text-sky-400" />
 
-                            <p
-                                class="mt-3 text-sm font-bold text-white"
-                            >
+                            <p class="mt-3 text-sm font-bold text-white">
                                 Secure
                             </p>
 
-                            <p
-                                class="mt-1 text-xs text-slate-400"
-                            >
-                                Account
-                            </p>
+                            <p class="mt-1 text-xs text-slate-400">Account</p>
                         </div>
 
                         <div
                             class="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-sm transition duration-300 hover:-translate-y-1 hover:bg-white/10"
                         >
-                            <CheckCircle2
-                                class="size-5 text-sky-400"
-                            />
+                            <CheckCircle2 class="size-5 text-sky-400" />
 
-                            <p
-                                class="mt-3 text-sm font-bold text-white"
-                            >
+                            <p class="mt-3 text-sm font-bold text-white">
                                 Recovery
                             </p>
 
-                            <p
-                                class="mt-1 text-xs text-slate-400"
-                            >
-                                Password
-                            </p>
+                            <p class="mt-1 text-xs text-slate-400">Password</p>
                         </div>
                     </div>
                 </div>
@@ -176,7 +147,6 @@ const emailIsValid = computed(() => {
                 class="relative flex min-h-screen items-center justify-center overflow-y-auto bg-white px-6 py-8 sm:px-10 lg:px-14 xl:px-20"
             >
                 <div class="w-full max-w-md">
-
                     <!-- BACK TO LOGIN -->
                     <div class="mb-7">
                         <Link
@@ -187,9 +157,7 @@ const emailIsValid = computed(() => {
                                 class="size-4 transition-transform duration-200 group-hover:-translate-x-1"
                             />
 
-                            <span>
-                                Kembali ke Login
-                            </span>
+                            <span> Kembali ke Login </span>
                         </Link>
                     </div>
 
@@ -218,11 +186,9 @@ const emailIsValid = computed(() => {
                             Lupa password?
                         </h2>
 
-                        <p
-                            class="mt-3 text-sm leading-relaxed text-slate-500"
-                        >
-                            Jangan khawatir. Masukkan email akun kamu
-                            untuk menerima link reset password.
+                        <p class="mt-3 text-sm leading-relaxed text-slate-500">
+                            Jangan khawatir. Masukkan email akun kamu untuk
+                            menerima link reset password.
                         </p>
                     </div>
 
@@ -233,14 +199,13 @@ const emailIsValid = computed(() => {
                         class="flex flex-col gap-6"
                     >
                         <div class="grid gap-5">
-
                             <!-- Progress -->
                             <div>
                                 <div
                                     class="mb-2 flex items-center justify-between"
                                 >
                                     <span
-                                        class="text-[11px] font-semibold uppercase tracking-wider text-slate-400"
+                                        class="text-[11px] font-semibold tracking-wider text-slate-400 uppercase"
                                     >
                                         Recovery progress
                                     </span>
@@ -305,7 +270,7 @@ const emailIsValid = computed(() => {
 
                                     <div
                                         v-if="emailIsValid"
-                                        class="absolute right-3 top-1/2 -translate-y-1/2 text-emerald-500"
+                                        class="absolute top-1/2 right-3 -translate-y-1/2 text-emerald-500"
                                     >
                                         <CheckCircle2 class="size-4" />
                                     </div>
@@ -320,9 +285,7 @@ const emailIsValid = computed(() => {
                                     Email terlihat valid
                                 </p>
 
-                                <InputError
-                                    :message="errors.email"
-                                />
+                                <InputError :message="errors.email" />
                             </div>
 
                             <!-- SECURITY INFO -->
@@ -345,8 +308,8 @@ const emailIsValid = computed(() => {
                                     <p
                                         class="mt-1 text-xs leading-relaxed text-slate-500"
                                     >
-                                        Link reset akan dikirim ke
-                                        email yang terdaftar pada akun.
+                                        Link reset akan dikirim ke email yang
+                                        terdaftar pada akun.
                                     </p>
                                 </div>
                             </div>
@@ -356,9 +319,7 @@ const emailIsValid = computed(() => {
                                 v-if="status"
                                 class="flex items-start gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm text-emerald-700"
                             >
-                                <CheckCircle2
-                                    class="mt-0.5 size-4 shrink-0"
-                                />
+                                <CheckCircle2 class="mt-0.5 size-4 shrink-0" />
 
                                 <span>
                                     {{ status }}
@@ -379,10 +340,7 @@ const emailIsValid = computed(() => {
                                         class="mr-2 size-4"
                                     />
 
-                                    <Check
-                                        v-else
-                                        class="mr-2 size-4"
-                                    />
+                                    <Check v-else class="mr-2 size-4" />
 
                                     <span>
                                         {{

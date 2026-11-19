@@ -34,17 +34,20 @@ defineOptions({
 
 const page = usePage();
 
-const user = computed(() => page.props.auth.user as {
-    id?: number;
-    name: string;
-    email: string;
-    business_name?: string | null;
-    profile_photo?: string | null;
-    role?: string | null;
-    email_verified_at?: string | null;
-    created_at?: string | null;
-    updated_at?: string | null;
-});
+const user = computed(
+    () =>
+        page.props.auth.user as {
+            id?: number;
+            name: string;
+            email: string;
+            business_name?: string | null;
+            profile_photo?: string | null;
+            role?: string | null;
+            email_verified_at?: string | null;
+            created_at?: string | null;
+            updated_at?: string | null;
+        },
+);
 
 const previewPhoto = ref<string | null>(null);
 
@@ -137,11 +140,11 @@ const formattedCreatedAt = computed(() => {
         >
             <!-- PROFILE HERO -->
             <section
-                class="relative overflow-hidden rounded-2xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur-sm"
+                class="border-border bg-card/80 relative overflow-hidden rounded-2xl border p-6 shadow-sm backdrop-blur-sm"
             >
                 <!-- Glow -->
                 <div
-                    class="pointer-events-none absolute -right-24 -top-24 h-56 w-56 rounded-full bg-sky-500/10 blur-3xl"
+                    class="pointer-events-none absolute -top-24 -right-24 h-56 w-56 rounded-full bg-sky-500/10 blur-3xl"
                 />
 
                 <div
@@ -155,7 +158,7 @@ const formattedCreatedAt = computed(() => {
                         <!-- Avatar -->
                         <div class="relative shrink-0">
                             <div
-                                class="flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted shadow-sm"
+                                class="border-border bg-muted flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl border shadow-sm"
                             >
                                 <img
                                     v-if="previewPhoto || user.profile_photo"
@@ -169,7 +172,7 @@ const formattedCreatedAt = computed(() => {
 
                                 <span
                                     v-else
-                                    class="text-2xl font-bold text-muted-foreground"
+                                    class="text-muted-foreground text-2xl font-bold"
                                 >
                                     {{ initials }}
                                 </span>
@@ -177,7 +180,7 @@ const formattedCreatedAt = computed(() => {
 
                             <label
                                 for="profile_photo"
-                                class="absolute -bottom-2 -right-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border border-border bg-background text-muted-foreground shadow-md transition hover:bg-muted hover:text-foreground"
+                                class="border-border bg-background text-muted-foreground hover:bg-muted hover:text-foreground absolute -right-2 -bottom-2 flex h-9 w-9 cursor-pointer items-center justify-center rounded-xl border shadow-md transition"
                                 title="Ganti foto profil"
                             >
                                 <Camera class="size-4" />
@@ -188,7 +191,7 @@ const formattedCreatedAt = computed(() => {
                         <div class="min-w-0">
                             <div class="flex flex-wrap items-center gap-2">
                                 <h2
-                                    class="text-xl font-semibold tracking-tight text-foreground"
+                                    class="text-foreground text-xl font-semibold tracking-tight"
                                 >
                                     {{ user.name }}
                                 </h2>
@@ -206,7 +209,7 @@ const formattedCreatedAt = computed(() => {
                             </div>
 
                             <p
-                                class="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground"
+                                class="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm"
                             >
                                 <Store class="size-3.5" />
 
@@ -217,7 +220,7 @@ const formattedCreatedAt = computed(() => {
                             </p>
 
                             <p
-                                class="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground"
+                                class="text-muted-foreground mt-1 flex items-center gap-1.5 text-sm"
                             >
                                 <Mail class="size-3.5" />
 
@@ -228,7 +231,7 @@ const formattedCreatedAt = computed(() => {
 
                     <!-- Role -->
                     <div
-                        class="flex items-center gap-3 rounded-xl border border-border bg-background/70 px-4 py-3"
+                        class="border-border bg-background/70 flex items-center gap-3 rounded-xl border px-4 py-3"
                     >
                         <div
                             class="flex h-9 w-9 items-center justify-center rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400"
@@ -238,7 +241,7 @@ const formattedCreatedAt = computed(() => {
 
                         <div>
                             <p
-                                class="text-[11px] font-medium uppercase tracking-wider text-muted-foreground"
+                                class="text-muted-foreground text-[11px] font-medium tracking-wider uppercase"
                             >
                                 Account Role
                             </p>
@@ -266,10 +269,7 @@ const formattedCreatedAt = computed(() => {
                         @change="handlePhotoChange"
                     />
 
-                    <InputError
-                        class="mt-1"
-                        :message="errors.profile_photo"
-                    />
+                    <InputError class="mt-1" :message="errors.profile_photo" />
                 </div>
             </section>
 
@@ -277,7 +277,7 @@ const formattedCreatedAt = computed(() => {
             <div class="grid gap-6 lg:grid-cols-2">
                 <!-- PERSONAL INFORMATION -->
                 <section
-                    class="rounded-2xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur-sm"
+                    class="border-border bg-card/80 rounded-2xl border p-6 shadow-sm backdrop-blur-sm"
                 >
                     <div class="mb-6 flex items-start gap-3">
                         <div
@@ -287,13 +287,11 @@ const formattedCreatedAt = computed(() => {
                         </div>
 
                         <div>
-                            <h2 class="font-semibold text-foreground">
+                            <h2 class="text-foreground font-semibold">
                                 Informasi Personal
                             </h2>
 
-                            <p
-                                class="mt-1 text-sm text-muted-foreground"
-                            >
+                            <p class="text-muted-foreground mt-1 text-sm">
                                 Informasi dasar akun kamu.
                             </p>
                         </div>
@@ -313,16 +311,12 @@ const formattedCreatedAt = computed(() => {
                                 placeholder="Nama lengkap"
                             />
 
-                            <InputError
-                                :message="errors.name"
-                            />
+                            <InputError :message="errors.name" />
                         </div>
 
                         <!-- Email -->
                         <div class="grid gap-2">
-                            <Label for="email">
-                                Alamat Email
-                            </Label>
+                            <Label for="email"> Alamat Email </Label>
 
                             <Input
                                 id="email"
@@ -334,16 +328,14 @@ const formattedCreatedAt = computed(() => {
                                 placeholder="Alamat email"
                             />
 
-                            <InputError
-                                :message="errors.email"
-                            />
+                            <InputError :message="errors.email" />
                         </div>
                     </div>
                 </section>
 
                 <!-- BUSINESS INFORMATION -->
                 <section
-                    class="rounded-2xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur-sm"
+                    class="border-border bg-card/80 rounded-2xl border p-6 shadow-sm backdrop-blur-sm"
                 >
                     <div class="mb-6 flex items-start gap-3">
                         <div
@@ -353,13 +345,11 @@ const formattedCreatedAt = computed(() => {
                         </div>
 
                         <div>
-                            <h2 class="font-semibold text-foreground">
+                            <h2 class="text-foreground font-semibold">
                                 Informasi Bisnis
                             </h2>
 
-                            <p
-                                class="mt-1 text-sm text-muted-foreground"
-                            >
+                            <p class="text-muted-foreground mt-1 text-sm">
                                 Identitas bisnis atau store yang digunakan.
                             </p>
                         </div>
@@ -374,39 +364,28 @@ const formattedCreatedAt = computed(() => {
                             <Input
                                 id="business_name"
                                 name="business_name"
-                                :default-value="
-                                    user.business_name ?? ''
-                                "
+                                :default-value="user.business_name ?? ''"
                                 autocomplete="organization"
                                 placeholder="Contoh: Rama Store"
                             />
 
-                            <InputError
-                                :message="errors.business_name"
-                            />
+                            <InputError :message="errors.business_name" />
                         </div>
 
                         <div
-                            class="rounded-xl border border-border bg-muted/30 p-4"
+                            class="border-border bg-muted/30 rounded-xl border p-4"
                         >
                             <div class="flex items-center gap-3">
-                                <Store
-                                    class="size-4 text-muted-foreground"
-                                />
+                                <Store class="text-muted-foreground size-4" />
 
                                 <div>
-                                    <p
-                                        class="text-xs text-muted-foreground"
-                                    >
+                                    <p class="text-muted-foreground text-xs">
                                         Store / Business
                                     </p>
 
-                                    <p
-                                        class="mt-1 text-sm font-medium"
-                                    >
+                                    <p class="mt-1 text-sm font-medium">
                                         {{
-                                            user.business_name ||
-                                            'Belum diatur'
+                                            user.business_name || 'Belum diatur'
                                         }}
                                     </p>
                                 </div>
@@ -418,7 +397,7 @@ const formattedCreatedAt = computed(() => {
 
             <!-- ACCOUNT OVERVIEW -->
             <section
-                class="rounded-2xl border border-border bg-card/80 p-6 shadow-sm backdrop-blur-sm"
+                class="border-border bg-card/80 rounded-2xl border p-6 shadow-sm backdrop-blur-sm"
             >
                 <div class="mb-6 flex items-start gap-3">
                     <div
@@ -428,13 +407,11 @@ const formattedCreatedAt = computed(() => {
                     </div>
 
                     <div>
-                        <h2 class="font-semibold text-foreground">
+                        <h2 class="text-foreground font-semibold">
                             Account Overview
                         </h2>
 
-                        <p
-                            class="mt-1 text-sm text-muted-foreground"
-                        >
+                        <p class="text-muted-foreground mt-1 text-sm">
                             Ringkasan status akun kamu.
                         </p>
                     </div>
@@ -442,10 +419,10 @@ const formattedCreatedAt = computed(() => {
 
                 <div class="grid gap-4 sm:grid-cols-3">
                     <div
-                        class="rounded-xl border border-border bg-background/60 p-4"
+                        class="border-border bg-background/60 rounded-xl border p-4"
                     >
                         <p
-                            class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                            class="text-muted-foreground text-xs font-medium tracking-wider uppercase"
                         >
                             Status
                         </p>
@@ -460,35 +437,31 @@ const formattedCreatedAt = computed(() => {
                                 "
                             />
 
-                            <span
-                                class="text-sm font-semibold"
-                            >
+                            <span class="text-sm font-semibold">
                                 {{ accountStatus }}
                             </span>
                         </div>
                     </div>
 
                     <div
-                        class="rounded-xl border border-border bg-background/60 p-4"
+                        class="border-border bg-background/60 rounded-xl border p-4"
                     >
                         <p
-                            class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                            class="text-muted-foreground text-xs font-medium tracking-wider uppercase"
                         >
                             Email
                         </p>
 
-                        <p
-                            class="mt-2 truncate text-sm font-semibold"
-                        >
+                        <p class="mt-2 truncate text-sm font-semibold">
                             {{ user.email }}
                         </p>
                     </div>
 
                     <div
-                        class="rounded-xl border border-border bg-background/60 p-4"
+                        class="border-border bg-background/60 rounded-xl border p-4"
                     >
                         <p
-                            class="text-xs font-medium uppercase tracking-wider text-muted-foreground"
+                            class="text-muted-foreground text-xs font-medium tracking-wider uppercase"
                         >
                             Bergabung
                         </p>
@@ -509,7 +482,7 @@ const formattedCreatedAt = computed(() => {
                         Ada perubahan pada profil?
                     </p>
 
-                    <p class="mt-0.5 text-xs text-muted-foreground">
+                    <p class="text-muted-foreground mt-0.5 text-xs">
                         Simpan perubahan untuk memperbarui informasi akun.
                     </p>
                 </div>

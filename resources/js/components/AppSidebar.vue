@@ -68,7 +68,6 @@ const intelligenceNavItems: NavItem[] = [
     },
 ];
 
-
 /*
 |--------------------------------------------------------------------------
 | Management
@@ -93,7 +92,6 @@ const managementNavItems: NavItem[] = [
     },
 ];
 
-
 /*
 |--------------------------------------------------------------------------
 | System
@@ -113,7 +111,6 @@ const systemNavItems: NavItem[] = [
     },
 ];
 
-
 /*
 |--------------------------------------------------------------------------
 | Footer
@@ -124,19 +121,24 @@ const footerNavItems: NavItem[] = [];
 </script>
 
 <template>
-    <Sidebar collapsible="icon" variant="inset" class="border-sidebar-border/80 bg-sidebar">
-
-       <!-- Logo -->
-        <SidebarHeader class="overflow-visible border-b border-sidebar-border/70 px-3 py-3">
+    <Sidebar
+        collapsible="icon"
+        variant="inset"
+        class="border-sidebar-border/80 bg-sidebar"
+    >
+        <!-- Logo -->
+        <SidebarHeader
+            class="border-sidebar-border/70 overflow-visible border-b px-3 py-3"
+        >
             <SidebarMenu class="overflow-visible">
                 <SidebarMenuItem class="overflow-visible">
                     <SidebarMenuButton
                         as-child
-                        class="h-10 w-full justify-center bg-transparent p-0 hover:bg-transparent focus:bg-transparent group-data-[collapsible=icon]:h-9"
+                        class="h-10 w-full justify-center bg-transparent p-0 group-data-[collapsible=icon]:h-9 hover:bg-transparent focus:bg-transparent"
                     >
                         <Link
                             :href="dashboard()"
-                            class="flex h-7 w-full items-center justify-center overflow-visible transition-opacity hover:opacity-90 group-data-[collapsible=icon]:justify-center"
+                            class="flex h-7 w-full items-center justify-center overflow-visible transition-opacity group-data-[collapsible=icon]:justify-center hover:opacity-90"
                         >
                             <AppLogo />
                         </Link>
@@ -145,46 +147,26 @@ const footerNavItems: NavItem[] = [];
             </SidebarMenu>
         </SidebarHeader>
 
-
         <!-- Navigation -->
         <SidebarContent class="gap-1 px-2 py-2">
-
             <!-- Dashboard -->
-            <NavMain
-                label=""
-                :items="dashboardNavItems"
-            />
+            <NavMain label="" :items="dashboardNavItems" />
 
             <!-- Intelligence -->
-            <NavMain
-                label="INTELLIGENCE"
-                :items="intelligenceNavItems"
-            />
+            <NavMain label="INTELLIGENCE" :items="intelligenceNavItems" />
 
             <!-- Management -->
-            <NavMain
-                label="MANAGEMENT"
-                :items="managementNavItems"
-            />
+            <NavMain label="MANAGEMENT" :items="managementNavItems" />
 
             <!-- System -->
-            <NavMain
-                label="SYSTEM"
-                :items="systemNavItems"
-            />
-
+            <NavMain label="SYSTEM" :items="systemNavItems" />
         </SidebarContent>
-
-
 
         <!-- Footer -->
         <SidebarFooter>
-
             <NavFooter :items="footerNavItems" />
 
             <NavUser />
-
         </SidebarFooter>
-
     </Sidebar>
 </template>

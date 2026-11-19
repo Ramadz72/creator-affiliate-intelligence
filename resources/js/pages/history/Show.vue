@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3';
 import {
     ArrowLeft,
     FileSpreadsheet,
@@ -7,103 +7,105 @@ import {
     ShoppingCart,
     Wallet,
     UserCheck,
-} from '@lucide/vue'
+} from '@lucide/vue';
 
 interface Affiliate {
-    id: number
-    name: string
-    username: string
-    platform: string
+    id: number;
+    name: string;
+    username: string;
+    platform: string;
 }
 
 interface Performance {
-    id: number
-    affiliate_id: number
-    gmv: string | number
-    attributed_orders: number
-    products_sold: number
-    commission: string | number
-    aov: string | number
-    ctr: string | number
-    ctor: string | number
-    affiliate: Affiliate | null
+    id: number;
+    affiliate_id: number;
+    gmv: string | number;
+    attributed_orders: number;
+    products_sold: number;
+    commission: string | number;
+    aov: string | number;
+    ctr: string | number;
+    ctor: string | number;
+    affiliate: Affiliate | null;
 }
 
 interface Batch {
-    id: number
-    file_name: string
-    period_start: string
-    period_end: string
-    status: string
-    total_rows: number
-    uploaded_at: string
-    uploaded_by: string
+    id: number;
+    file_name: string;
+    period_start: string;
+    period_end: string;
+    status: string;
+    total_rows: number;
+    uploaded_at: string;
+    uploaded_by: string;
 }
 
 interface Summary {
-    total_affiliates: number
-    total_gmv: number
-    total_orders: number
-    total_products_sold: number
-    total_commission: number
+    total_affiliates: number;
+    total_gmv: number;
+    total_orders: number;
+    total_products_sold: number;
+    total_commission: number;
 }
 
 interface Performances {
-    data: Performance[]
-    current_page: number
-    last_page: number
-    total: number
-    per_page: number
+    data: Performance[];
+    current_page: number;
+    last_page: number;
+    total: number;
+    per_page: number;
 }
 
 const props = defineProps<{
-    batch: Batch
-    summary: Summary
-    performances: Performances
-}>()
+    batch: Batch;
+    summary: Summary;
+    performances: Performances;
+}>();
 
 const formatNumber = (value: number | string) => {
-    return Number(value ?? 0).toLocaleString('id-ID')
-}
+    return Number(value ?? 0).toLocaleString('id-ID');
+};
 
 const formatRupiah = (value: number | string) => {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         maximumFractionDigits: 0,
-    }).format(Number(value ?? 0))
-}
+    }).format(Number(value ?? 0));
+};
 
 const formatDate = (value: string | null) => {
-    if (!value) return '-'
+    if (!value) return '-';
 
     return new Intl.DateTimeFormat('id-ID', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
-    }).format(new Date(value))
-}
+    }).format(new Date(value));
+};
 </script>
 
 <template>
     <Head title="History Detail" />
 
-    <div class="app-textured-bg min-h-full p-4 text-foreground md:p-6">
+    <div class="app-textured-bg text-foreground min-h-full p-4 md:p-6">
         <!-- Header -->
         <div class="mb-6">
             <div class="flex items-center gap-4">
                 <!-- Back -->
                 <Link
                     href="/history"
-                    class="flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted"
+                    class="border-border bg-card hover:bg-muted flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition"
                 >
                     <ArrowLeft class="h-5 w-5" />
                 </Link>
 
                 <!-- Icon + Title -->
                 <div class="flex items-center gap-3">
-                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                        <FileSpreadsheet class="h-5 w-5 text-primary" />
+                    <div
+                        class="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
+                    >
+                        <FileSpreadsheet class="text-primary h-5 w-5" />
                     </div>
 
                     <div>
@@ -111,7 +113,7 @@ const formatDate = (value: string | null) => {
                             History Detail
                         </h1>
 
-                        <p class="text-sm text-muted-foreground">
+                        <p class="text-muted-foreground text-sm">
                             {{ batch.file_name }}
                         </p>
                     </div>
@@ -120,24 +122,16 @@ const formatDate = (value: string | null) => {
         </div>
 
         <!-- Batch Information -->
-        <div
-            class="mb-6 rounded-xl border border-border bg-card p-5 shadow-sm"
-        >
+        <div class="border-border bg-card mb-6 rounded-xl border p-5 shadow-sm">
             <div class="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
                 <div>
-                    <p class="text-xs text-muted-foreground">
-                        Batch
-                    </p>
+                    <p class="text-muted-foreground text-xs">Batch</p>
 
-                    <p class="mt-1 font-medium">
-                        #{{ batch.id }}
-                    </p>
+                    <p class="mt-1 font-medium">#{{ batch.id }}</p>
                 </div>
 
                 <div>
-                    <p class="text-xs text-muted-foreground">
-                        Periode
-                    </p>
+                    <p class="text-muted-foreground text-xs">Periode</p>
 
                     <p class="mt-1 font-medium">
                         {{ formatDate(batch.period_start) }}
@@ -147,9 +141,7 @@ const formatDate = (value: string | null) => {
                 </div>
 
                 <div>
-                    <p class="text-xs text-muted-foreground">
-                        Uploaded By
-                    </p>
+                    <p class="text-muted-foreground text-xs">Uploaded By</p>
 
                     <p class="mt-1 font-medium">
                         {{ batch.uploaded_by }}
@@ -157,9 +149,7 @@ const formatDate = (value: string | null) => {
                 </div>
 
                 <div>
-                    <p class="text-xs text-muted-foreground">
-                        Waktu Upload
-                    </p>
+                    <p class="text-muted-foreground text-xs">Waktu Upload</p>
 
                     <p class="mt-1 font-medium">
                         {{ batch.uploaded_at }}
@@ -170,15 +160,11 @@ const formatDate = (value: string | null) => {
 
         <!-- Summary -->
         <div class="mb-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-            <div
-                class="rounded-xl border border-border bg-card p-5 shadow-sm"
-            >
+            <div class="border-border bg-card rounded-xl border p-5 shadow-sm">
                 <div class="flex items-center justify-between">
-                    <p class="text-sm text-muted-foreground">
-                        Affiliate
-                    </p>
+                    <p class="text-muted-foreground text-sm">Affiliate</p>
 
-                    <Users class="h-5 w-5 text-muted-foreground" />
+                    <Users class="text-muted-foreground h-5 w-5" />
                 </div>
 
                 <p class="mt-3 text-2xl font-semibold">
@@ -186,15 +172,11 @@ const formatDate = (value: string | null) => {
                 </p>
             </div>
 
-            <div
-                class="rounded-xl border border-border bg-card p-5 shadow-sm"
-            >
+            <div class="border-border bg-card rounded-xl border p-5 shadow-sm">
                 <div class="flex items-center justify-between">
-                    <p class="text-sm text-muted-foreground">
-                        GMV
-                    </p>
+                    <p class="text-muted-foreground text-sm">GMV</p>
 
-                    <Wallet class="h-5 w-5 text-muted-foreground" />
+                    <Wallet class="text-muted-foreground h-5 w-5" />
                 </div>
 
                 <p class="mt-3 text-xl font-semibold">
@@ -202,15 +184,11 @@ const formatDate = (value: string | null) => {
                 </p>
             </div>
 
-            <div
-                class="rounded-xl border border-border bg-card p-5 shadow-sm"
-            >
+            <div class="border-border bg-card rounded-xl border p-5 shadow-sm">
                 <div class="flex items-center justify-between">
-                    <p class="text-sm text-muted-foreground">
-                        Orders
-                    </p>
+                    <p class="text-muted-foreground text-sm">Orders</p>
 
-                    <ShoppingCart class="h-5 w-5 text-muted-foreground" />
+                    <ShoppingCart class="text-muted-foreground h-5 w-5" />
                 </div>
 
                 <p class="mt-3 text-2xl font-semibold">
@@ -218,15 +196,11 @@ const formatDate = (value: string | null) => {
                 </p>
             </div>
 
-            <div
-                class="rounded-xl border border-border bg-card p-5 shadow-sm"
-            >
+            <div class="border-border bg-card rounded-xl border p-5 shadow-sm">
                 <div class="flex items-center justify-between">
-                    <p class="text-sm text-muted-foreground">
-                        Terjual
-                    </p>
+                    <p class="text-muted-foreground text-sm">Terjual</p>
 
-                    <UserCheck class="h-5 w-5 text-muted-foreground" />
+                    <UserCheck class="text-muted-foreground h-5 w-5" />
                 </div>
 
                 <p class="mt-3 text-2xl font-semibold">
@@ -234,15 +208,11 @@ const formatDate = (value: string | null) => {
                 </p>
             </div>
 
-            <div
-                class="rounded-xl border border-border bg-card p-5 shadow-sm"
-            >
+            <div class="border-border bg-card rounded-xl border p-5 shadow-sm">
                 <div class="flex items-center justify-between">
-                    <p class="text-sm text-muted-foreground">
-                        Commission
-                    </p>
+                    <p class="text-muted-foreground text-sm">Commission</p>
 
-                    <Wallet class="h-5 w-5 text-muted-foreground" />
+                    <Wallet class="text-muted-foreground h-5 w-5" />
                 </div>
 
                 <p class="mt-3 text-xl font-semibold">
@@ -253,23 +223,21 @@ const formatDate = (value: string | null) => {
 
         <!-- Performance Table -->
         <div
-            class="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
+            class="border-border bg-card overflow-hidden rounded-xl border shadow-sm"
         >
             <div
-                class="flex items-center gap-3 border-b border-border px-6 py-4"
+                class="border-border flex items-center gap-3 border-b px-6 py-4"
             >
                 <div
-                    class="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"
+                    class="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg"
                 >
-                    <Users class="h-5 w-5 text-primary" />
+                    <Users class="text-primary h-5 w-5" />
                 </div>
 
                 <div>
-                    <h2 class="font-semibold">
-                        Affiliate Performance
-                    </h2>
+                    <h2 class="font-semibold">Affiliate Performance</h2>
 
-                    <p class="text-sm text-muted-foreground">
+                    <p class="text-muted-foreground text-sm">
                         Data performance yang tersimpan pada batch ini.
                     </p>
                 </div>
@@ -280,64 +248,75 @@ const formatDate = (value: string | null) => {
                 class="px-6 py-12 text-center"
             >
                 <FileSpreadsheet
-                    class="mx-auto h-10 w-10 text-muted-foreground"
+                    class="text-muted-foreground mx-auto h-10 w-10"
                 />
 
-                <p class="mt-3 font-medium">
-                    Tidak ada data performance
-                </p>
+                <p class="mt-3 font-medium">Tidak ada data performance</p>
 
-                <p class="mt-1 text-sm text-muted-foreground">
+                <p class="text-muted-foreground mt-1 text-sm">
                     Batch ini belum memiliki data performance.
                 </p>
             </div>
 
-            <div
-                v-else
-                class="overflow-x-auto"
-            >
+            <div v-else class="overflow-x-auto">
                 <table class="w-full text-sm">
-                    <thead class="border-b border-border bg-muted/30">
+                    <thead class="border-border bg-muted/30 border-b">
                         <tr class="text-left">
-                            <th class="px-6 py-4 font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-6 py-4 font-medium"
+                            >
                                 Affiliate
                             </th>
 
-                            <th class="px-6 py-4 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-6 py-4 text-right font-medium"
+                            >
                                 GMV
                             </th>
 
-                            <th class="px-6 py-4 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-6 py-4 text-right font-medium"
+                            >
                                 Orders
                             </th>
 
-                            <th class="px-6 py-4 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-6 py-4 text-right font-medium"
+                            >
                                 Terjual
                             </th>
 
-                            <th class="px-6 py-4 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-6 py-4 text-right font-medium"
+                            >
                                 AOV
                             </th>
 
-                            <th class="px-6 py-4 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-6 py-4 text-right font-medium"
+                            >
                                 CTR
                             </th>
 
-                            <th class="px-6 py-4 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-6 py-4 text-right font-medium"
+                            >
                                 CTOR
                             </th>
 
-                            <th class="px-6 py-4 text-right font-medium text-muted-foreground">
+                            <th
+                                class="text-muted-foreground px-6 py-4 text-right font-medium"
+                            >
                                 Commission
                             </th>
                         </tr>
                     </thead>
 
-                    <tbody class="divide-y divide-border">
+                    <tbody class="divide-border divide-y">
                         <tr
                             v-for="performance in performances.data"
                             :key="performance.id"
-                            class="transition-colors hover:bg-muted/20"
+                            class="hover:bg-muted/20 transition-colors"
                         >
                             <td class="px-6 py-4">
                                 <div>
@@ -345,8 +324,13 @@ const formatDate = (value: string | null) => {
                                         {{ performance.affiliate?.name ?? '-' }}
                                     </p>
 
-                                    <p class="mt-1 text-xs text-muted-foreground">
-                                        @{{ performance.affiliate?.username ?? '-' }}
+                                    <p
+                                        class="text-muted-foreground mt-1 text-xs"
+                                    >
+                                        @{{
+                                            performance.affiliate?.username ??
+                                            '-'
+                                        }}
                                     </p>
                                 </div>
                             </td>
@@ -356,7 +340,9 @@ const formatDate = (value: string | null) => {
                             </td>
 
                             <td class="px-6 py-4 text-right">
-                                {{ formatNumber(performance.attributed_orders) }}
+                                {{
+                                    formatNumber(performance.attributed_orders)
+                                }}
                             </td>
 
                             <td class="px-6 py-4 text-right">

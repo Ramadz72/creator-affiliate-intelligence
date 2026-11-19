@@ -1,5 +1,5 @@
 ﻿<script setup lang="ts">
-import { Head, Link } from '@inertiajs/vue3'
+import { Head, Link } from '@inertiajs/vue3';
 import {
     ArrowLeft,
     ArrowUpRight,
@@ -7,17 +7,17 @@ import {
     Home,
     SearchX,
     Sparkles,
-} from '@lucide/vue'
+} from '@lucide/vue';
 
 defineOptions({
     layout: undefined,
-})
+});
 
 function goBack() {
     if (window.history.length > 1) {
-        window.history.back()
+        window.history.back();
     } else {
-        window.location.href = '/dashboard'
+        window.location.href = '/dashboard';
     }
 }
 </script>
@@ -33,21 +33,30 @@ function goBack() {
             class="pointer-events-none absolute inset-0 -z-10 opacity-50"
             style="
                 background-image:
-                    linear-gradient(rgba(100, 116, 139, 0.055) 1px, transparent 1px),
-                    linear-gradient(90deg, rgba(100, 116, 139, 0.055) 1px, transparent 1px);
+                    linear-gradient(
+                        rgba(100, 116, 139, 0.055) 1px,
+                        transparent 1px
+                    ),
+                    linear-gradient(
+                        90deg,
+                        rgba(100, 116, 139, 0.055) 1px,
+                        transparent 1px
+                    );
                 background-size: 34px 34px;
             "
         />
 
         <div
-            class="pointer-events-none absolute -left-40 -top-40 -z-10 h-[32rem] w-[32rem] rounded-full bg-indigo-200/30 blur-[100px]"
+            class="pointer-events-none absolute -top-40 -left-40 -z-10 h-[32rem] w-[32rem] rounded-full bg-indigo-200/30 blur-[100px]"
         />
 
         <div
-            class="pointer-events-none absolute -bottom-48 right-0 -z-10 h-[35rem] w-[35rem] rounded-full bg-violet-200/35 blur-[110px]"
+            class="pointer-events-none absolute right-0 -bottom-48 -z-10 h-[35rem] w-[35rem] rounded-full bg-violet-200/35 blur-[110px]"
         />
 
-        <div class="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col px-6 sm:px-10 lg:px-16">
+        <div
+            class="mx-auto flex min-h-screen w-full max-w-[1600px] flex-col px-6 sm:px-10 lg:px-16"
+        >
             <!-- Header -->
             <header class="flex items-center justify-between py-7 sm:py-9">
                 <Link href="/dashboard" class="group flex items-center gap-3">
@@ -61,9 +70,10 @@ function goBack() {
                         />
                     </div>
 
-
                     <div class="leading-tight">
-                        <p class="text-sm font-bold tracking-tight text-slate-950">
+                        <p
+                            class="text-sm font-bold tracking-tight text-slate-950"
+                        >
                             Creator Affiliate
                         </p>
                         <p class="mt-1 text-xs font-medium text-slate-500">
@@ -83,7 +93,7 @@ function goBack() {
 
             <!-- Main hero -->
             <section
-                class="grid flex-1 items-center gap-10 pb-12 pt-6 lg:grid-cols-[0.92fr_1.08fr] lg:gap-5 lg:py-10"
+                class="grid flex-1 items-center gap-10 pt-6 pb-12 lg:grid-cols-[0.92fr_1.08fr] lg:gap-5 lg:py-10"
             >
                 <!-- Left content -->
                 <div class="relative z-10 max-w-[640px]">
@@ -94,21 +104,19 @@ function goBack() {
                         Looks like you are lost
                     </div>
 
-                    
                     <h1
-                        class="text-[clamp(2.5rem,4.2vw,4.5rem)] font-bold leading-[1.08] tracking-[-0.065em]"
+                        class="text-[clamp(2.5rem,4.2vw,4.5rem)] leading-[1.08] font-bold tracking-[-0.065em]"
                     >
                         <span class="block whitespace-nowrap">
                             Oops! Halaman ini
                         </span>
 
                         <span
-                            class="mt-1 block whitespace-nowrap bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 bg-clip-text pb-2 text-transparent"
+                            class="mt-1 block bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-500 bg-clip-text pb-2 whitespace-nowrap text-transparent"
                         >
                             menghilang.
                         </span>
                     </h1>
-                    
 
                     <p
                         class="mt-6 max-w-xl text-sm leading-7 text-slate-500 sm:text-base sm:leading-8"
@@ -132,7 +140,9 @@ function goBack() {
                             <p class="text-sm font-bold text-slate-800">
                                 Halaman tidak ditemukan
                             </p>
-                            <p class="mt-1 text-xs leading-5 text-slate-500 sm:text-sm">
+                            <p
+                                class="mt-1 text-xs leading-5 text-slate-500 sm:text-sm"
+                            >
                                 Periksa kembali URL atau kembali ke dashboard
                                 untuk melanjutkan pekerjaanmu.
                             </p>
@@ -143,19 +153,19 @@ function goBack() {
                     <div class="mt-7 flex flex-wrap gap-3">
                         <Link
                             href="/dashboard"
-                            class="group inline-flex min-h-12 items-center gap-3 rounded-xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:bg-sky-800 hover:shadow-indigo-700/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                            class="group inline-flex min-h-12 items-center gap-3 rounded-xl bg-sky-600 px-5 py-3 text-sm font-semibold text-white shadow-lg shadow-slate-950/15 transition-all duration-200 hover:-translate-y-0.5 hover:bg-sky-800 hover:shadow-indigo-700/20 focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:outline-none"
                         >
                             <Home class="h-4 w-4" />
                             Dashboard
                             <ArrowUpRight
-                                class="h-4 w-4 text-white/60 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-white"
+                                class="h-4 w-4 text-white/60 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-white"
                             />
                         </Link>
 
                         <button
                             type="button"
                             @click="goBack"
-                            class="inline-flex min-h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white/90 px-5 py-3 text-sm font-semibold text-slate-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+                            class="inline-flex min-h-12 items-center gap-3 rounded-xl border border-slate-200 bg-white/90 px-5 py-3 text-sm font-semibold text-slate-600 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-slate-300 hover:bg-white focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 focus-visible:outline-none"
                         >
                             <ArrowLeft class="h-4 w-4" />
                             Halaman Sebelumnya
@@ -171,7 +181,9 @@ function goBack() {
                 </div>
 
                 <!-- Right visual -->
-                <div class="relative mx-auto w-full max-w-[760px] lg:ml-auto lg:max-w-none">
+                <div
+                    class="relative mx-auto w-full max-w-[760px] lg:ml-auto lg:max-w-none"
+                >
                     <!-- Decorative frame -->
                     <div
                         class="pointer-events-none absolute -inset-3 rounded-[2.5rem] border border-white/90 sm:-inset-5"
@@ -198,7 +210,7 @@ function goBack() {
 
                     <!-- Image status badge -->
                     <div
-                        class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur-xl sm:left-7 sm:top-7"
+                        class="absolute top-4 left-4 inline-flex items-center gap-2 rounded-full border border-white/70 bg-white/90 px-3.5 py-2.5 text-xs font-semibold text-slate-700 shadow-lg backdrop-blur-xl sm:top-7 sm:left-7"
                     >
                         <span class="h-2 w-2 rounded-full bg-rose-500" />
                         Page unavailable
@@ -211,7 +223,8 @@ function goBack() {
                 class="mt-8 flex flex-col gap-3 border-t border-slate-200/70 py-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between"
             >
                 <p>
-                    © {{ new Date().getFullYear() }} Creator Affiliate Intelligence
+                    © {{ new Date().getFullYear() }} Creator Affiliate
+                    Intelligence
                 </p>
 
                 <p class="flex items-center gap-2">

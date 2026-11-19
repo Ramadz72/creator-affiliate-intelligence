@@ -195,9 +195,7 @@ const gmvSparkValues = computed(() => {
 
 const ordersSparkValues = computed(() => {
     if (Array.isArray(props.orders_trend) && props.orders_trend.length > 0) {
-        const trend = props.orders_trend.map((row) =>
-            Number(row.orders) || 0,
-        );
+        const trend = props.orders_trend.map((row) => Number(row.orders) || 0);
 
         if (trend.some((v) => v > 0) || trend.length > 1) {
             return trend;
@@ -233,7 +231,9 @@ const ordersSparkValues = computed(() => {
 
 const signalRows = computed(() => {
     const current = props.affiliate_performance ?? [];
-    const previous = [...(props.comparison_affiliate_performance ?? [])].reverse();
+    const previous = [
+        ...(props.comparison_affiliate_performance ?? []),
+    ].reverse();
 
     if (current.length > 0 && previous.length > 0) {
         return [...previous, ...current];
@@ -307,7 +307,6 @@ const clearSignalHover = () => {
     hoveredSignalIndex.value = null;
 };
 
-
 const startDate = ref(props.selected_period?.start ?? '');
 
 const endDate = ref(props.selected_period?.end ?? '');
@@ -332,7 +331,6 @@ const getDaysAgo = (days: number) => {
     return formatDateInput(date);
 };
 
-
 const calendarMonth = ref(
     new Date(`${props.selected_period?.start || getToday()}T00:00:00`),
 );
@@ -344,7 +342,6 @@ const calendarMonthLabel = computed(() =>
     }).format(calendarMonth.value),
 );
 
-
 const calendarDays = computed<string[]>(() => {
     const year = calendarMonth.value.getFullYear();
     const month = calendarMonth.value.getMonth();
@@ -354,9 +351,7 @@ const calendarDays = computed<string[]>(() => {
     const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
 
     return Array.from({ length: totalCells }, (_, index) =>
-        formatDateInput(
-            new Date(year, month, index - firstDay + 1),
-        ),
+        formatDateInput(new Date(year, month, index - firstDay + 1)),
     );
 });
 
@@ -376,7 +371,6 @@ const isComparisonDate = (date: string) =>
 const isSelectedDate = (date: string) =>
     date === startDate.value || date === endDate.value;
 
-
 const changeCalendarMonth = (amount: number) => {
     calendarMonth.value = new Date(
         calendarMonth.value.getFullYear(),
@@ -393,7 +387,6 @@ const isDateInRange = (date: string) =>
 
 const isRangeEndpoint = (date: string) =>
     date === startDate.value || date === endDate.value;
-
 
 const selectCalendarDate = (date: string) => {
     if (!isCurrentCalendarMonth(date)) {
@@ -417,7 +410,6 @@ const selectCalendarDate = (date: string) => {
     endDate.value = date;
     applyPeriod();
 };
-
 
 const formatDate = (date: string | null) => {
     if (!date) return '-';
@@ -467,7 +459,6 @@ const applyPeriod = () => {
     if (startDate.value > endDate.value) {
         return;
     }
-
 
     router.get(
         '/dashboard',
@@ -687,7 +678,8 @@ const actionItems = computed(() => {
             href: `/affiliates${selectedPeriodQuery.value}${selectedPeriodQuery.value ? '&' : '?'}action=SUPPORT`,
             icon: markRaw(Headphones),
             iconClass: 'bg-emerald-500/10 text-emerald-500 ring-emerald-500/15',
-            hoverClass: 'hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]',
+            hoverClass:
+                'hover:border-emerald-500/40 hover:bg-emerald-500/[0.04]',
             barClass: 'bg-emerald-500',
             valueClass: 'text-emerald-500',
             priority: true,
@@ -751,13 +743,14 @@ const insightPeriodLabel = () => {
         props.insight_preview.period.end,
     );
 };
-
 </script>
 
 <template>
     <Head title="Dashboard" />
 
-    <div class="app-textured-bg text-foreground min-h-full p-4 text-[15px] md:p-6">
+    <div
+        class="app-textured-bg text-foreground min-h-full p-4 text-[15px] md:p-6"
+    >
         <!-- Header -->
         <section
             class="border-border/70 bg-card/70 relative z-30 mb-5 rounded-2xl border p-4 shadow-sm backdrop-blur md:p-5"
@@ -780,8 +773,9 @@ const insightPeriodLabel = () => {
                 class="relative flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between"
             >
                 <div class="min-w-0">
-                    <div class="flex flex-wrap items-center gap-x-3 gap-y-2">
-                    </div>
+                    <div
+                        class="flex flex-wrap items-center gap-x-3 gap-y-2"
+                    ></div>
 
                     <h1
                         class="dash-gradient-text from-foreground via-foreground mt-1 inline-block bg-gradient-to-r to-sky-500 bg-clip-text text-[1.9rem] font-semibold tracking-tight text-transparent md:text-[2.1rem]"
@@ -789,7 +783,9 @@ const insightPeriodLabel = () => {
                         {{ props.business_name || 'Nama Bisnis' }}
                     </h1>
 
-                    <p class="text-muted-foreground mt-1.5 max-w-xl text-[0.95rem]">
+                    <p
+                        class="text-muted-foreground mt-1.5 max-w-xl text-[0.95rem]"
+                    >
                         Pantau performa creator dan affiliate tokomu di satu
                         tempat, lengkap dengan prioritas tindakan.
                     </p>
@@ -822,7 +818,6 @@ const insightPeriodLabel = () => {
                     </div>
                 </div>
 
-                
                 <!-- Periode Data: Kalender Permanen -->
                 <section class="w-full self-start sm:w-[280px]">
                     <!-- Navigasi bulan -->
@@ -833,8 +828,13 @@ const insightPeriodLabel = () => {
                             @click="changeCalendarMonth(-1)"
                             class="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-lg transition"
                         >
-                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                            <svg
+                                viewBox="0 0 24 24"
+                                class="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
                                 <path d="m15 18-6-6 6-6" />
                             </svg>
                         </button>
@@ -849,8 +849,13 @@ const insightPeriodLabel = () => {
                             @click="changeCalendarMonth(1)"
                             class="hover:bg-muted flex h-8 w-8 items-center justify-center rounded-lg transition"
                         >
-                            <svg viewBox="0 0 24 24" class="h-4 w-4" fill="none"
-                                stroke="currentColor" stroke-width="2">
+                            <svg
+                                viewBox="0 0 24 24"
+                                class="h-4 w-4"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                            >
                                 <path d="m9 18 6-6-6-6" />
                             </svg>
                         </button>
@@ -859,7 +864,15 @@ const insightPeriodLabel = () => {
                     <!-- Nama hari -->
                     <div class="mb-1 grid grid-cols-7 gap-0">
                         <div
-                            v-for="day in ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab']"
+                            v-for="day in [
+                                'Min',
+                                'Sen',
+                                'Sel',
+                                'Rab',
+                                'Kam',
+                                'Jum',
+                                'Sab',
+                            ]"
                             :key="day"
                             class="text-muted-foreground py-1 text-center text-[10px] font-medium"
                         >
@@ -882,7 +895,8 @@ const insightPeriodLabel = () => {
                                     isSelectedDate(date),
 
                                 'bg-sky-500/10 text-sky-700 dark:text-sky-300':
-                                    isDateInRange(date) && !isSelectedDate(date),
+                                    isDateInRange(date) &&
+                                    !isSelectedDate(date),
 
                                 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300':
                                     isComparisonDate(date) &&
@@ -912,7 +926,6 @@ const insightPeriodLabel = () => {
                             {{ Number(date.slice(-2)) }}
                         </button>
                     </div>
-
                 </section>
             </div>
         </section>
@@ -1187,7 +1200,9 @@ const insightPeriodLabel = () => {
                             </div>
 
                             <div>
-                                <p class="text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase">
+                                <p
+                                    class="text-muted-foreground text-xs font-semibold tracking-[0.14em] uppercase"
+                                >
                                     Attributed Orders
                                 </p>
 
@@ -1311,7 +1326,7 @@ const insightPeriodLabel = () => {
 
                         <span
                             v-if="signalPoints.length"
-                            class="pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500 ring-2 ring-background"
+                            class="ring-background pointer-events-none absolute h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500 ring-2"
                             :style="{
                                 left: `${signalPoints[signalPoints.length - 1].x}%`,
                                 top: `${(signalPoints[signalPoints.length - 1].y / signalHeight) * 100}%`,
@@ -1324,7 +1339,7 @@ const insightPeriodLabel = () => {
 
                         <span
                             v-if="hoveredSignalPoint"
-                            class="pointer-events-none absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500 ring-2 ring-background"
+                            class="ring-background pointer-events-none absolute h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-sky-500 ring-2"
                             :style="{
                                 left: `${hoveredSignalPoint.x}%`,
                                 top: `${(hoveredSignalPoint.y / signalHeight) * 100}%`,
@@ -1366,16 +1381,12 @@ const insightPeriodLabel = () => {
                     <div
                         v-if="signalRows.length >= 2"
                         class="text-muted-foreground mt-2 flex items-center justify-between text-[10px]"
-                    >
-
-                    </div>
-                    
+                    ></div>
 
                     <div
                         v-if="signalPoints.length > 1"
                         class="text-muted-foreground mt-2 flex items-center justify-between text-[10px]"
-                    >
-                    </div>
+                    ></div>
                 </div>
             </div>
 
@@ -1567,10 +1578,10 @@ const insightPeriodLabel = () => {
                                         {{ item.label }}
                                     </p>
 
-                                <p
-                                    class="text-muted-foreground mt-0.5 truncate text-xs"
-                                >
-                                    {{ item.hint }}
+                                    <p
+                                        class="text-muted-foreground mt-0.5 truncate text-xs"
+                                    >
+                                        {{ item.hint }}
                                     </p>
                                 </div>
                             </div>
@@ -1606,10 +1617,24 @@ const insightPeriodLabel = () => {
                         v-if="deprioritizeCount > 0"
                         type="button"
                         @click="showDeprioritize = !showDeprioritize"
-                        class="w-full flex items-center justify-between rounded-lg border border-border/70 bg-muted/10 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-muted/30 transition"
+                        class="border-border/70 bg-muted/10 text-muted-foreground hover:text-foreground hover:bg-muted/30 flex w-full items-center justify-between rounded-lg border px-3 py-2 text-xs transition"
                     >
-                        <span>{{ showDeprioritize ? 'Sembunyikan' : 'Tampilkan' }} {{ deprioritizeCount }} Deprioritize</span>
-                        <svg class="h-3.5 w-3.5 transition-transform" :class="{ 'rotate-180': showDeprioritize }" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m6 9 6 6 6-6"/></svg>
+                        <span
+                            >{{
+                                showDeprioritize ? 'Sembunyikan' : 'Tampilkan'
+                            }}
+                            {{ deprioritizeCount }} Deprioritize</span
+                        >
+                        <svg
+                            class="h-3.5 w-3.5 transition-transform"
+                            :class="{ 'rotate-180': showDeprioritize }"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path d="m6 9 6 6 6-6" />
+                        </svg>
                     </button>
                 </div>
             </div>

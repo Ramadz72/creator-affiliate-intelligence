@@ -24,15 +24,9 @@ const saveTabs = () => {
         return;
     }
 
-    localStorage.setItem(
-        'creator-affiliate-tabs',
-        JSON.stringify(tabs.value),
-    );
+    localStorage.setItem('creator-affiliate-tabs', JSON.stringify(tabs.value));
 
-    localStorage.setItem(
-        'creator-affiliate-active-tab',
-        activeTabId.value,
-    );
+    localStorage.setItem('creator-affiliate-active-tab', activeTabId.value);
 };
 
 const initializeTabs = (currentUrl?: string) => {
@@ -43,9 +37,7 @@ const initializeTabs = (currentUrl?: string) => {
     initialized = true;
 
     try {
-        const savedTabs = localStorage.getItem(
-            'creator-affiliate-tabs',
-        );
+        const savedTabs = localStorage.getItem('creator-affiliate-tabs');
 
         if (savedTabs) {
             const parsed = JSON.parse(savedTabs) as AppTab[];
@@ -59,10 +51,7 @@ const initializeTabs = (currentUrl?: string) => {
                     (tab) => tab.id !== 'dashboard',
                 );
 
-                tabs.value = [
-                    savedDashboard ?? defaultTab,
-                    ...otherTabs,
-                ];
+                tabs.value = [savedDashboard ?? defaultTab, ...otherTabs];
             }
         }
 
@@ -84,10 +73,8 @@ const initializeTabs = (currentUrl?: string) => {
                 .find(
                     (tab) =>
                         tab.href &&
-                        (
-                            currentUrl === tab.href ||
-                            currentUrl.startsWith(`${tab.href}/`)
-                        ),
+                        (currentUrl === tab.href ||
+                            currentUrl.startsWith(`${tab.href}/`)),
                 );
 
             if (matchingTab) {
@@ -118,13 +105,8 @@ const createTab = () => {
     return newTab;
 };
 
-const updateActiveTab = (
-    title: string,
-    href: string,
-) => {
-    const tab = tabs.value.find(
-        (item) => item.id === activeTabId.value,
-    );
+const updateActiveTab = (title: string, href: string) => {
+    const tab = tabs.value.find((item) => item.id === activeTabId.value);
 
     if (!tab) {
         return;
@@ -137,9 +119,7 @@ const updateActiveTab = (
 };
 
 const updateActiveTabUrl = (href: string) => {
-    const tab = tabs.value.find(
-        (item) => item.id === activeTabId.value,
-    );
+    const tab = tabs.value.find((item) => item.id === activeTabId.value);
 
     if (!tab) {
         return;
@@ -149,8 +129,6 @@ const updateActiveTabUrl = (href: string) => {
 
     saveTabs();
 };
-
-
 
 const activateTab = (id: string) => {
     if (!tabs.value.some((tab) => tab.id === id)) {
@@ -167,9 +145,7 @@ const closeTab = (id: string) => {
         return;
     }
 
-    const index = tabs.value.findIndex(
-        (tab) => tab.id === id,
-    );
+    const index = tabs.value.findIndex((tab) => tab.id === id);
 
     if (index === -1) {
         return null;
@@ -182,10 +158,7 @@ const closeTab = (id: string) => {
     let nextTab: AppTab | null = null;
 
     if (wasActive) {
-        nextTab =
-            tabs.value[index] ??
-            tabs.value[index - 1] ??
-            defaultTab;
+        nextTab = tabs.value[index] ?? tabs.value[index - 1] ?? defaultTab;
 
         activeTabId.value = nextTab.id;
     }
@@ -193,12 +166,6 @@ const closeTab = (id: string) => {
     saveTabs();
 
     return nextTab;
-};
-
-const getActiveTab = () => {
-    return tabs.value.find(
-        (tab) => tab.id === activeTabId.value,
-    );
 };
 
 export function useAppTabs() {

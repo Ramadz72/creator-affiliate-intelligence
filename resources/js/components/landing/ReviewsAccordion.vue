@@ -1,28 +1,27 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { TrendingUp } from '@lucide/vue'
-import Reveal from './Reveal.vue'
-import { REVIEWS } from '../../data/landing'
+import { ref } from 'vue';
+import { TrendingUp } from '@lucide/vue';
+import Reveal from './Reveal.vue';
+import { REVIEWS } from '../../data/landing';
 
-const open = ref(0)
+const open = ref(0);
 </script>
 
 <template>
     <section id="review" class="bg-white py-20 sm:py-28">
         <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-
             <!-- Heading -->
             <Reveal>
                 <div class="mx-auto max-w-3xl text-center">
                     <span
-                        class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-blue-600"
+                        class="inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold tracking-[0.16em] text-blue-600 uppercase"
                     >
                         <span class="h-2 w-2 rounded-full bg-blue-600"></span>
                         Review Pemilik Toko
                     </span>
 
                     <h2
-                        class="mt-5 font-heading text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl"
+                        class="font-heading mt-5 text-3xl leading-tight font-extrabold tracking-tight text-slate-900 sm:text-4xl"
                     >
                         Dipakai untuk mengambil keputusan,
                         <br class="hidden sm:block" />
@@ -43,8 +42,8 @@ const open = ref(0)
                         class="group relative h-full cursor-pointer overflow-hidden rounded-[24px] transition-[flex,max-width] duration-500 ease-out"
                         :class="
                             open === i
-                                ? 'flex-[4] min-w-0'
-                                : 'flex-1 min-w-[110px] max-w-[170px]'
+                                ? 'min-w-0 flex-[4]'
+                                : 'max-w-[170px] min-w-[110px] flex-1'
                         "
                     >
                         <!-- Background Image -->
@@ -56,7 +55,7 @@ const open = ref(0)
                             decoding="async"
                             width="1200"
                             height="800"
-                            class="absolute inset-0 h-full w-full object-cover object-center transform-gpu transition-transform duration-700 ease-out group-hover:scale-[1.03]"
+                            class="absolute inset-0 h-full w-full transform-gpu object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.03]"
                         />
 
                         <!-- Dark Overlay -->
@@ -71,8 +70,8 @@ const open = ref(0)
                                 class="pointer-events-none absolute inset-0 flex items-start justify-center"
                             >
                                 <span
-                                    class="mt-5 whitespace-nowrap text-xs font-semibold text-white/90"
-                                    style="writing-mode: vertical-rl;"
+                                    class="mt-5 text-xs font-semibold whitespace-nowrap text-white/90"
+                                    style="writing-mode: vertical-rl"
                                 >
                                     {{ r.name }}
                                 </span>
@@ -90,14 +89,14 @@ const open = ref(0)
                             >
                                 <!-- Quote Icon -->
                                 <div
-                                    class="mb-4 text-4xl font-bold leading-none text-cyan-400"
+                                    class="mb-4 text-4xl leading-none font-bold text-cyan-400"
                                 >
                                     ”
                                 </div>
 
                                 <!-- Quote -->
                                 <p
-                                    class="max-w-2xl text-sm font-medium leading-6 text-white sm:text-base sm:leading-7"
+                                    class="max-w-2xl text-sm leading-6 font-medium text-white sm:text-base sm:leading-7"
                                 >
                                     “{{ r.quote }}”
                                 </p>
@@ -126,7 +125,9 @@ const open = ref(0)
                                         class="mt-1 text-xs text-cyan-300 sm:text-sm"
                                     >
                                         {{ r.handle }}
-                                        <span class="mx-1 text-white/30">·</span>
+                                        <span class="mx-1 text-white/30"
+                                            >·</span
+                                        >
                                         {{ r.category }}
                                     </p>
                                 </div>

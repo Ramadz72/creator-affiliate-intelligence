@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { Link, useForm } from '@inertiajs/vue3'
+import { computed, ref } from 'vue';
+import { Link, useForm } from '@inertiajs/vue3';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -20,53 +20,53 @@ import {
     Wallet,
     XCircle,
     Zap,
-} from '@lucide/vue'
+} from '@lucide/vue';
 
 interface Creator {
-    id: number
-    name: string
-    username: string
-    profile_image: string | null
+    id: number;
+    name: string;
+    username: string;
+    profile_image: string | null;
 }
 
 interface Campaign {
-    id: number
-    campaign_name: string
-    product_name: string
-    agreed_price: string | number
-    creator: Creator
+    id: number;
+    campaign_name: string;
+    product_name: string;
+    agreed_price: string | number;
+    creator: Creator;
 }
 
 interface Performance {
-    id: number
-    performance_date: string | null
-    views: number
-    likes: number
-    comments: number
-    shares: number
-    saves: number
-    clicks: number
-    orders: number
-    buyers: number
-    gmv: string | number
+    id: number;
+    performance_date: string | null;
+    views: number;
+    likes: number;
+    comments: number;
+    shares: number;
+    saves: number;
+    clicks: number;
+    orders: number;
+    buyers: number;
+    gmv: string | number;
 }
 
 const props = defineProps<{
-    campaign: Campaign
-    performance: Performance
-}>()
+    campaign: Campaign;
+    performance: Performance;
+}>();
 
-const activeSection = ref<'reach' | 'conversion' | 'revenue'>('reach')
+const activeSection = ref<'reach' | 'conversion' | 'revenue'>('reach');
 
 const getDateValue = (value: string | null | undefined) => {
-    if (!value) return ''
+    if (!value) return '';
 
-    return value.slice(0, 10)
-}
+    return value.slice(0, 10);
+};
 
 const originalPerformanceDate = getDateValue(
     props.performance.performance_date,
-)
+);
 
 const original = {
     views: Number(props.performance.views ?? 0),
@@ -78,7 +78,7 @@ const original = {
     orders: Number(props.performance.orders ?? 0),
     buyers: Number(props.performance.buyers ?? 0),
     gmv: Number(props.performance.gmv ?? 0),
-}
+};
 
 const form = useForm({
     performance_date: originalPerformanceDate,
@@ -91,7 +91,7 @@ const form = useForm({
     orders: original.orders,
     buyers: original.buyers,
     gmv: String(original.gmv),
-})
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -100,68 +100,66 @@ const form = useForm({
 */
 
 const number = (value: unknown) => {
-    const parsed = Number(value)
-    return Number.isFinite(parsed) ? parsed : 0
-}
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+};
 
 const rupiah = (value: string | number) => {
     return new Intl.NumberFormat('id-ID', {
         style: 'currency',
         currency: 'IDR',
         maximumFractionDigits: 0,
-    }).format(number(value))
-}
+    }).format(number(value));
+};
 
 const formatNumber = (value: number) => {
     return new Intl.NumberFormat('id-ID', {
         maximumFractionDigits: 0,
-    }).format(number(value))
-}
+    }).format(number(value));
+};
 
 const formatCompact = (value: number) => {
-    const n = number(value)
+    const n = number(value);
 
     if (n >= 1_000_000_000) {
-        return `${(n / 1_000_000_000).toFixed(1)}B`
+        return `${(n / 1_000_000_000).toFixed(1)}B`;
     }
 
     if (n >= 1_000_000) {
-        return `${(n / 1_000_000).toFixed(1)}M`
+        return `${(n / 1_000_000).toFixed(1)}M`;
     }
 
     if (n >= 1_000) {
-        return `${(n / 1_000).toFixed(1)}K`
+        return `${(n / 1_000).toFixed(1)}K`;
     }
 
-    return formatNumber(n)
-}
+    return formatNumber(n);
+};
 
 const formatPercent = (value: number) => {
-    return `${number(value).toFixed(2)}%`
-}
+    return `${number(value).toFixed(2)}%`;
+};
 
 const formatRoas = (value: number) => {
-    return `${number(value).toFixed(2)}x`
-}
+    return `${number(value).toFixed(2)}x`;
+};
 
 const errorFor = (field: string) => {
-    return (form.errors as Record<string, string | undefined>)[field]
-}
+    return (form.errors as Record<string, string | undefined>)[field];
+};
 
-const setActiveSection = (
-    section: 'reach' | 'conversion' | 'revenue',
-) => {
-    activeSection.value = section
+const setActiveSection = (section: 'reach' | 'conversion' | 'revenue') => {
+    activeSection.value = section;
 
     window.setTimeout(() => {
-        const target = document.getElementById(`section-${section}`)
+        const target = document.getElementById(`section-${section}`);
 
         target?.scrollIntoView({
             behavior: 'smooth',
             block: 'start',
-        })
-    }, 0)
-}
+        });
+    }, 0);
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -169,62 +167,57 @@ const setActiveSection = (
 |--------------------------------------------------------------------------
 */
 
-const agreedPrice = computed(() => number(props.campaign.agreed_price))
+const agreedPrice = computed(() => number(props.campaign.agreed_price));
 
-const views = computed(() => number(form.views))
-const likes = computed(() => number(form.likes))
-const comments = computed(() => number(form.comments))
-const shares = computed(() => number(form.shares))
-const saves = computed(() => number(form.saves))
-const clicks = computed(() => number(form.clicks))
-const orders = computed(() => number(form.orders))
-const buyers = computed(() => number(form.buyers))
-const gmv = computed(() => number(form.gmv))
+const views = computed(() => number(form.views));
+const likes = computed(() => number(form.likes));
+const comments = computed(() => number(form.comments));
+const shares = computed(() => number(form.shares));
+const saves = computed(() => number(form.saves));
+const clicks = computed(() => number(form.clicks));
+const orders = computed(() => number(form.orders));
+const buyers = computed(() => number(form.buyers));
+const gmv = computed(() => number(form.gmv));
 
 const engagementTotal = computed(() => {
-    return (
-        likes.value +
-        comments.value +
-        shares.value +
-        saves.value
-    )
-})
+    return likes.value + comments.value + shares.value + saves.value;
+});
 
 const engagementRate = computed(() => {
-    if (views.value <= 0) return 0
+    if (views.value <= 0) return 0;
 
-    return (engagementTotal.value / views.value) * 100
-})
+    return (engagementTotal.value / views.value) * 100;
+});
 
 const conversionRate = computed(() => {
-    if (clicks.value <= 0) return 0
+    if (clicks.value <= 0) return 0;
 
-    return (orders.value / clicks.value) * 100
-})
+    return (orders.value / clicks.value) * 100;
+});
 
 const costPerView = computed(() => {
-    if (views.value <= 0 || agreedPrice.value <= 0) return 0
+    if (views.value <= 0 || agreedPrice.value <= 0) return 0;
 
-    return agreedPrice.value / views.value
-})
+    return agreedPrice.value / views.value;
+});
 
 const costPerOrder = computed(() => {
-    if (orders.value <= 0 || agreedPrice.value <= 0) return 0
+    if (orders.value <= 0 || agreedPrice.value <= 0) return 0;
 
-    return agreedPrice.value / orders.value
-})
+    return agreedPrice.value / orders.value;
+});
 
 const roas = computed(() => {
-    if (agreedPrice.value <= 0) return 0
+    if (agreedPrice.value <= 0) return 0;
 
-    return gmv.value / agreedPrice.value
-})
+    return gmv.value / agreedPrice.value;
+});
 
 const roi = computed(() => {
-    if (agreedPrice.value <= 0) return 0
+    if (agreedPrice.value <= 0) return 0;
 
-    return ((gmv.value - agreedPrice.value) / agreedPrice.value) * 100
-})
+    return ((gmv.value - agreedPrice.value) / agreedPrice.value) * 100;
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -239,73 +232,68 @@ const healthScore = computed(() => {
         orders.value <= 0 &&
         gmv.value <= 0
     ) {
-        return 0
+        return 0;
     }
 
-    let score = 0
+    let score = 0;
 
     // ROAS: 45%
     if (roas.value >= 3) {
-        score += 45
+        score += 45;
     } else if (roas.value >= 2) {
-        score += 38
+        score += 38;
     } else if (roas.value >= 1.5) {
-        score += 32
+        score += 32;
     } else if (roas.value >= 1) {
-        score += 24
+        score += 24;
     } else if (roas.value > 0) {
-        score += 10
+        score += 10;
     }
 
     // Engagement: 25%
     if (engagementRate.value >= 8) {
-        score += 25
+        score += 25;
     } else if (engagementRate.value >= 5) {
-        score += 21
+        score += 21;
     } else if (engagementRate.value >= 3) {
-        score += 17
+        score += 17;
     } else if (engagementRate.value >= 1) {
-        score += 10
+        score += 10;
     } else if (engagementRate.value > 0) {
-        score += 5
+        score += 5;
     }
 
     // Conversion: 20%
     if (conversionRate.value >= 5) {
-        score += 20
+        score += 20;
     } else if (conversionRate.value >= 3) {
-        score += 17
+        score += 17;
     } else if (conversionRate.value >= 1) {
-        score += 12
+        score += 12;
     } else if (conversionRate.value > 0) {
-        score += 5
+        score += 5;
     }
 
     // Buyers / orders: 10%
     if (buyers.value > 0 && orders.value > 0) {
-        score += Math.min(
-            10,
-            (buyers.value / orders.value) * 10,
-        )
+        score += Math.min(10, (buyers.value / orders.value) * 10);
     }
 
-    return Math.min(100, Math.round(score))
-})
+    return Math.min(100, Math.round(score));
+});
 
 const health = computed(() => {
-    const score = healthScore.value
+    const score = healthScore.value;
 
     if (score >= 80) {
         return {
             label: 'Excellent',
             description:
                 'Campaign menunjukkan performa yang sangat kuat dan layak dipertimbangkan untuk scale.',
-            class:
-                'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-            bar:
-                'bg-emerald-500',
+            class: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+            bar: 'bg-emerald-500',
             icon: CheckCircle2,
-        }
+        };
     }
 
     if (score >= 60) {
@@ -313,12 +301,10 @@ const health = computed(() => {
             label: 'Healthy',
             description:
                 'Campaign berada dalam kondisi sehat dengan beberapa area yang masih dapat dioptimalkan.',
-            class:
-                'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-            bar:
-                'bg-sky-500',
+            class: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+            bar: 'bg-sky-500',
             icon: TrendingUp,
-        }
+        };
     }
 
     if (score >= 40) {
@@ -326,25 +312,21 @@ const health = computed(() => {
             label: 'Monitor',
             description:
                 'Campaign masih menghasilkan sinyal positif, tetapi perlu monitoring dan optimasi lebih lanjut.',
-            class:
-                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-            bar:
-                'bg-amber-500',
+            class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+            bar: 'bg-amber-500',
             icon: AlertTriangle,
-        }
+        };
     }
 
     return {
         label: 'Need Attention',
         description:
             'Performa campaign perlu dievaluasi sebelum campaign dilanjutkan atau di-scale.',
-        class:
-            'bg-red-500/10 text-red-600 dark:text-red-400',
-        bar:
-            'bg-red-500',
+        class: 'bg-red-500/10 text-red-600 dark:text-red-400',
+        bar: 'bg-red-500',
         icon: XCircle,
-    }
-})
+    };
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -363,13 +345,10 @@ const recommendedAction = computed(() => {
             title: 'Complete Performance Data',
             description:
                 'Masukkan data aktual campaign terlebih dahulu agar sistem dapat memberikan rekomendasi yang lebih akurat.',
-            class:
-                'bg-muted text-muted-foreground',
-            iconClass:
-                'bg-muted text-muted-foreground',
-            action:
-                'Lengkapi data performance',
-        }
+            class: 'bg-muted text-muted-foreground',
+            iconClass: 'bg-muted text-muted-foreground',
+            action: 'Lengkapi data performance',
+        };
     }
 
     if (roas.value >= 3) {
@@ -377,13 +356,11 @@ const recommendedAction = computed(() => {
             title: 'Scale Campaign',
             description:
                 'Campaign menghasilkan return berbasis GMV yang sangat kuat. Pertimbangkan untuk meningkatkan exposure secara bertahap.',
-            class:
-                'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
+            class: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
             iconClass:
                 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400',
-            action:
-                'Pertahankan strategi dan scale secara bertahap',
-        }
+            action: 'Pertahankan strategi dan scale secara bertahap',
+        };
     }
 
     if (roas.value >= 1.5) {
@@ -391,13 +368,10 @@ const recommendedAction = computed(() => {
             title: 'Maintain & Optimize',
             description:
                 'Campaign berada dalam kondisi sehat. Pertahankan strategi utama sambil mengoptimalkan area yang masih lemah.',
-            class:
-                'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-            iconClass:
-                'bg-sky-500/10 text-sky-600 dark:text-sky-400',
-            action:
-                'Optimalkan engagement dan conversion',
-        }
+            class: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+            iconClass: 'bg-sky-500/10 text-sky-600 dark:text-sky-400',
+            action: 'Optimalkan engagement dan conversion',
+        };
     }
 
     if (roas.value >= 1) {
@@ -405,27 +379,21 @@ const recommendedAction = computed(() => {
             title: 'Review Performance',
             description:
                 'GMV sudah menutup biaya campaign, tetapi return masih relatif terbatas.',
-            class:
-                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-            iconClass:
-                'bg-amber-500/10 text-amber-600 dark:text-amber-400',
-            action:
-                'Review CTR, conversion, konten, dan CTA',
-        }
+            class: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+            iconClass: 'bg-amber-500/10 text-amber-600 dark:text-amber-400',
+            action: 'Review CTR, conversion, konten, dan CTA',
+        };
     }
 
     return {
         title: 'Investigate Campaign',
         description:
             'GMV berada di bawah biaya campaign. Evaluasi creator, konten, conversion, dan offer sebelum melakukan scale.',
-        class:
-            'bg-red-500/10 text-red-600 dark:text-red-400',
-        iconClass:
-            'bg-red-500/10 text-red-600 dark:text-red-400',
-        action:
-            'Evaluasi campaign sebelum dilanjutkan',
-    }
-})
+        class: 'bg-red-500/10 text-red-600 dark:text-red-400',
+        iconClass: 'bg-red-500/10 text-red-600 dark:text-red-400',
+        action: 'Evaluasi campaign sebelum dilanjutkan',
+    };
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -434,40 +402,42 @@ const recommendedAction = computed(() => {
 */
 
 const dataWarnings = computed(() => {
-    const warnings: string[] = []
+    const warnings: string[] = [];
 
     if (clicks.value > views.value && views.value > 0) {
         warnings.push(
             'Clicks lebih besar daripada views. Periksa kembali data traffic.',
-        )
+        );
     }
 
     if (orders.value > clicks.value && clicks.value > 0) {
         warnings.push(
             'Orders lebih besar daripada clicks. Periksa kembali data conversion.',
-        )
+        );
     }
 
     if (buyers.value > orders.value && orders.value > 0) {
         warnings.push(
             'Buyers lebih besar daripada orders. Pastikan definisi buyers/orders sesuai sumber data.',
-        )
+        );
     }
 
-    if (likes.value + comments.value + shares.value + saves.value > views.value && views.value > 0) {
+    if (
+        likes.value + comments.value + shares.value + saves.value >
+            views.value &&
+        views.value > 0
+    ) {
         warnings.push(
             'Total engagement lebih besar daripada views. Periksa kembali data engagement.',
-        )
+        );
     }
 
     if (gmv.value > 0 && agreedPrice.value <= 0) {
-        warnings.push(
-            'GMV tersedia tetapi agreed price campaign tidak valid.',
-        )
+        warnings.push('GMV tersedia tetapi agreed price campaign tidak valid.');
     }
 
-    return warnings
-})
+    return warnings;
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -477,11 +447,11 @@ const dataWarnings = computed(() => {
 
 const changedFields = computed(() => {
     const changes: {
-        label: string
-        oldValue: number
-        newValue: number
-        format: 'number' | 'currency'
-    }[] = []
+        label: string;
+        oldValue: number;
+        newValue: number;
+        format: 'number' | 'currency';
+    }[] = [];
 
     const check = (
         label: string,
@@ -495,34 +465,34 @@ const changedFields = computed(() => {
                 oldValue,
                 newValue,
                 format,
-            })
+            });
         }
-    }
+    };
 
-    check('Views', original.views, views.value)
-    check('Likes', original.likes, likes.value)
-    check('Comments', original.comments, comments.value)
-    check('Shares', original.shares, shares.value)
-    check('Saves', original.saves, saves.value)
-    check('Clicks', original.clicks, clicks.value)
-    check('Orders', original.orders, orders.value)
-    check('Buyers', original.buyers, buyers.value)
-    check('GMV', original.gmv, gmv.value, 'currency')
+    check('Views', original.views, views.value);
+    check('Likes', original.likes, likes.value);
+    check('Comments', original.comments, comments.value);
+    check('Shares', original.shares, shares.value);
+    check('Saves', original.saves, saves.value);
+    check('Clicks', original.clicks, clicks.value);
+    check('Orders', original.orders, orders.value);
+    check('Buyers', original.buyers, buyers.value);
+    check('GMV', original.gmv, gmv.value, 'currency');
 
-    return changes
-})
+    return changes;
+});
 
 const snapshotDateChanged = computed(() => {
-    return form.performance_date !== originalPerformanceDate
-})
+    return form.performance_date !== originalPerformanceDate;
+});
 
 const hasChanges = computed(() => {
-    return changedFields.value.length > 0 || snapshotDateChanged.value
-})
+    return changedFields.value.length > 0 || snapshotDateChanged.value;
+});
 
 const totalChanges = computed(() => {
-    return changedFields.value.length + (snapshotDateChanged.value ? 1 : 0)
-})
+    return changedFields.value.length + (snapshotDateChanged.value ? 1 : 0);
+});
 
 /*
 |--------------------------------------------------------------------------
@@ -531,19 +501,19 @@ const totalChanges = computed(() => {
 */
 
 const resetChanges = () => {
-    form.performance_date = originalPerformanceDate
-    form.views = original.views
-    form.likes = original.likes
-    form.comments = original.comments
-    form.shares = original.shares
-    form.saves = original.saves
-    form.clicks = original.clicks
-    form.orders = original.orders
-    form.buyers = original.buyers
-    form.gmv = String(original.gmv)
+    form.performance_date = originalPerformanceDate;
+    form.views = original.views;
+    form.likes = original.likes;
+    form.comments = original.comments;
+    form.shares = original.shares;
+    form.saves = original.saves;
+    form.clicks = original.clicks;
+    form.orders = original.orders;
+    form.buyers = original.buyers;
+    form.gmv = String(original.gmv);
 
-    form.clearErrors()
-}
+    form.clearErrors();
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -554,8 +524,8 @@ const resetChanges = () => {
 const submit = () => {
     form.put(
         `/campaigns/${props.campaign.id}/performance/${props.performance.id}`,
-    )
-}
+    );
+};
 
 /*
 |--------------------------------------------------------------------------
@@ -564,7 +534,7 @@ const submit = () => {
 */
 
 const inputClass = (field: string) => {
-    const hasError = Boolean(errorFor(field))
+    const hasError = Boolean(errorFor(field));
 
     return [
         'w-full rounded-xl border bg-background px-3.5 py-3 text-sm outline-none transition-all',
@@ -572,20 +542,23 @@ const inputClass = (field: string) => {
         hasError
             ? 'border-destructive focus:border-destructive'
             : 'border-input focus:border-ring',
-    ].join(' ')
-}
+    ].join(' ');
+};
 </script>
 
 <template>
-    <div class="app-textured-bg min-h-full w-full px-4 py-6 pb-28 sm:px-6 lg:px-8">
+    <div
+        class="app-textured-bg min-h-full w-full px-4 py-6 pb-28 sm:px-6 lg:px-8"
+    >
         <div class="mx-auto max-w-7xl space-y-6">
-
             <!-- Header -->
-            <div class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div
+                class="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between"
+            >
                 <div class="flex items-start gap-4">
                     <Link
                         :href="`/campaigns/${campaign.id}`"
-                        class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border bg-card text-muted-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted hover:text-foreground hover:shadow-md"
+                        class="border-border bg-card text-muted-foreground hover:bg-muted hover:text-foreground mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
                         title="Kembali"
                     >
                         <ArrowLeft class="h-5 w-5" />
@@ -598,15 +571,16 @@ const inputClass = (field: string) => {
                             </h1>
 
                             <span
-                                class="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                                class="bg-primary/10 text-primary inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium"
                             >
                                 <Sparkles class="h-3.5 w-3.5" />
                                 Intelligence
                             </span>
                         </div>
 
-                        <p class="mt-1 text-sm text-muted-foreground">
-                            Perbarui hasil aktual campaign dan lihat dampaknya secara realtime.
+                        <p class="text-muted-foreground mt-1 text-sm">
+                            Perbarui hasil aktual campaign dan lihat dampaknya
+                            secara realtime.
                         </p>
                     </div>
                 </div>
@@ -621,10 +595,14 @@ const inputClass = (field: string) => {
             </div>
 
             <!-- Campaign Context -->
-            <div class="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-                <div class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6">
+            <div
+                class="border-border bg-card overflow-hidden rounded-2xl border shadow-sm"
+            >
+                <div
+                    class="flex flex-col gap-5 p-5 sm:flex-row sm:items-center sm:p-6"
+                >
                     <div
-                        class="h-14 w-14 shrink-0 overflow-hidden rounded-full border border-border bg-muted"
+                        class="border-border bg-muted h-14 w-14 shrink-0 overflow-hidden rounded-full border"
                     >
                         <img
                             v-if="campaign.creator?.profile_image"
@@ -635,14 +613,18 @@ const inputClass = (field: string) => {
 
                         <div
                             v-else
-                            class="flex h-full w-full items-center justify-center text-lg font-semibold text-muted-foreground"
+                            class="text-muted-foreground flex h-full w-full items-center justify-center text-lg font-semibold"
                         >
-                            {{ campaign.creator?.name?.charAt(0).toUpperCase() }}
+                            {{
+                                campaign.creator?.name?.charAt(0).toUpperCase()
+                            }}
                         </div>
                     </div>
 
                     <div class="min-w-0">
-                        <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        <p
+                            class="text-muted-foreground text-xs font-medium tracking-wider uppercase"
+                        >
                             Campaign
                         </p>
 
@@ -650,7 +632,7 @@ const inputClass = (field: string) => {
                             {{ campaign.campaign_name }}
                         </h2>
 
-                        <p class="mt-1 text-sm text-muted-foreground">
+                        <p class="text-muted-foreground mt-1 text-sm">
                             {{ campaign.product_name }}
                             <span class="mx-1">•</span>
                             {{ campaign.creator?.name }}
@@ -659,8 +641,10 @@ const inputClass = (field: string) => {
                         </p>
                     </div>
 
-                    <div class="ml-auto shrink-0 rounded-xl bg-muted/50 px-4 py-3">
-                        <p class="text-xs text-muted-foreground">
+                    <div
+                        class="bg-muted/50 ml-auto shrink-0 rounded-xl px-4 py-3"
+                    >
+                        <p class="text-muted-foreground text-xs">
                             Agreed Price
                         </p>
                         <p class="mt-0.5 font-semibold">
@@ -672,12 +656,16 @@ const inputClass = (field: string) => {
 
             <!-- Live KPI Preview -->
             <div class="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-                <div class="group rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div
+                    class="group border-border bg-card rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                >
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-muted-foreground">
+                        <span class="text-muted-foreground text-xs font-medium">
                             Views
                         </span>
-                        <Eye class="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:scale-110" />
+                        <Eye
+                            class="text-muted-foreground h-4 w-4 transition-transform duration-200 group-hover:scale-110"
+                        />
                     </div>
 
                     <p class="mt-2 text-xl font-semibold tracking-tight">
@@ -685,12 +673,16 @@ const inputClass = (field: string) => {
                     </p>
                 </div>
 
-                <div class="group rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div
+                    class="group border-border bg-card rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                >
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-muted-foreground">
+                        <span class="text-muted-foreground text-xs font-medium">
                             Engagement
                         </span>
-                        <Users class="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:scale-110" />
+                        <Users
+                            class="text-muted-foreground h-4 w-4 transition-transform duration-200 group-hover:scale-110"
+                        />
                     </div>
 
                     <p class="mt-2 text-xl font-semibold tracking-tight">
@@ -698,12 +690,16 @@ const inputClass = (field: string) => {
                     </p>
                 </div>
 
-                <div class="group rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div
+                    class="group border-border bg-card rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                >
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-muted-foreground">
+                        <span class="text-muted-foreground text-xs font-medium">
                             Conversion
                         </span>
-                        <MousePointerClick class="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:scale-110" />
+                        <MousePointerClick
+                            class="text-muted-foreground h-4 w-4 transition-transform duration-200 group-hover:scale-110"
+                        />
                     </div>
 
                     <p class="mt-2 text-xl font-semibold tracking-tight">
@@ -711,12 +707,16 @@ const inputClass = (field: string) => {
                     </p>
                 </div>
 
-                <div class="group rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div
+                    class="group border-border bg-card rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                >
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-muted-foreground">
+                        <span class="text-muted-foreground text-xs font-medium">
                             Orders
                         </span>
-                        <ShoppingCart class="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:scale-110" />
+                        <ShoppingCart
+                            class="text-muted-foreground h-4 w-4 transition-transform duration-200 group-hover:scale-110"
+                        />
                     </div>
 
                     <p class="mt-2 text-xl font-semibold tracking-tight">
@@ -724,12 +724,16 @@ const inputClass = (field: string) => {
                     </p>
                 </div>
 
-                <div class="group rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div
+                    class="group border-border bg-card rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                >
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-muted-foreground">
+                        <span class="text-muted-foreground text-xs font-medium">
                             ROAS
                         </span>
-                        <TrendingUp class="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:scale-110" />
+                        <TrendingUp
+                            class="text-muted-foreground h-4 w-4 transition-transform duration-200 group-hover:scale-110"
+                        />
                     </div>
 
                     <p class="mt-2 text-xl font-semibold tracking-tight">
@@ -737,17 +741,25 @@ const inputClass = (field: string) => {
                     </p>
                 </div>
 
-                <div class="group rounded-2xl border border-border bg-card p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                <div
+                    class="group border-border bg-card rounded-2xl border p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                >
                     <div class="flex items-center justify-between">
-                        <span class="text-xs font-medium text-muted-foreground">
+                        <span class="text-muted-foreground text-xs font-medium">
                             ROI
                         </span>
-                        <CircleDollarSign class="h-4 w-4 text-muted-foreground transition-transform duration-200 group-hover:scale-110" />
+                        <CircleDollarSign
+                            class="text-muted-foreground h-4 w-4 transition-transform duration-200 group-hover:scale-110"
+                        />
                     </div>
 
                     <p
                         class="mt-2 text-xl font-semibold tracking-tight"
-                        :class="roi >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'"
+                        :class="
+                            roi >= 0
+                                ? 'text-emerald-600 dark:text-emerald-400'
+                                : 'text-red-600 dark:text-red-400'
+                        "
                     >
                         {{ formatPercent(roi) }}
                     </p>
@@ -756,53 +768,56 @@ const inputClass = (field: string) => {
 
             <!-- Main Layout -->
             <div class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-
                 <!-- Form -->
                 <form
                     @submit.prevent="submit"
-                    class="min-w-0 overflow-hidden rounded-2xl border border-border bg-card shadow-sm"
+                    class="border-border bg-card min-w-0 overflow-hidden rounded-2xl border shadow-sm"
                 >
                     <!-- Section Navigation -->
-                    <div class="sticky top-0 z-20 border-b border-border bg-card/95 p-2 backdrop-blur">
+                    <div
+                        class="border-border bg-card/95 sticky top-0 z-20 border-b p-2 backdrop-blur"
+                    >
                         <div class="grid grid-cols-3 gap-1">
                             <button
                                 type="button"
                                 class="rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
-                                :class="activeSection === 'reach'
-                                    ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
-                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
+                                :class="
+                                    activeSection === 'reach'
+                                        ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                "
                                 @click="setActiveSection('reach')"
                             >
                                 <span class="hidden sm:inline">
                                     Reach & Engagement
                                 </span>
-                                <span class="sm:hidden">
-                                    Reach
-                                </span>
+                                <span class="sm:hidden"> Reach </span>
                             </button>
 
                             <button
                                 type="button"
                                 class="rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
-                                :class="activeSection === 'conversion'
-                                    ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
-                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
+                                :class="
+                                    activeSection === 'conversion'
+                                        ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                "
                                 @click="setActiveSection('conversion')"
                             >
                                 <span class="hidden sm:inline">
                                     Traffic & Conversion
                                 </span>
-                                <span class="sm:hidden">
-                                    Conversion
-                                </span>
+                                <span class="sm:hidden"> Conversion </span>
                             </button>
 
                             <button
                                 type="button"
                                 class="rounded-xl px-3 py-2.5 text-sm font-medium transition-all"
-                                :class="activeSection === 'revenue'
-                                    ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
-                                    : 'text-muted-foreground hover:bg-muted hover:text-foreground'"
+                                :class="
+                                    activeSection === 'revenue'
+                                        ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
+                                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                                "
                                 @click="setActiveSection('revenue')"
                             >
                                 Revenue
@@ -811,15 +826,18 @@ const inputClass = (field: string) => {
                     </div>
 
                     <div class="space-y-8 p-5 sm:p-6">
-
                         <!-- Snapshot Date -->
                         <section
                             id="section-snapshot-date"
-                            class="rounded-2xl border border-border bg-muted/20 p-4 sm:p-5"
+                            class="border-border bg-muted/20 rounded-2xl border p-4 sm:p-5"
                         >
-                            <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div
+                                class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+                            >
                                 <div class="flex items-start gap-3">
-                                    <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                    <div
+                                        class="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                                    >
                                         <CalendarDays class="h-5 w-5" />
                                     </div>
 
@@ -828,8 +846,11 @@ const inputClass = (field: string) => {
                                             Snapshot Date
                                         </h2>
 
-                                        <p class="mt-1 text-sm text-muted-foreground">
-                                            Ubah tanggal pencatatan data performance ini.
+                                        <p
+                                            class="text-muted-foreground mt-1 text-sm"
+                                        >
+                                            Ubah tanggal pencatatan data
+                                            performance ini.
                                         </p>
 
                                         <p
@@ -837,9 +858,15 @@ const inputClass = (field: string) => {
                                             class="mt-2 text-xs font-medium text-amber-600 dark:text-amber-400"
                                         >
                                             Tanggal berubah dari
-                                            {{ originalPerformanceDate || 'belum ditentukan' }}
+                                            {{
+                                                originalPerformanceDate ||
+                                                'belum ditentukan'
+                                            }}
                                             menjadi
-                                            {{ form.performance_date || 'belum ditentukan' }}.
+                                            {{
+                                                form.performance_date ||
+                                                'belum ditentukan'
+                                            }}.
                                         </p>
                                     </div>
                                 </div>
@@ -861,7 +888,7 @@ const inputClass = (field: string) => {
 
                                     <p
                                         v-if="errorFor('performance_date')"
-                                        class="mt-1.5 text-xs text-destructive"
+                                        class="text-destructive mt-1.5 text-xs"
                                     >
                                         {{ errorFor('performance_date') }}
                                     </p>
@@ -872,7 +899,9 @@ const inputClass = (field: string) => {
                         <!-- Reach -->
                         <section id="section-reach" class="scroll-mt-24">
                             <div class="mb-5 flex items-start gap-3">
-                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                <div
+                                    class="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+                                >
                                     <Eye class="h-5 w-5" />
                                 </div>
 
@@ -881,15 +910,22 @@ const inputClass = (field: string) => {
                                         Reach & Engagement
                                     </h2>
 
-                                    <p class="mt-1 text-sm text-muted-foreground">
-                                        Masukkan performa konten aktual campaign.
+                                    <p
+                                        class="text-muted-foreground mt-1 text-sm"
+                                    >
+                                        Masukkan performa konten aktual
+                                        campaign.
                                     </p>
                                 </div>
                             </div>
 
-                            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            <div
+                                class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+                            >
                                 <div>
-                                    <label class="mb-2 block text-sm font-medium">
+                                    <label
+                                        class="mb-2 block text-sm font-medium"
+                                    >
                                         Views
                                     </label>
 
@@ -902,14 +938,16 @@ const inputClass = (field: string) => {
 
                                     <p
                                         v-if="errorFor('views')"
-                                        class="mt-1.5 text-xs text-destructive"
+                                        class="text-destructive mt-1.5 text-xs"
                                     >
                                         {{ errorFor('views') }}
                                     </p>
                                 </div>
 
                                 <div>
-                                    <label class="mb-2 block text-sm font-medium">
+                                    <label
+                                        class="mb-2 block text-sm font-medium"
+                                    >
                                         Likes
                                     </label>
 
@@ -922,14 +960,16 @@ const inputClass = (field: string) => {
 
                                     <p
                                         v-if="errorFor('likes')"
-                                        class="mt-1.5 text-xs text-destructive"
+                                        class="text-destructive mt-1.5 text-xs"
                                     >
                                         {{ errorFor('likes') }}
                                     </p>
                                 </div>
 
                                 <div>
-                                    <label class="mb-2 block text-sm font-medium">
+                                    <label
+                                        class="mb-2 block text-sm font-medium"
+                                    >
                                         Comments
                                     </label>
 
@@ -942,14 +982,16 @@ const inputClass = (field: string) => {
 
                                     <p
                                         v-if="errorFor('comments')"
-                                        class="mt-1.5 text-xs text-destructive"
+                                        class="text-destructive mt-1.5 text-xs"
                                     >
                                         {{ errorFor('comments') }}
                                     </p>
                                 </div>
 
                                 <div>
-                                    <label class="mb-2 block text-sm font-medium">
+                                    <label
+                                        class="mb-2 block text-sm font-medium"
+                                    >
                                         Shares
                                     </label>
 
@@ -962,14 +1004,16 @@ const inputClass = (field: string) => {
 
                                     <p
                                         v-if="errorFor('shares')"
-                                        class="mt-1.5 text-xs text-destructive"
+                                        class="text-destructive mt-1.5 text-xs"
                                     >
                                         {{ errorFor('shares') }}
                                     </p>
                                 </div>
 
                                 <div>
-                                    <label class="mb-2 block text-sm font-medium">
+                                    <label
+                                        class="mb-2 block text-sm font-medium"
+                                    >
                                         Saves
                                     </label>
 
@@ -982,14 +1026,16 @@ const inputClass = (field: string) => {
 
                                     <p
                                         v-if="errorFor('saves')"
-                                        class="mt-1.5 text-xs text-destructive"
+                                        class="text-destructive mt-1.5 text-xs"
                                     >
                                         {{ errorFor('saves') }}
                                     </p>
                                 </div>
 
-                                <div class="rounded-xl border border-border bg-muted/30 p-4">
-                                    <p class="text-xs text-muted-foreground">
+                                <div
+                                    class="border-border bg-muted/30 rounded-xl border p-4"
+                                >
+                                    <p class="text-muted-foreground text-xs">
                                         Total Engagement
                                     </p>
 
@@ -997,8 +1043,11 @@ const inputClass = (field: string) => {
                                         {{ formatNumber(engagementTotal) }}
                                     </p>
 
-                                    <p class="mt-1 text-xs text-muted-foreground">
-                                        {{ formatPercent(engagementRate) }} engagement rate
+                                    <p
+                                        class="text-muted-foreground mt-1 text-xs"
+                                    >
+                                        {{ formatPercent(engagementRate) }}
+                                        engagement rate
                                     </p>
                                 </div>
                             </div>
@@ -1007,10 +1056,12 @@ const inputClass = (field: string) => {
                         <!-- Conversion -->
                         <section
                             id="section-conversion"
-                            class="scroll-mt-24 border-t border-border pt-8"
+                            class="border-border scroll-mt-24 border-t pt-8"
                         >
                             <div class="mb-5 flex items-start gap-3">
-                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                                <div
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sky-500/10 text-sky-600 dark:text-sky-400"
+                                >
                                     <MousePointerClick class="h-5 w-5" />
                                 </div>
 
@@ -1019,15 +1070,22 @@ const inputClass = (field: string) => {
                                         Traffic & Conversion
                                     </h2>
 
-                                    <p class="mt-1 text-sm text-muted-foreground">
-                                        Masukkan traffic dan transaksi yang dihasilkan campaign.
+                                    <p
+                                        class="text-muted-foreground mt-1 text-sm"
+                                    >
+                                        Masukkan traffic dan transaksi yang
+                                        dihasilkan campaign.
                                     </p>
                                 </div>
                             </div>
 
-                            <div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                            <div
+                                class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3"
+                            >
                                 <div>
-                                    <label class="mb-2 block text-sm font-medium">
+                                    <label
+                                        class="mb-2 block text-sm font-medium"
+                                    >
                                         Clicks
                                     </label>
 
@@ -1040,14 +1098,16 @@ const inputClass = (field: string) => {
 
                                     <p
                                         v-if="errorFor('clicks')"
-                                        class="mt-1.5 text-xs text-destructive"
+                                        class="text-destructive mt-1.5 text-xs"
                                     >
                                         {{ errorFor('clicks') }}
                                     </p>
                                 </div>
 
                                 <div>
-                                    <label class="mb-2 block text-sm font-medium">
+                                    <label
+                                        class="mb-2 block text-sm font-medium"
+                                    >
                                         Orders
                                     </label>
 
@@ -1060,14 +1120,16 @@ const inputClass = (field: string) => {
 
                                     <p
                                         v-if="errorFor('orders')"
-                                        class="mt-1.5 text-xs text-destructive"
+                                        class="text-destructive mt-1.5 text-xs"
                                     >
                                         {{ errorFor('orders') }}
                                     </p>
                                 </div>
 
                                 <div>
-                                    <label class="mb-2 block text-sm font-medium">
+                                    <label
+                                        class="mb-2 block text-sm font-medium"
+                                    >
                                         Buyers
                                     </label>
 
@@ -1080,7 +1142,7 @@ const inputClass = (field: string) => {
 
                                     <p
                                         v-if="errorFor('buyers')"
-                                        class="mt-1.5 text-xs text-destructive"
+                                        class="text-destructive mt-1.5 text-xs"
                                     >
                                         {{ errorFor('buyers') }}
                                     </p>
@@ -1088,9 +1150,15 @@ const inputClass = (field: string) => {
                             </div>
 
                             <div class="mt-5 grid gap-4 sm:grid-cols-2">
-                                <div class="rounded-xl border border-border bg-muted/30 p-4">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs text-muted-foreground">
+                                <div
+                                    class="border-border bg-muted/30 rounded-xl border p-4"
+                                >
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
+                                        <span
+                                            class="text-muted-foreground text-xs"
+                                        >
                                             Conversion Rate
                                         </span>
 
@@ -1099,9 +1167,11 @@ const inputClass = (field: string) => {
                                         </span>
                                     </div>
 
-                                    <div class="mt-3 h-2 overflow-hidden rounded-full bg-muted">
+                                    <div
+                                        class="bg-muted mt-3 h-2 overflow-hidden rounded-full"
+                                    >
                                         <div
-                                            class="h-full rounded-full bg-primary transition-all duration-300"
+                                            class="bg-primary h-full rounded-full transition-all duration-300"
                                             :style="{
                                                 width: `${Math.min(conversionRate * 10, 100)}%`,
                                             }"
@@ -1109,9 +1179,15 @@ const inputClass = (field: string) => {
                                     </div>
                                 </div>
 
-                                <div class="rounded-xl border border-border bg-muted/30 p-4">
-                                    <div class="flex items-center justify-between">
-                                        <span class="text-xs text-muted-foreground">
+                                <div
+                                    class="border-border bg-muted/30 rounded-xl border p-4"
+                                >
+                                    <div
+                                        class="flex items-center justify-between"
+                                    >
+                                        <span
+                                            class="text-muted-foreground text-xs"
+                                        >
                                             Cost / Order
                                         </span>
 
@@ -1120,7 +1196,9 @@ const inputClass = (field: string) => {
                                         </span>
                                     </div>
 
-                                    <p class="mt-2 text-xs text-muted-foreground">
+                                    <p
+                                        class="text-muted-foreground mt-2 text-xs"
+                                    >
                                         Berdasarkan agreed price campaign.
                                     </p>
                                 </div>
@@ -1130,20 +1208,23 @@ const inputClass = (field: string) => {
                         <!-- Revenue -->
                         <section
                             id="section-revenue"
-                            class="scroll-mt-24 border-t border-border pt-8"
+                            class="border-border scroll-mt-24 border-t pt-8"
                         >
                             <div class="mb-5 flex items-start gap-3">
-                                <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                                <div
+                                    class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                                >
                                     <Wallet class="h-5 w-5" />
                                 </div>
 
                                 <div>
-                                    <h2 class="font-semibold">
-                                        Revenue
-                                    </h2>
+                                    <h2 class="font-semibold">Revenue</h2>
 
-                                    <p class="mt-1 text-sm text-muted-foreground">
-                                        Masukkan total GMV yang dapat diatribusikan ke campaign.
+                                    <p
+                                        class="text-muted-foreground mt-1 text-sm"
+                                    >
+                                        Masukkan total GMV yang dapat
+                                        diatribusikan ke campaign.
                                     </p>
                                 </div>
                             </div>
@@ -1154,7 +1235,9 @@ const inputClass = (field: string) => {
                                 </label>
 
                                 <div class="flex">
-                                    <div class="flex items-center rounded-l-xl border border-r-0 border-input bg-muted/40 px-4 text-sm font-medium text-muted-foreground">
+                                    <div
+                                        class="border-input bg-muted/40 text-muted-foreground flex items-center rounded-l-xl border border-r-0 px-4 text-sm font-medium"
+                                    >
                                         Rp
                                     </div>
 
@@ -1171,19 +1254,22 @@ const inputClass = (field: string) => {
 
                                 <p
                                     v-if="errorFor('gmv')"
-                                    class="mt-1.5 text-xs text-destructive"
+                                    class="text-destructive mt-1.5 text-xs"
                                 >
                                     {{ errorFor('gmv') }}
                                 </p>
 
-                                <p class="mt-2 text-xs text-muted-foreground">
-                                    Nilai GMV digunakan untuk menghitung ROAS dan GMV-based ROI.
+                                <p class="text-muted-foreground mt-2 text-xs">
+                                    Nilai GMV digunakan untuk menghitung ROAS
+                                    dan GMV-based ROI.
                                 </p>
                             </div>
 
                             <div class="mt-5 grid gap-4 sm:grid-cols-3">
-                                <div class="rounded-xl border border-border bg-muted/30 p-4">
-                                    <p class="text-xs text-muted-foreground">
+                                <div
+                                    class="border-border bg-muted/30 rounded-xl border p-4"
+                                >
+                                    <p class="text-muted-foreground text-xs">
                                         GMV
                                     </p>
                                     <p class="mt-1 font-semibold">
@@ -1191,8 +1277,10 @@ const inputClass = (field: string) => {
                                     </p>
                                 </div>
 
-                                <div class="rounded-xl border border-border bg-muted/30 p-4">
-                                    <p class="text-xs text-muted-foreground">
+                                <div
+                                    class="border-border bg-muted/30 rounded-xl border p-4"
+                                >
+                                    <p class="text-muted-foreground text-xs">
                                         ROAS
                                     </p>
                                     <p class="mt-1 font-semibold">
@@ -1200,15 +1288,19 @@ const inputClass = (field: string) => {
                                     </p>
                                 </div>
 
-                                <div class="rounded-xl border border-border bg-muted/30 p-4">
-                                    <p class="text-xs text-muted-foreground">
+                                <div
+                                    class="border-border bg-muted/30 rounded-xl border p-4"
+                                >
+                                    <p class="text-muted-foreground text-xs">
                                         GMV-based ROI
                                     </p>
                                     <p
                                         class="mt-1 font-semibold"
-                                        :class="roi >= 0
-                                            ? 'text-emerald-600 dark:text-emerald-400'
-                                            : 'text-red-600 dark:text-red-400'"
+                                        :class="
+                                            roi >= 0
+                                                ? 'text-emerald-600 dark:text-emerald-400'
+                                                : 'text-red-600 dark:text-red-400'
+                                        "
                                     >
                                         {{ formatPercent(roi) }}
                                     </p>
@@ -1222,12 +1314,16 @@ const inputClass = (field: string) => {
                             class="rounded-2xl border border-amber-500/30 bg-amber-500/5 p-5"
                         >
                             <div class="flex items-start gap-3">
-                                <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                                <div
+                                    class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                                >
                                     <AlertTriangle class="h-4 w-4" />
                                 </div>
 
                                 <div class="min-w-0">
-                                    <p class="font-semibold text-amber-700 dark:text-amber-300">
+                                    <p
+                                        class="font-semibold text-amber-700 dark:text-amber-300"
+                                    >
                                         Data Quality Check
                                     </p>
 
@@ -1247,24 +1343,27 @@ const inputClass = (field: string) => {
                         <!-- What Changed -->
                         <div
                             v-if="hasChanges"
-                            class="rounded-2xl border border-border bg-muted/20 p-5"
+                            class="border-border bg-muted/20 rounded-2xl border p-5"
                         >
                             <div class="flex items-center gap-3">
-                                <div class="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                                <div
+                                    class="bg-primary/10 text-primary flex h-9 w-9 items-center justify-center rounded-xl"
+                                >
                                     <RefreshCcw class="h-4 w-4" />
                                 </div>
 
                                 <div>
-                                    <p class="font-semibold">
-                                        What Changed?
-                                    </p>
-                                    <p class="text-xs text-muted-foreground">
-                                        Perubahan dibanding data performance sebelumnya.
+                                    <p class="font-semibold">What Changed?</p>
+                                    <p class="text-muted-foreground text-xs">
+                                        Perubahan dibanding data performance
+                                        sebelumnya.
                                     </p>
                                 </div>
                             </div>
 
-                            <div class="mt-4 divide-y divide-border rounded-xl border border-border bg-card">
+                            <div
+                                class="divide-border border-border bg-card mt-4 divide-y rounded-xl border"
+                            >
                                 <div
                                     v-for="change in changedFields"
                                     :key="change.label"
@@ -1274,22 +1373,30 @@ const inputClass = (field: string) => {
                                         {{ change.label }}
                                     </span>
 
-                                    <div class="flex items-center gap-2 text-sm">
+                                    <div
+                                        class="flex items-center gap-2 text-sm"
+                                    >
                                         <span class="text-muted-foreground">
                                             {{
                                                 change.format === 'currency'
                                                     ? rupiah(change.oldValue)
-                                                    : formatNumber(change.oldValue)
+                                                    : formatNumber(
+                                                          change.oldValue,
+                                                      )
                                             }}
                                         </span>
 
-                                        <ChevronRight class="h-4 w-4 text-muted-foreground" />
+                                        <ChevronRight
+                                            class="text-muted-foreground h-4 w-4"
+                                        />
 
                                         <span class="font-semibold">
                                             {{
                                                 change.format === 'currency'
                                                     ? rupiah(change.newValue)
-                                                    : formatNumber(change.newValue)
+                                                    : formatNumber(
+                                                          change.newValue,
+                                                      )
                                             }}
                                         </span>
                                     </div>
@@ -1299,9 +1406,11 @@ const inputClass = (field: string) => {
                     </div>
 
                     <!-- Form Footer -->
-                    <div class="flex flex-col gap-3 border-t border-border bg-muted/20 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                    <div
+                        class="border-border bg-muted/20 flex flex-col gap-3 border-t px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6"
+                    >
                         <div>
-                            <p class="text-xs text-muted-foreground">
+                            <p class="text-muted-foreground text-xs">
                                 Semua metrik di preview dihitung realtime.
                             </p>
 
@@ -1317,7 +1426,7 @@ const inputClass = (field: string) => {
                             <button
                                 v-if="hasChanges"
                                 type="button"
-                                class="inline-flex items-center justify-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted hover:shadow-sm"
+                                class="border-border bg-card hover:bg-muted inline-flex items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                                 @click="resetChanges"
                             >
                                 <RefreshCcw class="h-4 w-4" />
@@ -1326,7 +1435,7 @@ const inputClass = (field: string) => {
 
                             <Link
                                 :href="`/campaigns/${campaign.id}`"
-                                class="inline-flex items-center justify-center rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:bg-muted hover:shadow-sm"
+                                class="border-border bg-card hover:bg-muted inline-flex items-center justify-center rounded-xl border px-4 py-2.5 text-sm font-medium transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm"
                             >
                                 Batal
                             </Link>
@@ -1334,7 +1443,7 @@ const inputClass = (field: string) => {
                             <button
                                 type="submit"
                                 :disabled="form.processing"
-                                class="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:bg-sky/90 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                                class="text-primary-foreground hover:bg-sky/90 inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-medium shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
                             >
                                 <Save class="h-4 w-4" />
 
@@ -1350,18 +1459,25 @@ const inputClass = (field: string) => {
 
                 <!-- Intelligence Sidebar -->
                 <aside class="space-y-4 lg:sticky lg:top-6 lg:self-start">
-
                     <!-- Health -->
-                    <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                    <div
+                        class="border-border bg-card rounded-2xl border p-5 shadow-sm"
+                    >
                         <div class="flex items-start justify-between gap-4">
                             <div>
-                                <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                <p
+                                    class="text-muted-foreground text-xs font-medium tracking-wider uppercase"
+                                >
                                     Performance Health
                                 </p>
 
-                                <p class="mt-1 text-2xl font-semibold tracking-tight">
+                                <p
+                                    class="mt-1 text-2xl font-semibold tracking-tight"
+                                >
                                     {{ healthScore }}
-                                    <span class="text-sm font-normal text-muted-foreground">
+                                    <span
+                                        class="text-muted-foreground text-sm font-normal"
+                                    >
                                         / 100
                                     </span>
                                 </p>
@@ -1371,15 +1487,14 @@ const inputClass = (field: string) => {
                                 class="flex h-10 w-10 items-center justify-center rounded-xl"
                                 :class="health.class"
                             >
-                                <component
-                                    :is="health.icon"
-                                    class="h-5 w-5"
-                                />
+                                <component :is="health.icon" class="h-5 w-5" />
                             </div>
                         </div>
 
                         <div class="mt-4">
-                            <div class="h-2 overflow-hidden rounded-full bg-muted">
+                            <div
+                                class="bg-muted h-2 overflow-hidden rounded-full"
+                            >
                                 <div
                                     class="h-full rounded-full transition-all duration-500"
                                     :class="health.bar"
@@ -1396,14 +1511,18 @@ const inputClass = (field: string) => {
                                 {{ health.label }}
                             </span>
 
-                            <p class="mt-3 text-sm leading-6 text-muted-foreground">
+                            <p
+                                class="text-muted-foreground mt-3 text-sm leading-6"
+                            >
                                 {{ health.description }}
                             </p>
                         </div>
                     </div>
 
                     <!-- Recommended Action -->
-                    <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                    <div
+                        class="border-border bg-card rounded-2xl border p-5 shadow-sm"
+                    >
                         <div class="flex items-start gap-3">
                             <div
                                 class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
@@ -1413,7 +1532,9 @@ const inputClass = (field: string) => {
                             </div>
 
                             <div>
-                                <p class="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                                <p
+                                    class="text-muted-foreground text-xs font-medium tracking-wider uppercase"
+                                >
                                     Recommended Action
                                 </p>
 
@@ -1423,7 +1544,7 @@ const inputClass = (field: string) => {
                             </div>
                         </div>
 
-                        <p class="mt-4 text-sm leading-6 text-muted-foreground">
+                        <p class="text-muted-foreground mt-4 text-sm leading-6">
                             {{ recommendedAction.description }}
                         </p>
 
@@ -1436,18 +1557,18 @@ const inputClass = (field: string) => {
                     </div>
 
                     <!-- Efficiency -->
-                    <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                    <div
+                        class="border-border bg-card rounded-2xl border p-5 shadow-sm"
+                    >
                         <div class="flex items-center gap-2">
-                            <BarChart3 class="h-4 w-4 text-muted-foreground" />
+                            <BarChart3 class="text-muted-foreground h-4 w-4" />
 
-                            <h3 class="font-semibold">
-                                Efficiency
-                            </h3>
+                            <h3 class="font-semibold">Efficiency</h3>
                         </div>
 
                         <div class="mt-4 space-y-3">
                             <div class="flex items-center justify-between">
-                                <span class="text-sm text-muted-foreground">
+                                <span class="text-muted-foreground text-sm">
                                     Cost / View
                                 </span>
 
@@ -1457,7 +1578,7 @@ const inputClass = (field: string) => {
                             </div>
 
                             <div class="flex items-center justify-between">
-                                <span class="text-sm text-muted-foreground">
+                                <span class="text-muted-foreground text-sm">
                                     Cost / Order
                                 </span>
 
@@ -1467,7 +1588,7 @@ const inputClass = (field: string) => {
                             </div>
 
                             <div class="flex items-center justify-between">
-                                <span class="text-sm text-muted-foreground">
+                                <span class="text-muted-foreground text-sm">
                                     GMV
                                 </span>
 
@@ -1479,26 +1600,33 @@ const inputClass = (field: string) => {
                     </div>
 
                     <!-- Quick Summary -->
-                    <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+                    <div
+                        class="border-border bg-card rounded-2xl border p-5 shadow-sm"
+                    >
                         <div class="flex items-center gap-2">
-                            <BarChart3 class="h-4 w-4 text-muted-foreground" />
+                            <BarChart3 class="text-muted-foreground h-4 w-4" />
 
-                            <h3 class="font-semibold">
-                                Live Summary
-                            </h3>
+                            <h3 class="font-semibold">Live Summary</h3>
                         </div>
 
                         <div class="mt-4 space-y-3">
-                            <div class="flex items-center justify-between gap-3 text-sm">
+                            <div
+                                class="flex items-center justify-between gap-3 text-sm"
+                            >
                                 <span class="text-muted-foreground">
                                     Snapshot Date
                                 </span>
 
                                 <span class="text-right font-medium">
-                                    {{ form.performance_date || 'Belum ditentukan' }}
+                                    {{
+                                        form.performance_date ||
+                                        'Belum ditentukan'
+                                    }}
                                 </span>
                             </div>
-                            <div class="flex items-center justify-between text-sm">
+                            <div
+                                class="flex items-center justify-between text-sm"
+                            >
                                 <span class="text-muted-foreground">
                                     Engagement
                                 </span>
@@ -1507,7 +1635,9 @@ const inputClass = (field: string) => {
                                 </span>
                             </div>
 
-                            <div class="flex items-center justify-between text-sm">
+                            <div
+                                class="flex items-center justify-between text-sm"
+                            >
                                 <span class="text-muted-foreground">
                                     Conversion
                                 </span>
@@ -1516,7 +1646,9 @@ const inputClass = (field: string) => {
                                 </span>
                             </div>
 
-                            <div class="flex items-center justify-between text-sm">
+                            <div
+                                class="flex items-center justify-between text-sm"
+                            >
                                 <span class="text-muted-foreground">
                                     Orders
                                 </span>
@@ -1525,7 +1657,9 @@ const inputClass = (field: string) => {
                                 </span>
                             </div>
 
-                            <div class="flex items-center justify-between text-sm">
+                            <div
+                                class="flex items-center justify-between text-sm"
+                            >
                                 <span class="text-muted-foreground">
                                     Buyers
                                 </span>
@@ -1534,7 +1668,9 @@ const inputClass = (field: string) => {
                                 </span>
                             </div>
 
-                            <div class="flex items-center justify-between border-t border-border pt-3 text-sm">
+                            <div
+                                class="border-border flex items-center justify-between border-t pt-3 text-sm"
+                            >
                                 <span class="text-muted-foreground">
                                     ROAS
                                 </span>
@@ -1560,15 +1696,17 @@ const inputClass = (field: string) => {
     >
         <div
             v-if="hasChanges"
-            class="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-card/95 shadow-2xl backdrop-blur"
+            class="border-border bg-card/95 fixed inset-x-0 bottom-0 z-40 border-t shadow-2xl backdrop-blur"
         >
-            <div class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+            <div
+                class="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8"
+            >
                 <div class="hidden min-w-0 sm:block">
                     <p class="text-sm font-medium">
                         Ada perubahan yang belum disimpan
                     </p>
 
-                    <p class="text-xs text-muted-foreground">
+                    <p class="text-muted-foreground text-xs">
                         {{ totalChanges }} perubahan terdeteksi
                     </p>
                 </div>
@@ -1576,7 +1714,7 @@ const inputClass = (field: string) => {
                 <div class="ml-auto flex gap-2">
                     <button
                         type="button"
-                        class="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-medium transition-all hover:bg-muted"
+                        class="border-border bg-card hover:bg-muted inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium transition-all"
                         @click="resetChanges"
                     >
                         <RefreshCcw class="h-4 w-4" />
@@ -1586,7 +1724,7 @@ const inputClass = (field: string) => {
                     <button
                         type="button"
                         :disabled="form.processing"
-                        class="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary/90 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+                        class="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                         @click="submit"
                     >
                         <Save class="h-4 w-4" />

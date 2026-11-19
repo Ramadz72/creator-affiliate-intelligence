@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { Head, Link, useForm } from '@inertiajs/vue3'
-import { computed, ref } from 'vue'
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 import {
     ArrowLeft,
     ArrowRight,
@@ -15,7 +15,7 @@ import {
     Users,
     X,
     Play,
-} from '@lucide/vue'
+} from '@lucide/vue';
 
 const form = useForm({
     name: '',
@@ -30,10 +30,10 @@ const form = useForm({
     profile_image: null as File | null,
     status: 'active',
     notes: '',
-})
+});
 
-const currentStep = ref(1)
-const previewImage = ref<string | null>(null)
+const currentStep = ref(1);
+const previewImage = ref<string | null>(null);
 
 const steps = [
     {
@@ -56,7 +56,7 @@ const steps = [
         title: 'Review',
         description: 'Periksa data',
     },
-]
+];
 
 const platforms = [
     {
@@ -74,39 +74,35 @@ const platforms = [
         label: 'YouTube',
         icon: Play,
     },
-]
+];
 
 const profileInitial = computed(() => {
     if (!form.name.trim()) {
-        return '?'
+        return '?';
     }
 
-    return form.name.trim().charAt(0).toUpperCase()
-})
+    return form.name.trim().charAt(0).toUpperCase();
+});
 
 const formattedFollowers = computed(() => {
-    return new Intl.NumberFormat('id-ID').format(
-        Number(form.followers || 0),
-    )
-})
+    return new Intl.NumberFormat('id-ID').format(Number(form.followers || 0));
+});
 
 const shortFollowers = computed(() => {
-    const value = Number(form.followers || 0)
+    const value = Number(form.followers || 0);
 
     if (value >= 1_000_000) {
         return `${(value / 1_000_000).toFixed(
             value % 1_000_000 === 0 ? 0 : 1,
-        )}M`
+        )}M`;
     }
 
     if (value >= 1_000) {
-        return `${(value / 1_000).toFixed(
-            value % 1_000 === 0 ? 0 : 1,
-        )}K`
+        return `${(value / 1_000).toFixed(value % 1_000 === 0 ? 0 : 1)}K`;
     }
 
-    return value.toLocaleString('id-ID')
-})
+    return value.toLocaleString('id-ID');
+});
 
 const completion = computed(() => {
     const fields = [
@@ -121,163 +117,155 @@ const completion = computed(() => {
         form.profile_link,
         form.profile_image,
         form.notes,
-    ]
+    ];
 
     const completed = fields.filter((field) => {
         if (typeof field === 'boolean') {
-            return field
+            return field;
         }
 
-        return Boolean(field)
-    }).length
+        return Boolean(field);
+    }).length;
 
-    return Math.round((completed / fields.length) * 100)
-})
+    return Math.round((completed / fields.length) * 100);
+});
 
 const usernameDisplay = computed(() => {
     if (!form.username) {
-        return '@username'
+        return '@username';
     }
 
-    return form.username.startsWith('@')
-        ? form.username
-        : `@${form.username}`
-})
+    return form.username.startsWith('@') ? form.username : `@${form.username}`;
+});
 
 const handleUsernameInput = () => {
-    form.username = form.username.replace(/\s/g, '')
-}
+    form.username = form.username.replace(/\s/g, '');
+};
 
 const handleFollowersInput = () => {
-    const value = Number(form.followers)
+    const value = Number(form.followers);
 
     if (!Number.isFinite(value) || value < 0) {
-        form.followers = 0
+        form.followers = 0;
     }
-}
+};
 
 const handleImageChange = (event: Event) => {
-    const input = event.target as HTMLInputElement
-    const file = input.files?.[0] ?? null
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0] ?? null;
 
-    form.profile_image = file
+    form.profile_image = file;
 
     if (previewImage.value) {
-        URL.revokeObjectURL(previewImage.value)
+        URL.revokeObjectURL(previewImage.value);
     }
 
     if (file) {
-        previewImage.value = URL.createObjectURL(file)
+        previewImage.value = URL.createObjectURL(file);
     } else {
-        previewImage.value = null
+        previewImage.value = null;
     }
-}
+};
 
 const removeImage = () => {
-    form.profile_image = null
+    form.profile_image = null;
 
     if (previewImage.value) {
-        URL.revokeObjectURL(previewImage.value)
+        URL.revokeObjectURL(previewImage.value);
     }
 
-    previewImage.value = null
+    previewImage.value = null;
 
     const input = document.getElementById(
         'profile_image',
-    ) as HTMLInputElement | null
+    ) as HTMLInputElement | null;
 
     if (input) {
-        input.value = ''
+        input.value = '';
     }
-}
+};
 
 const setAudience = (
     field: 'audience_gender' | 'audience_age' | 'audience_location',
     value: string,
 ) => {
-    form[field][0] = value
-}
+    form[field][0] = value;
+};
 
 const canContinueFromProfile = computed(() => {
     return Boolean(
         form.name.trim() &&
-            form.username.trim() &&
-            form.platform &&
-            form.category.trim(),
-    )
-})
+        form.username.trim() &&
+        form.platform &&
+        form.category.trim(),
+    );
+});
 
 const nextStep = () => {
     if (currentStep.value === 1 && !canContinueFromProfile.value) {
-        return
+        return;
     }
 
     if (currentStep.value < 4) {
-        currentStep.value++
+        currentStep.value++;
         window.scrollTo({
             top: 0,
             behavior: 'smooth',
-        })
+        });
     }
-}
+};
 
 const previousStep = () => {
     if (currentStep.value > 1) {
-        currentStep.value--
+        currentStep.value--;
         window.scrollTo({
             top: 0,
             behavior: 'smooth',
-        })
+        });
     }
-}
+};
 
 const goToStep = (step: number) => {
     if (step < currentStep.value) {
-        currentStep.value = step
+        currentStep.value = step;
     }
-}
+};
 
 const submit = () => {
     form.post('/creators', {
         forceFormData: true,
-    })
-}
+    });
+};
 
-const fieldClass = (
-    field: keyof typeof form.errors,
-) => {
+const fieldClass = (field: keyof typeof form.errors) => {
     return form.errors[field]
         ? 'border-red-500 focus:border-red-500 focus:ring-red-500/10'
-        : 'border-border focus:border-primary focus:ring-primary/10'
-}
+        : 'border-border focus:border-primary focus:ring-primary/10';
+};
 </script>
 
 <template>
     <Head title="Tambah Creator" />
 
-    <div
-        class="app-textured-bg min-h-full p-4 text-foreground md:p-6"
-    >
+    <div class="app-textured-bg text-foreground min-h-full p-4 md:p-6">
         <!-- Header -->
         <div class="mb-6">
             <div class="flex items-start gap-4">
                 <Link
                     href="/creators"
-                    class="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-border bg-card transition hover:bg-muted"
+                    class="border-border bg-card hover:bg-muted inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border transition"
                 >
                     <ArrowLeft class="h-5 w-5" />
                 </Link>
 
                 <div>
-                    <h1
-                        class="text-2xl font-semibold tracking-tight"
-                    >
+                    <h1 class="text-2xl font-semibold tracking-tight">
                         Tambah Creator
                     </h1>
 
-                    <p class="mt-1 text-sm text-muted-foreground">
-                        Tambahkan creator atau KOL untuk kebutuhan
-                        analisis kolaborasi.
+                    <p class="text-muted-foreground mt-1 text-sm">
+                        Tambahkan creator atau KOL untuk kebutuhan analisis
+                        kolaborasi.
                     </p>
                 </div>
             </div>
@@ -285,20 +273,16 @@ const fieldClass = (
 
         <!-- Stepper -->
         <div
-            class="mb-6 rounded-xl border border-border bg-card px-5 py-4 shadow-sm"
+            class="border-border bg-card mb-6 rounded-xl border px-5 py-4 shadow-sm"
         >
             <div class="flex items-center">
-                <template
-                    v-for="(step, index) in steps"
-                    :key="step.number"
-                >
+                <template v-for="(step, index) in steps" :key="step.number">
                     <button
                         type="button"
                         class="group flex min-w-0 items-center gap-3 text-left"
                         :class="{
                             'cursor-pointer': step.number <= currentStep,
-                            'cursor-default':
-                                step.number > currentStep,
+                            'cursor-default': step.number > currentStep,
                         }"
                         @click="goToStep(step.number)"
                     >
@@ -310,7 +294,7 @@ const fieldClass = (
                                     : step.number === currentStep
                                       ? 'border-sky-600 bg-sky-600 text-white shadow-sm'
                                       : 'border-border hover:bg-muted'
-                                "
+                            "
                         >
                             <Check
                                 v-if="step.number < currentStep"
@@ -334,7 +318,7 @@ const fieldClass = (
                                 {{ step.title }}
                             </p>
 
-                            <p class="truncate text-xs text-muted-foreground">
+                            <p class="text-muted-foreground truncate text-xs">
                                 {{ step.description }}
                             </p>
                         </div>
@@ -342,10 +326,9 @@ const fieldClass = (
 
                     <div
                         v-if="index < steps.length - 1"
-                        class="mx-3 h-px flex-1 bg-border sm:mx-5"
+                        class="bg-border mx-3 h-px flex-1 sm:mx-5"
                         :class="{
-                            'bg-primary/40':
-                                step.number < currentStep,
+                            'bg-primary/40': step.number < currentStep,
                         }"
                     />
                 </template>
@@ -353,25 +336,17 @@ const fieldClass = (
         </div>
 
         <!-- Main -->
-        <div
-            class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]"
-        >
+        <div class="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
             <!-- Form -->
-            <form
-                @submit.prevent="submit"
-                class="min-w-0"
-            >
+            <form @submit.prevent="submit" class="min-w-0">
                 <!-- STEP 1 -->
-                <div
-                    v-if="currentStep === 1"
-                    class="space-y-5"
-                >
+                <div v-if="currentStep === 1" class="space-y-5">
                     <div
-                        class="rounded-xl border border-border bg-card p-5 shadow-sm md:p-6"
+                        class="border-border bg-card rounded-xl border p-5 shadow-sm md:p-6"
                     >
                         <div class="mb-6">
                             <p
-                                class="text-xs font-medium uppercase tracking-wide text-primary"
+                                class="text-primary text-xs font-medium tracking-wide uppercase"
                             >
                                 Step 01
                             </p>
@@ -380,20 +355,15 @@ const fieldClass = (
                                 Profil Creator
                             </h2>
 
-                            <p
-                                class="mt-1 text-sm text-muted-foreground"
-                            >
-                                Informasi utama mengenai creator atau
-                                KOL.
+                            <p class="text-muted-foreground mt-1 text-sm">
+                                Informasi utama mengenai creator atau KOL.
                             </p>
                         </div>
 
                         <div class="grid gap-5 md:grid-cols-2">
                             <!-- Name -->
                             <div class="space-y-2">
-                                <label
-                                    class="text-sm font-medium"
-                                >
+                                <label class="text-sm font-medium">
                                     Creator Name
                                     <span class="text-red-500">*</span>
                                 </label>
@@ -403,7 +373,7 @@ const fieldClass = (
                                     type="text"
                                     placeholder="Contoh: Sarah Putri"
                                     :class="fieldClass('name')"
-                                    class="h-11 w-full rounded-lg border bg-background px-4 text-sm outline-none transition focus:ring-2"
+                                    class="bg-background h-11 w-full rounded-lg border px-4 text-sm transition outline-none focus:ring-2"
                                 />
 
                                 <p
@@ -416,16 +386,14 @@ const fieldClass = (
 
                             <!-- Username -->
                             <div class="space-y-2">
-                                <label
-                                    class="text-sm font-medium"
-                                >
+                                <label class="text-sm font-medium">
                                     Username
                                     <span class="text-red-500">*</span>
                                 </label>
 
                                 <div class="relative">
                                     <span
-                                        class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground"
+                                        class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 -translate-y-1/2 text-sm"
                                     >
                                         @
                                     </span>
@@ -435,7 +403,7 @@ const fieldClass = (
                                         type="text"
                                         placeholder="username"
                                         :class="fieldClass('username')"
-                                        class="h-11 w-full rounded-lg border bg-background pl-8 pr-4 text-sm outline-none transition focus:ring-2"
+                                        class="bg-background h-11 w-full rounded-lg border pr-4 pl-8 text-sm transition outline-none focus:ring-2"
                                         @input="handleUsernameInput"
                                     />
                                 </div>
@@ -450,9 +418,7 @@ const fieldClass = (
 
                             <!-- Platform -->
                             <div class="space-y-2 md:col-span-2">
-                                <label
-                                    class="text-sm font-medium"
-                                >
+                                <label class="text-sm font-medium">
                                     Platform
                                     <span class="text-red-500">*</span>
                                 </label>
@@ -464,15 +430,11 @@ const fieldClass = (
                                         type="button"
                                         class="flex h-12 items-center gap-3 rounded-lg border px-4 text-sm font-medium transition"
                                         :class="
-                                            form.platform ===
-                                            platform.value
+                                            form.platform === platform.value
                                                 ? 'border-primary bg-primary/5 text-primary'
                                                 : 'border-border bg-background hover:bg-muted'
                                         "
-                                        @click="
-                                            form.platform =
-                                                platform.value
-                                        "
+                                        @click="form.platform = platform.value"
                                     >
                                         <component
                                             :is="platform.icon"
@@ -483,8 +445,7 @@ const fieldClass = (
 
                                         <Check
                                             v-if="
-                                                form.platform ===
-                                                platform.value
+                                                form.platform === platform.value
                                             "
                                             class="ml-auto h-4 w-4"
                                         />
@@ -501,9 +462,7 @@ const fieldClass = (
 
                             <!-- Category -->
                             <div class="space-y-2">
-                                <label
-                                    class="text-sm font-medium"
-                                >
+                                <label class="text-sm font-medium">
                                     Category
                                     <span class="text-red-500">*</span>
                                 </label>
@@ -513,7 +472,7 @@ const fieldClass = (
                                     type="text"
                                     placeholder="Beauty, Fashion, Gaming..."
                                     :class="fieldClass('category')"
-                                    class="h-11 w-full rounded-lg border bg-background px-4 text-sm outline-none transition focus:ring-2"
+                                    class="bg-background h-11 w-full rounded-lg border px-4 text-sm transition outline-none focus:ring-2"
                                 />
 
                                 <p
@@ -526,9 +485,7 @@ const fieldClass = (
 
                             <!-- Followers -->
                             <div class="space-y-2">
-                                <label
-                                    class="text-sm font-medium"
-                                >
+                                <label class="text-sm font-medium">
                                     Followers
                                 </label>
 
@@ -538,13 +495,11 @@ const fieldClass = (
                                     min="0"
                                     placeholder="0"
                                     :class="fieldClass('followers')"
-                                    class="h-11 w-full rounded-lg border bg-background px-4 text-sm outline-none transition focus:ring-2"
+                                    class="bg-background h-11 w-full rounded-lg border px-4 text-sm transition outline-none focus:ring-2"
                                     @input="handleFollowersInput"
                                 />
 
-                                <div
-                                    class="flex items-center justify-between"
-                                >
+                                <div class="flex items-center justify-between">
                                     <p
                                         v-if="form.errors.followers"
                                         class="text-xs text-red-500"
@@ -554,7 +509,7 @@ const fieldClass = (
 
                                     <p
                                         v-else
-                                        class="text-xs text-muted-foreground"
+                                        class="text-muted-foreground text-xs"
                                     >
                                         {{
                                             form.followers
@@ -567,14 +522,12 @@ const fieldClass = (
 
                             <!-- Status -->
                             <div class="space-y-2 md:col-span-2">
-                                <label
-                                    class="text-sm font-medium"
-                                >
+                                <label class="text-sm font-medium">
                                     Status
                                 </label>
 
                                 <div
-                                    class="flex items-center justify-between rounded-lg border border-border bg-background px-4 py-3"
+                                    class="border-border bg-background flex items-center justify-between rounded-lg border px-4 py-3"
                                 >
                                     <div>
                                         <p class="text-sm font-medium">
@@ -582,10 +535,10 @@ const fieldClass = (
                                         </p>
 
                                         <p
-                                            class="mt-0.5 text-xs text-muted-foreground"
+                                            class="text-muted-foreground mt-0.5 text-xs"
                                         >
-                                            Creator dapat digunakan
-                                            untuk kebutuhan analisis.
+                                            Creator dapat digunakan untuk
+                                            kebutuhan analisis.
                                         </p>
                                     </div>
 
@@ -599,8 +552,7 @@ const fieldClass = (
                                         "
                                         @click="
                                             form.status =
-                                                form.status ===
-                                                'active'
+                                                form.status === 'active'
                                                     ? 'inactive'
                                                     : 'active'
                                         "
@@ -621,135 +573,101 @@ const fieldClass = (
                 </div>
 
                 <!-- STEP 2 -->
-                <div
-                    v-else-if="currentStep === 2"
-                    class="space-y-5"
-                >
+                <div v-else-if="currentStep === 2" class="space-y-5">
                     <div
-                        class="rounded-xl border border-border bg-card p-5 shadow-sm md:p-6"
+                        class="border-border bg-card rounded-xl border p-5 shadow-sm md:p-6"
                     >
                         <div class="mb-6">
                             <p
-                                class="text-xs font-medium uppercase tracking-wide text-primary"
+                                class="text-primary text-xs font-medium tracking-wide uppercase"
                             >
                                 Step 02
                             </p>
 
-                            <h2 class="mt-1 text-lg font-semibold">
-                                Audience
-                            </h2>
+                            <h2 class="mt-1 text-lg font-semibold">Audience</h2>
 
-                            <p
-                                class="mt-1 text-sm text-muted-foreground"
-                            >
-                                Informasi audience membantu menilai
-                                kesesuaian creator dengan campaign.
+                            <p class="text-muted-foreground mt-1 text-sm">
+                                Informasi audience membantu menilai kesesuaian
+                                creator dengan campaign.
                             </p>
                         </div>
 
                         <div class="space-y-5">
                             <!-- Gender -->
                             <div class="space-y-2">
-                                <div
-                                    class="flex items-center justify-between"
-                                >
-                                    <label
-                                        class="text-sm font-medium"
-                                    >
+                                <div class="flex items-center justify-between">
+                                    <label class="text-sm font-medium">
                                         Gender
                                     </label>
 
-                                    <span
-                                        class="text-xs text-muted-foreground"
-                                    >
+                                    <span class="text-muted-foreground text-xs">
                                         Optional
                                     </span>
                                 </div>
 
                                 <input
-                                    :value="
-                                        form.audience_gender[0] ?? ''
-                                    "
+                                    :value="form.audience_gender[0] ?? ''"
                                     type="text"
                                     placeholder="Contoh: Female 70%"
-                                    class="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                    class="border-border bg-background focus:border-primary focus:ring-primary/10 h-11 w-full rounded-lg border px-4 text-sm transition outline-none focus:ring-2"
                                     @input="
                                         setAudience(
                                             'audience_gender',
-                                            (
-                                                $event.target as HTMLInputElement
-                                            ).value,
+                                            ($event.target as HTMLInputElement)
+                                                .value,
                                         )
                                     "
                                 />
 
-                                <p
-                                    class="text-xs text-muted-foreground"
-                                >
+                                <p class="text-muted-foreground text-xs">
                                     Contoh: Female 70%, Male 30%
                                 </p>
                             </div>
 
                             <!-- Age -->
                             <div class="space-y-2">
-                                <label
-                                    class="text-sm font-medium"
-                                >
-                                    Age
-                                </label>
+                                <label class="text-sm font-medium"> Age </label>
 
                                 <input
-                                    :value="
-                                        form.audience_age[0] ?? ''
-                                    "
+                                    :value="form.audience_age[0] ?? ''"
                                     type="text"
                                     placeholder="Contoh: 18-24 60%"
-                                    class="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                    class="border-border bg-background focus:border-primary focus:ring-primary/10 h-11 w-full rounded-lg border px-4 text-sm transition outline-none focus:ring-2"
                                     @input="
                                         setAudience(
                                             'audience_age',
-                                            (
-                                                $event.target as HTMLInputElement
-                                            ).value,
+                                            ($event.target as HTMLInputElement)
+                                                .value,
                                         )
                                     "
                                 />
 
-                                <p
-                                    class="text-xs text-muted-foreground"
-                                >
+                                <p class="text-muted-foreground text-xs">
                                     Contoh: 18-24 60%, 25-34 30%
                                 </p>
                             </div>
 
                             <!-- Location -->
                             <div class="space-y-2">
-                                <label
-                                    class="text-sm font-medium"
-                                >
+                                <label class="text-sm font-medium">
                                     Location
                                 </label>
 
                                 <input
-                                    :value="
-                                        form.audience_location[0] ?? ''
-                                    "
+                                    :value="form.audience_location[0] ?? ''"
                                     type="text"
                                     placeholder="Contoh: Indonesia 90%"
-                                    class="h-11 w-full rounded-lg border border-border bg-background px-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                    class="border-border bg-background focus:border-primary focus:ring-primary/10 h-11 w-full rounded-lg border px-4 text-sm transition outline-none focus:ring-2"
                                     @input="
                                         setAudience(
                                             'audience_location',
-                                            (
-                                                $event.target as HTMLInputElement
-                                            ).value,
+                                            ($event.target as HTMLInputElement)
+                                                .value,
                                         )
                                     "
                                 />
 
-                                <p
-                                    class="text-xs text-muted-foreground"
-                                >
+                                <p class="text-muted-foreground text-xs">
                                     Contoh: Indonesia 90%, Malaysia 10%
                                 </p>
                             </div>
@@ -758,16 +676,13 @@ const fieldClass = (
                 </div>
 
                 <!-- STEP 3 -->
-                <div
-                    v-else-if="currentStep === 3"
-                    class="space-y-5"
-                >
+                <div v-else-if="currentStep === 3" class="space-y-5">
                     <div
-                        class="rounded-xl border border-border bg-card p-5 shadow-sm md:p-6"
+                        class="border-border bg-card rounded-xl border p-5 shadow-sm md:p-6"
                     >
                         <div class="mb-6">
                             <p
-                                class="text-xs font-medium uppercase tracking-wide text-primary"
+                                class="text-primary text-xs font-medium tracking-wide uppercase"
                             >
                                 Step 03
                             </p>
@@ -776,39 +691,35 @@ const fieldClass = (
                                 Detail Creator
                             </h2>
 
-                            <p
-                                class="mt-1 text-sm text-muted-foreground"
-                            >
-                                Lengkapi informasi tambahan agar
-                                profile creator lebih siap dianalisis.
+                            <p class="text-muted-foreground mt-1 text-sm">
+                                Lengkapi informasi tambahan agar profile creator
+                                lebih siap dianalisis.
                             </p>
                         </div>
 
                         <div class="space-y-6">
                             <!-- Profile Link -->
                             <div class="space-y-2">
-                                <label
-                                    class="text-sm font-medium"
-                                >
+                                <label class="text-sm font-medium">
                                     Profile Link
                                 </label>
 
                                 <div class="relative">
                                     <LinkIcon
-                                        class="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+                                        class="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
                                     />
 
                                     <input
                                         v-model="form.profile_link"
                                         type="url"
                                         placeholder="https://..."
-                                        class="h-11 w-full rounded-lg border border-border bg-background pl-10 pr-4 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                        class="border-border bg-background focus:border-primary focus:ring-primary/10 h-11 w-full rounded-lg border pr-4 pl-10 text-sm transition outline-none focus:ring-2"
                                     />
                                 </div>
 
                                 <div
                                     v-if="form.profile_link"
-                                    class="flex items-center gap-2 text-xs text-muted-foreground"
+                                    class="text-muted-foreground flex items-center gap-2 text-xs"
                                 >
                                     <Check
                                         class="h-3.5 w-3.5 text-emerald-500"
@@ -820,17 +731,15 @@ const fieldClass = (
 
                             <!-- Profile Image -->
                             <div class="space-y-3">
-                                <label
-                                    class="text-sm font-medium"
-                                >
+                                <label class="text-sm font-medium">
                                     Foto Profil
                                 </label>
 
                                 <div
-                                    class="flex flex-col gap-4 rounded-xl border border-dashed border-border bg-muted/20 p-4 sm:flex-row sm:items-center"
+                                    class="border-border bg-muted/20 flex flex-col gap-4 rounded-xl border border-dashed p-4 sm:flex-row sm:items-center"
                                 >
                                     <div
-                                        class="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted"
+                                        class="border-border bg-muted flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border"
                                     >
                                         <img
                                             v-if="previewImage"
@@ -841,7 +750,7 @@ const fieldClass = (
 
                                         <User
                                             v-else
-                                            class="h-8 w-8 text-muted-foreground"
+                                            class="text-muted-foreground h-8 w-8"
                                         />
                                     </div>
 
@@ -854,18 +763,14 @@ const fieldClass = (
                                                 type="file"
                                                 accept="image/jpeg,image/png,image/webp"
                                                 class="hidden"
-                                                @change="
-                                                    handleImageChange
-                                                "
+                                                @change="handleImageChange"
                                             />
 
                                             <label
                                                 for="profile_image"
-                                                class="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background px-3.5 py-2 text-sm font-medium transition hover:bg-muted"
+                                                class="border-border bg-background hover:bg-muted inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3.5 py-2 text-sm font-medium transition"
                                             >
-                                                <ImagePlus
-                                                    class="h-4 w-4"
-                                                />
+                                                <ImagePlus class="h-4 w-4" />
 
                                                 {{
                                                     previewImage
@@ -886,10 +791,9 @@ const fieldClass = (
                                         </div>
 
                                         <p
-                                            class="mt-2 text-xs text-muted-foreground"
+                                            class="text-muted-foreground mt-2 text-xs"
                                         >
-                                            JPG, PNG, atau WEBP · Maksimal
-                                            2 MB
+                                            JPG, PNG, atau WEBP · Maksimal 2 MB
                                         </p>
                                     </div>
                                 </div>
@@ -904,18 +808,12 @@ const fieldClass = (
 
                             <!-- Notes -->
                             <div class="space-y-2">
-                                <div
-                                    class="flex items-center justify-between"
-                                >
-                                    <label
-                                        class="text-sm font-medium"
-                                    >
+                                <div class="flex items-center justify-between">
+                                    <label class="text-sm font-medium">
                                         Notes
                                     </label>
 
-                                    <span
-                                        class="text-xs text-muted-foreground"
-                                    >
+                                    <span class="text-muted-foreground text-xs">
                                         {{ form.notes.length }} karakter
                                     </span>
                                 </div>
@@ -924,7 +822,7 @@ const fieldClass = (
                                     v-model="form.notes"
                                     rows="5"
                                     placeholder="Catatan tambahan mengenai creator..."
-                                    class="w-full resize-none rounded-lg border border-border bg-background px-4 py-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+                                    class="border-border bg-background focus:border-primary focus:ring-primary/10 w-full resize-none rounded-lg border px-4 py-3 text-sm transition outline-none focus:ring-2"
                                 />
                             </div>
                         </div>
@@ -932,16 +830,13 @@ const fieldClass = (
                 </div>
 
                 <!-- STEP 4 -->
-                <div
-                    v-else
-                    class="space-y-5"
-                >
+                <div v-else class="space-y-5">
                     <div
-                        class="rounded-xl border border-border bg-card p-5 shadow-sm md:p-6"
+                        class="border-border bg-card rounded-xl border p-5 shadow-sm md:p-6"
                     >
                         <div class="mb-6">
                             <p
-                                class="text-xs font-medium uppercase tracking-wide text-primary"
+                                class="text-primary text-xs font-medium tracking-wide uppercase"
                             >
                                 Step 04
                             </p>
@@ -950,21 +845,19 @@ const fieldClass = (
                                 Review Creator
                             </h2>
 
-                            <p
-                                class="mt-1 text-sm text-muted-foreground"
-                            >
-                                Pastikan informasi creator sudah sesuai
-                                sebelum disimpan.
+                            <p class="text-muted-foreground mt-1 text-sm">
+                                Pastikan informasi creator sudah sesuai sebelum
+                                disimpan.
                             </p>
                         </div>
 
                         <!-- Review Profile -->
                         <div
-                            class="rounded-xl border border-border bg-muted/20 p-4"
+                            class="border-border bg-muted/20 rounded-xl border p-4"
                         >
                             <div class="flex items-center gap-4">
                                 <div
-                                    class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted"
+                                    class="border-border bg-muted flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border"
                                 >
                                     <img
                                         v-if="previewImage"
@@ -975,21 +868,19 @@ const fieldClass = (
 
                                     <span
                                         v-else
-                                        class="text-lg font-semibold text-muted-foreground"
+                                        class="text-muted-foreground text-lg font-semibold"
                                     >
                                         {{ profileInitial }}
                                     </span>
                                 </div>
 
                                 <div class="min-w-0">
-                                    <h3
-                                        class="truncate font-semibold"
-                                    >
+                                    <h3 class="truncate font-semibold">
                                         {{ form.name || 'Nama Creator' }}
                                     </h3>
 
                                     <p
-                                        class="mt-0.5 text-sm text-muted-foreground"
+                                        class="text-muted-foreground mt-0.5 text-sm"
                                     >
                                         {{ usernameDisplay }}
                                     </p>
@@ -1015,14 +906,12 @@ const fieldClass = (
                         </div>
 
                         <!-- Review Sections -->
-                        <div class="mt-5 divide-y divide-border">
+                        <div class="divide-border mt-5 divide-y">
                             <div
                                 class="flex items-start justify-between gap-4 py-4"
                             >
                                 <div>
-                                    <p
-                                        class="text-xs text-muted-foreground"
-                                    >
+                                    <p class="text-muted-foreground text-xs">
                                         Platform
                                     </p>
 
@@ -1032,9 +921,7 @@ const fieldClass = (
                                 </div>
 
                                 <div class="text-right">
-                                    <p
-                                        class="text-xs text-muted-foreground"
-                                    >
+                                    <p class="text-muted-foreground text-xs">
                                         Followers
                                     </p>
 
@@ -1045,9 +932,7 @@ const fieldClass = (
                             </div>
 
                             <div class="py-4">
-                                <p
-                                    class="text-xs text-muted-foreground"
-                                >
+                                <p class="text-muted-foreground text-xs">
                                     Category
                                 </p>
 
@@ -1057,60 +942,45 @@ const fieldClass = (
                             </div>
 
                             <div class="py-4">
-                                <p
-                                    class="text-xs text-muted-foreground"
-                                >
+                                <p class="text-muted-foreground text-xs">
                                     Audience
                                 </p>
 
                                 <div class="mt-2 grid gap-3 sm:grid-cols-3">
                                     <div>
                                         <p
-                                            class="text-[11px] text-muted-foreground"
+                                            class="text-muted-foreground text-[11px]"
                                         >
                                             Gender
                                         </p>
 
-                                        <p
-                                            class="mt-1 text-sm font-medium"
-                                        >
-                                            {{
-                                                form.audience_gender[0] ||
-                                                '-'
-                                            }}
+                                        <p class="mt-1 text-sm font-medium">
+                                            {{ form.audience_gender[0] || '-' }}
                                         </p>
                                     </div>
 
                                     <div>
                                         <p
-                                            class="text-[11px] text-muted-foreground"
+                                            class="text-muted-foreground text-[11px]"
                                         >
                                             Age
                                         </p>
 
-                                        <p
-                                            class="mt-1 text-sm font-medium"
-                                        >
-                                            {{
-                                                form.audience_age[0] ||
-                                                '-'
-                                            }}
+                                        <p class="mt-1 text-sm font-medium">
+                                            {{ form.audience_age[0] || '-' }}
                                         </p>
                                     </div>
 
                                     <div>
                                         <p
-                                            class="text-[11px] text-muted-foreground"
+                                            class="text-muted-foreground text-[11px]"
                                         >
                                             Location
                                         </p>
 
-                                        <p
-                                            class="mt-1 text-sm font-medium"
-                                        >
+                                        <p class="mt-1 text-sm font-medium">
                                             {{
-                                                form.audience_location[0] ||
-                                                '-'
+                                                form.audience_location[0] || '-'
                                             }}
                                         </p>
                                     </div>
@@ -1118,9 +988,7 @@ const fieldClass = (
                             </div>
 
                             <div class="py-4">
-                                <p
-                                    class="text-xs text-muted-foreground"
-                                >
+                                <p class="text-muted-foreground text-xs">
                                     Profile Link
                                 </p>
 
@@ -1129,31 +997,22 @@ const fieldClass = (
                                     :href="form.profile_link"
                                     target="_blank"
                                     rel="noopener noreferrer"
-                                    class="mt-1 inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                                    class="text-primary mt-1 inline-flex items-center gap-1 text-sm font-medium hover:underline"
                                 >
                                     Lihat profile
-                                    <ExternalLink
-                                        class="h-3.5 w-3.5"
-                                    />
+                                    <ExternalLink class="h-3.5 w-3.5" />
                                 </a>
 
-                                <p
-                                    v-else
-                                    class="mt-1 text-sm font-medium"
-                                >
-                                    -
-                                </p>
+                                <p v-else class="mt-1 text-sm font-medium">-</p>
                             </div>
 
                             <div class="py-4">
-                                <p
-                                    class="text-xs text-muted-foreground"
-                                >
+                                <p class="text-muted-foreground text-xs">
                                     Notes
                                 </p>
 
                                 <p
-                                    class="mt-1 whitespace-pre-line text-sm leading-6"
+                                    class="mt-1 text-sm leading-6 whitespace-pre-line"
                                 >
                                     {{ form.notes || '-' }}
                                 </p>
@@ -1163,33 +1022,27 @@ const fieldClass = (
 
                     <!-- Completion -->
                     <div
-                        class="rounded-xl border border-border bg-card p-4 shadow-sm"
+                        class="border-border bg-card rounded-xl border p-4 shadow-sm"
                     >
-                        <div
-                            class="flex items-center justify-between gap-4"
-                        >
+                        <div class="flex items-center justify-between gap-4">
                             <div>
                                 <p class="text-sm font-medium">
                                     Kelengkapan data
                                 </p>
 
-                                <p
-                                    class="mt-0.5 text-xs text-muted-foreground"
-                                >
-                                    Data tambahan dapat dilengkapi
-                                    kembali setelah creator dibuat.
+                                <p class="text-muted-foreground mt-0.5 text-xs">
+                                    Data tambahan dapat dilengkapi kembali
+                                    setelah creator dibuat.
                                 </p>
                             </div>
 
-                            <span
-                                class="text-sm font-semibold"
-                            >
+                            <span class="text-sm font-semibold">
                                 {{ completion }}%
                             </span>
                         </div>
 
                         <div
-                            class="mt-3 h-1.5 overflow-hidden rounded-full bg-muted"
+                            class="bg-muted mt-3 h-1.5 overflow-hidden rounded-full"
                         >
                             <div
                                 class="h-full rounded-full bg-sky-600 transition-all duration-300"
@@ -1202,14 +1055,12 @@ const fieldClass = (
                 </div>
 
                 <!-- Navigation -->
-                <div
-                    class="mt-5 flex items-center justify-between gap-3"
-                >
+                <div class="mt-5 flex items-center justify-between gap-3">
                     <div>
                         <Link
                             v-if="currentStep === 1"
                             href="/creators"
-                            class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium transition hover:bg-muted"
+                            class="border-border bg-card hover:bg-muted inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition"
                         >
                             Batal
                         </Link>
@@ -1217,7 +1068,7 @@ const fieldClass = (
                         <button
                             v-else
                             type="button"
-                            class="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-medium transition hover:bg-muted"
+                            class="border-border bg-card hover:bg-muted inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition"
                             @click="previousStep"
                         >
                             <ChevronLeft class="h-4 w-4" />
@@ -1230,10 +1081,9 @@ const fieldClass = (
                             v-if="currentStep < 4"
                             type="button"
                             :disabled="
-                                currentStep === 1 &&
-                                !canContinueFromProfile
+                                currentStep === 1 && !canContinueFromProfile
                             "
-                            class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="text-primary-foreground inline-flex items-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-medium transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                             @click="nextStep"
                         >
                             Lanjutkan
@@ -1244,7 +1094,7 @@ const fieldClass = (
                             v-else
                             type="submit"
                             :disabled="form.processing"
-                            class="inline-flex items-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-medium text-primary-foreground transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                            class="text-primary-foreground inline-flex items-center gap-2 rounded-lg bg-sky-600 px-5 py-2.5 text-sm font-medium transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                             <Save class="h-4 w-4" />
 
@@ -1261,38 +1111,30 @@ const fieldClass = (
             <!-- Live Preview -->
             <aside class="hidden xl:block">
                 <div
-                    class="sticky top-6 rounded-xl border border-border bg-card p-5 shadow-sm"
+                    class="border-border bg-card sticky top-6 rounded-xl border p-5 shadow-sm"
                 >
-                    <div
-                        class="flex items-center justify-between"
-                    >
+                    <div class="flex items-center justify-between">
                         <div>
-                            <p class="text-sm font-semibold">
-                                Creator Preview
-                            </p>
+                            <p class="text-sm font-semibold">Creator Preview</p>
 
-                            <p
-                                class="mt-0.5 text-xs text-muted-foreground"
-                            >
+                            <p class="text-muted-foreground mt-0.5 text-xs">
                                 Preview akan mengikuti data form.
                             </p>
                         </div>
 
                         <div
-                            class="flex h-8 w-8 items-center justify-center rounded-lg bg-muted"
+                            class="bg-muted flex h-8 w-8 items-center justify-center rounded-lg"
                         >
-                            <User
-                                class="h-4 w-4 text-muted-foreground"
-                            />
+                            <User class="text-muted-foreground h-4 w-4" />
                         </div>
                     </div>
 
                     <!-- Profile -->
                     <div
-                        class="mt-6 rounded-xl border border-border bg-muted/20 p-5 text-center"
+                        class="border-border bg-muted/20 mt-6 rounded-xl border p-5 text-center"
                     >
                         <div
-                            class="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border border-border bg-muted"
+                            class="border-border bg-muted mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-full border"
                         >
                             <img
                                 v-if="previewImage"
@@ -1303,7 +1145,7 @@ const fieldClass = (
 
                             <span
                                 v-else
-                                class="text-2xl font-semibold text-muted-foreground"
+                                class="text-muted-foreground text-2xl font-semibold"
                             >
                                 {{ profileInitial }}
                             </span>
@@ -1313,9 +1155,7 @@ const fieldClass = (
                             {{ form.name || 'Nama Creator' }}
                         </p>
 
-                        <p
-                            class="mt-1 truncate text-sm text-muted-foreground"
-                        >
+                        <p class="text-muted-foreground mt-1 truncate text-sm">
                             {{ usernameDisplay }}
                         </p>
 
@@ -1324,7 +1164,7 @@ const fieldClass = (
                         >
                             <span
                                 v-if="form.platform"
-                                class="rounded-md bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                                class="bg-primary/10 text-primary rounded-md px-2.5 py-1 text-xs font-medium"
                             >
                                 {{ form.platform }}
                             </span>
@@ -1350,10 +1190,10 @@ const fieldClass = (
                     <!-- Metrics -->
                     <div class="mt-4 grid grid-cols-2 gap-3">
                         <div
-                            class="rounded-lg border border-border bg-background p-3"
+                            class="border-border bg-background rounded-lg border p-3"
                         >
                             <p
-                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                                class="text-muted-foreground text-[11px] tracking-wide uppercase"
                             >
                                 Followers
                             </p>
@@ -1364,17 +1204,15 @@ const fieldClass = (
                         </div>
 
                         <div
-                            class="rounded-lg border border-border bg-background p-3"
+                            class="border-border bg-background rounded-lg border p-3"
                         >
                             <p
-                                class="text-[11px] uppercase tracking-wide text-muted-foreground"
+                                class="text-muted-foreground text-[11px] tracking-wide uppercase"
                             >
                                 Category
                             </p>
 
-                            <p
-                                class="mt-1 truncate text-sm font-semibold"
-                            >
+                            <p class="mt-1 truncate text-sm font-semibold">
                                 {{ form.category || '-' }}
                             </p>
                         </div>
@@ -1382,65 +1220,59 @@ const fieldClass = (
 
                     <!-- Audience -->
                     <div class="mt-4">
-                        <p
-                            class="text-xs font-medium text-muted-foreground"
-                        >
+                        <p class="text-muted-foreground text-xs font-medium">
                             Audience
                         </p>
 
                         <div class="mt-2 space-y-2">
                             <div
-                                class="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2"
+                                class="bg-muted/40 flex items-center justify-between rounded-lg px-3 py-2"
                             >
-                                <span class="text-xs text-muted-foreground">
+                                <span class="text-muted-foreground text-xs">
                                     Gender
                                 </span>
 
-                                <span class="max-w-[160px] truncate text-xs font-medium">
-                                    {{
-                                        form.audience_gender[0] || '-'
-                                    }}
+                                <span
+                                    class="max-w-[160px] truncate text-xs font-medium"
+                                >
+                                    {{ form.audience_gender[0] || '-' }}
                                 </span>
                             </div>
 
                             <div
-                                class="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2"
+                                class="bg-muted/40 flex items-center justify-between rounded-lg px-3 py-2"
                             >
-                                <span class="text-xs text-muted-foreground">
+                                <span class="text-muted-foreground text-xs">
                                     Age
                                 </span>
 
-                                <span class="max-w-[160px] truncate text-xs font-medium">
-                                    {{
-                                        form.audience_age[0] || '-'
-                                    }}
+                                <span
+                                    class="max-w-[160px] truncate text-xs font-medium"
+                                >
+                                    {{ form.audience_age[0] || '-' }}
                                 </span>
                             </div>
 
                             <div
-                                class="flex items-center justify-between rounded-lg bg-muted/40 px-3 py-2"
+                                class="bg-muted/40 flex items-center justify-between rounded-lg px-3 py-2"
                             >
-                                <span class="text-xs text-muted-foreground">
+                                <span class="text-muted-foreground text-xs">
                                     Location
                                 </span>
 
-                                <span class="max-w-[160px] truncate text-xs font-medium">
-                                    {{
-                                        form.audience_location[0] || '-'
-                                    }}
+                                <span
+                                    class="max-w-[160px] truncate text-xs font-medium"
+                                >
+                                    {{ form.audience_location[0] || '-' }}
                                 </span>
                             </div>
                         </div>
                     </div>
 
                     <!-- Completion -->
-                    <div class="mt-5 border-t border-border pt-4">
-                        <div
-                            class="flex items-center justify-between"
-                        >
-                            <span
-                                class="text-xs text-muted-foreground"
-                            >
+                    <div class="border-border mt-5 border-t pt-4">
+                        <div class="flex items-center justify-between">
+                            <span class="text-muted-foreground text-xs">
                                 Data completeness
                             </span>
 
@@ -1450,7 +1282,7 @@ const fieldClass = (
                         </div>
 
                         <div
-                            class="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"
+                            class="bg-muted mt-2 h-1.5 overflow-hidden rounded-full"
                         >
                             <div
                                 class="h-full rounded-full bg-sky-600 transition-all duration-300"

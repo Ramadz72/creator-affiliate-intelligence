@@ -1,4 +1,5 @@
 import { createSSRApp, h } from 'vue';
+import type { DefineComponent } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { createInertiaApp } from '@inertiajs/vue3';
 import createServer from '@inertiajs/vue3/server';
@@ -8,7 +9,7 @@ import VChart from '@/lib/echarts';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
-const pages = import.meta.glob('./pages/**/*.vue');
+const pages = import.meta.glob<DefineComponent>('./pages/**/*.vue');
 
 createServer((page) =>
     createInertiaApp({
