@@ -18,6 +18,16 @@ class SecurityHeadersTest extends TestCase
             ->assertHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
     }
 
+    public function test_csrf_token_meta_tag_is_rendered(): void
+    {
+        $response = $this->get('/');
+
+        $response->assertOk()->assertSee(
+            'name="csrf-token" content="'.csrf_token().'"',
+            false,
+        );
+    }
+
     public function test_hsts_is_added_only_on_secure_requests(): void
     {
         $middleware = new AddSecurityHeaders;

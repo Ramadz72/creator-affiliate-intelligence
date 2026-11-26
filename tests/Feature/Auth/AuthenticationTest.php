@@ -6,6 +6,10 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
 use Laravel\Fortify\Features;
+use Laravel\Socialite\Contracts\Provider;
+use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\User as GoogleUser;
+use Mockery;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -88,5 +92,55 @@ class AuthenticationTest extends TestCase
         ]);
 
         $response->assertTooManyRequests();
+    }
+
+    public function test_new_google_user_is_marked_verified()
+    {
+        $googleUser = GoogleUser::fake([
+            'id' => 'google-new-user',
+            'name' => 'Google User',
+            'email' => 'google-new@example.com',
+            'email_verified' => true,
+        ]);
+
+        $provider = Mockery::mock(Provider::class);
+        $provider->shouldReceive('user')->once()->andReturn($googleUser);
+
+        Socialite::shouldReceive('driver')->once()->with('google')->andReturn($provider);
+
+        $response = $this->get(route('auth.google.callback'));
+
+        $response->assertRedirect(route('dashboard', absolute: false));
+
+        $user = User::query()->where('email', 'google-new@example.com')->firstOrFail();
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertTrue($user->hasVerifiedEmail());
+    }
+
+    public function test_existing_unverified_google_user_is_marked_verified()
+    {
+        $user = User::factory()->create([
+            'email' => 'google-existing@example.com',
+        ]);
+        $user->forceFill(['email_verified_at' => null])->save();
+
+        $googleUser = GoogleUser::fake([
+            'id' => 'google-existing-user',
+            'email' => 'google-existing@example.com',
+            'email_verified' => true,
+        ]);
+
+        $provider = Mockery::mock(Provider::class);
+        $provider->shouldReceive('user')->once()->andReturn($googleUser);
+
+        Socialite::shouldReceive('driver')->once()->with('google')->andReturn($provider);
+
+        $response = $this->get(route('auth.google.callback'));
+
+        $response->assertRedirect(route('dashboard', absolute: false));
+
+        $this->assertAuthenticatedAs($user);
+        $this->assertTrue($user->fresh()->hasVerifiedEmail());
     }
 }

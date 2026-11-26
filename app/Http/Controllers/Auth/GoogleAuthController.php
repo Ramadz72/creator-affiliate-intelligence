@@ -4,19 +4,21 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
+use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 use Throwable;
 
 class GoogleAuthController extends Controller
 {
-    public function redirect()
+    public function redirect(): RedirectResponse|SymfonyRedirectResponse
     {
         return Socialite::driver('google')->redirect();
     }
 
-    public function callback()
+    public function callback(): RedirectResponse
     {
         try {
             $googleUser = Socialite::driver('google')->user();
@@ -43,7 +45,6 @@ class GoogleAuthController extends Controller
                 $user->update([
                     'google_id' => $googleUser->getId(),
                     'profile_photo' => $googleUser->getAvatar(),
-                    'email_verified_at' => $user->email_verified_at ?? now(),
                 ]);
             }
         }
@@ -57,8 +58,11 @@ class GoogleAuthController extends Controller
                 'google_id' => $googleUser->getId(),
                 'profile_photo' => $googleUser->getAvatar(),
                 'password' => Str::random(40),
-                'email_verified_at' => now(),
             ]);
+        }
+
+        if (! $user->hasVerifiedEmail()) {
+            $user->markEmailAsVerified();
         }
 
         Auth::login($user, true);
