@@ -4,13 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Jobs\ProcessAffiliateImportJob;
 use App\Models\ImportBatch;
-use App\Models\Affiliate;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
 class AffiliateImportController extends Controller
 {
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'file' => [
@@ -84,7 +85,7 @@ class AffiliateImportController extends Controller
         }
     }
 
-    public function progress(ImportBatch $batch)
+    public function progress(ImportBatch $batch): JsonResponse
     {
         abort_unless(
             $batch->uploaded_by === Auth::id(),
@@ -108,7 +109,7 @@ class AffiliateImportController extends Controller
         ]);
     }
 
-    public function active()
+    public function active(): JsonResponse
     {
         $batch = ImportBatch::query()
             ->where('uploaded_by', Auth::id())

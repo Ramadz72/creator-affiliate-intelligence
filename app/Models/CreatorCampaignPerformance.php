@@ -52,6 +52,7 @@ class CreatorCampaignPerformance extends Model
         'roas' => 'decimal:4',
     ];
 
+    /** @return BelongsTo<Campaign, $this> */
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);

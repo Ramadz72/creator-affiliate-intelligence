@@ -1,10 +1,7 @@
 <?php
 
 namespace App\Models;
-use App\Models\CreatorContent;
-use App\Models\CreatorRateCard;
-use App\Models\Campaign;
-use App\Models\CreatorScore;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -35,21 +32,25 @@ class Creator extends Model
         'audience_location' => 'array',
     ];
 
+    /** @return HasMany<CreatorContent, $this> */
     public function contents(): HasMany
     {
         return $this->hasMany(CreatorContent::class);
     }
 
+    /** @return HasMany<CreatorRateCard, $this> */
     public function rateCards(): HasMany
     {
         return $this->hasMany(CreatorRateCard::class);
     }
 
+    /** @return HasMany<Campaign, $this> */
     public function campaigns(): HasMany
     {
         return $this->hasMany(Campaign::class);
     }
 
+    /** @return HasMany<CreatorScore, $this> */
     public function scores(): HasMany
     {
         return $this->hasMany(CreatorScore::class);

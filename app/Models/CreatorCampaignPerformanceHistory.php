@@ -54,6 +54,7 @@ class CreatorCampaignPerformanceHistory extends Model
         'roi' => 'decimal:2',
     ];
 
+    /** @return BelongsTo<Campaign, $this> */
     public function campaign(): BelongsTo
     {
         return $this->belongsTo(Campaign::class);

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Creator;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -21,7 +22,7 @@ class CreatorController extends Controller
 
         $allowedTiers = ['nano', 'micro', 'macro', 'mega'];
 
-        if (!in_array($tier, $allowedTiers, true)) {
+        if (! in_array($tier, $allowedTiers, true)) {
             $tier = '';
         }
 
@@ -39,6 +40,7 @@ class CreatorController extends Controller
                     'micro' => $query->whereBetween('followers', [10000, 99999]),
                     'macro' => $query->whereBetween('followers', [100000, 999999]),
                     'mega' => $query->where('followers', '>=', 1000000),
+                    default => null,
                 };
             })
             ->latest()
@@ -55,7 +57,7 @@ class CreatorController extends Controller
     /**
      * Menampilkan form tambah Creator.
      */
-    public function create()
+    public function create(): Response
     {
         return Inertia::render('creators/Create');
     }
@@ -63,7 +65,7 @@ class CreatorController extends Controller
     /**
      * Menyimpan Creator baru.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'name' => ['required', 'string', 'max:150'],
@@ -87,13 +89,15 @@ class CreatorController extends Controller
         }
 
         $validated['user_id'] = Auth::id();
-        
+
         Creator::create($validated);
 
         return redirect()
             ->route('creators.index')
-            ->with('success', 'Creator berhasil ditambahkan.');}
-    public function show(Request $request, Creator $creator)
+            ->with('success', 'Creator berhasil ditambahkan.');
+    }
+
+    public function show(Request $request, Creator $creator): Response
     {
         abort_unless($creator->user_id === Auth::id(), 404);
 
@@ -115,7 +119,7 @@ class CreatorController extends Controller
         ]);
     }
 
-    public function edit(Creator $creator)
+    public function edit(Creator $creator): Response
     {
         abort_unless($creator->user_id === Auth::id(), 404);
 
@@ -124,7 +128,7 @@ class CreatorController extends Controller
         ]);
     }
 
-    public function update(Request $request, Creator $creator)
+    public function update(Request $request, Creator $creator): RedirectResponse
     {
         abort_unless($creator->user_id === Auth::id(), 404);
         $validated = $request->validate([
@@ -154,14 +158,14 @@ class CreatorController extends Controller
             ? [$validated['audience_location']]
             : null;
         if ($request->hasFile('profile_image')) {
-        if ($creator->profile_image) {
-            Storage::disk('public')->delete($creator->profile_image);
-        }
+            if ($creator->profile_image) {
+                Storage::disk('public')->delete($creator->profile_image);
+            }
 
-        $validated['profile_image'] = $request
-            ->file('profile_image')
-            ->store('creator-profiles', 'public');
-    }
+            $validated['profile_image'] = $request
+                ->file('profile_image')
+                ->store('creator-profiles', 'public');
+        }
         $creator->update($validated);
 
         return redirect()
@@ -169,8 +173,8 @@ class CreatorController extends Controller
             ->with('success', 'Creator berhasil diperbarui.');
     }
 
-    public function destroy(Creator $creator)
-    {   
+    public function destroy(Creator $creator): RedirectResponse
+    {
         abort_unless($creator->user_id === Auth::id(), 404);
 
         $creator->delete();

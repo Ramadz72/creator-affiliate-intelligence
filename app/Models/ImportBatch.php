@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Models;
-use App\Models\User;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -46,16 +46,19 @@ class ImportBatch extends Model
         'created_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<User, $this> */
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
+    /** @return HasMany<AffiliatePerformance, $this> */
     public function performances(): HasMany
     {
         return $this->hasMany(AffiliatePerformance::class);
     }
 
+    /** @return HasMany<AffiliateScore, $this> */
     public function scores(): HasMany
     {
         return $this->hasMany(AffiliateScore::class);

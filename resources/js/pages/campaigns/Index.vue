@@ -17,6 +17,7 @@ import {
     RotateCcw,
     Search,
     Trash2,
+    X,
     XCircle,
     Zap,
 } from '@lucide/vue';

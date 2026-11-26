@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Creator;
-use App\Models\CreatorScore;
 use App\Models\CreatorAnalysisSnapshot;
+use App\Models\CreatorScore;
 use App\Services\CreatorAnalysisService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class CreatorAnalysisController extends Controller
 {
@@ -17,7 +19,7 @@ class CreatorAnalysisController extends Controller
      * Penting:
      * Halaman ini TIDAK menghitung ulang analysis.
      */
-    public function show(Creator $creator)
+    public function show(Creator $creator): Response
     {
         abort_unless($creator->user_id === Auth::id(), 404);
 
@@ -25,7 +27,7 @@ class CreatorAnalysisController extends Controller
             ->orderByDesc('id')
             ->first();
 
-        if (!$score) {
+        if (! $score) {
             return Inertia::render('creators/Analysis', [
                 'creator' => $creator,
                 'analysis' => null,
@@ -33,35 +35,27 @@ class CreatorAnalysisController extends Controller
         }
 
         $scoreHistory = CreatorScore::where('creator_id', $creator->id)
-        ->orderBy('period_end')
-        ->orderBy('id')
-        ->get([
-            'id',
-            'period_start',
-            'period_end',
-            'performance_score',
-            'engagement_score',
-            'audience_fit_score',
-            'historical_score',
-            'deal_value_score',
-            'overall_score',
-            'recommendation',
-        ]);
-
-        if (!$score) {
-            return Inertia::render('creators/Analysis', [
-                'creator' => $creator,
-                'analysis' => null,
-                'scoreHistory' => $scoreHistory,
+            ->orderBy('period_end')
+            ->orderBy('id')
+            ->get([
+                'id',
+                'period_start',
+                'period_end',
+                'performance_score',
+                'engagement_score',
+                'audience_fit_score',
+                'historical_score',
+                'deal_value_score',
+                'overall_score',
+                'recommendation',
             ]);
-        }
 
         $snapshot = CreatorAnalysisSnapshot::where(
             'creator_score_id',
             $score->id
         )->first();
 
-        if (!$snapshot) {
+        if (! $snapshot) {
             return Inertia::render('creators/Analysis', [
                 'creator' => $creator,
                 'analysis' => null,
@@ -118,14 +112,14 @@ class CreatorAnalysisController extends Controller
     public function run(
         Creator $creator,
         CreatorAnalysisService $analysisService
-    ) {
+    ): RedirectResponse {
         abort_unless($creator->user_id === Auth::id(), 404);
 
         $analysis = $analysisService->analyze($creator);
 
         if (
-            !$analysis['period_start'] ||
-            !$analysis['period_end']
+            ! $analysis['period_start'] ||
+            ! $analysis['period_end']
         ) {
             return redirect()
                 ->route('creators.analysis', $creator)
@@ -170,7 +164,7 @@ class CreatorAnalysisController extends Controller
     /**
      * History semua analysis creator.
      */
-    public function history(Creator $creator)
+    public function history(Creator $creator): Response
     {
         abort_unless($creator->user_id === Auth::id(), 404);
 
@@ -191,7 +185,7 @@ class CreatorAnalysisController extends Controller
     public function historyDetail(
         Creator $creator,
         CreatorScore $score
-    ) {
+    ): Response {
         abort_unless($score->creator_id === $creator->id, 404);
         abort_unless($creator->user_id === Auth::id(), 404);
 

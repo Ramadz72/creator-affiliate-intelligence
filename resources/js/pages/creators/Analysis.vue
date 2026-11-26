@@ -26,6 +26,8 @@ import {
     RefreshCw,
 } from '@lucide/vue';
 
+import { Button } from '@/components/ui/button';
+
 interface Creator {
     id: number;
     name: string;

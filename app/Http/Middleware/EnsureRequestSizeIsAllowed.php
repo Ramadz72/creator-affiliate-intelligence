@@ -8,16 +8,15 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureRequestSizeIsAllowed
 {
-    private const MAX_BYTES = 10 * 1024 * 1024;
-
     public function handle(Request $request, Closure $next): Response
     {
+        $maxBytes = (int) config('app.max_request_bytes', 25 * 1024 * 1024);
         $contentLength = $request->header('Content-Length');
 
         if (
             $contentLength !== null
             && is_numeric($contentLength)
-            && (int) $contentLength > self::MAX_BYTES
+            && (int) $contentLength > $maxBytes
         ) {
             if ($request->expectsJson()) {
                 return response()->json(['message' => 'Payload too large.'], 413);

@@ -21,9 +21,6 @@ const hasProfilePhoto = computed(
     () => !!props.user.profile_photo && props.user.profile_photo.trim() !== '',
 );
 
-console.log('Profile photo:', props.user.profile_photo);
-console.log('Has profile photo:', hasProfilePhoto.value);
-
 const isCollapsed = computed(() => state.value === 'collapsed');
 </script>
 

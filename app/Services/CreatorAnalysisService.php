@@ -6,6 +6,9 @@ use App\Models\Creator;
 
 class CreatorAnalysisService
 {
+    /**
+     * @return array<string, mixed>
+     */
     public function analyze(Creator $creator): array
     {
         /*
@@ -161,12 +164,12 @@ class CreatorAnalysisService
         | 5. DEAL VALUE SCORE
         |--------------------------------------------------------------------------
         */
-            
+
         $rateCard = $creator->rateCards()
             ->orderBy('price')
             ->first();
-        
-        if (!$rateCard || $contents->isEmpty()) {
+
+        if (! $rateCard || $contents->isEmpty()) {
             $dealValueScore = 0;
             $averageCostPerView = null;
         } else {
@@ -359,7 +362,7 @@ class CreatorAnalysisService
                 'message' => sprintf(
                     'Rate card yang dianalisis memberikan deal value score %.2f dengan estimasi cost per view sebesar Rp%s.',
                     $dealValueScore,
-                    number_format($averageCostPerView ?? 0, 2, ',', '.')
+                    number_format($averageCostPerView, 2, ',', '.')
                 ),
             ];
         } elseif ($dealValueScore >= 50) {
@@ -369,7 +372,7 @@ class CreatorAnalysisService
                 'message' => sprintf(
                     'Rate card yang dianalisis memiliki deal value score %.2f dengan estimasi cost per view sebesar Rp%s.',
                     $dealValueScore,
-                    number_format($averageCostPerView ?? 0, 2, ',', '.')
+                    number_format($averageCostPerView, 2, ',', '.')
                 ),
             ];
         } else {
@@ -410,7 +413,7 @@ class CreatorAnalysisService
         |
         */
 
-       return [
+        return [
             'creator_id' => $creator->id,
             'creator_name' => $creator->name,
 
@@ -426,7 +429,7 @@ class CreatorAnalysisService
             'average_views' => round($averageViews ?? 0, 2),
 
             'engagement_rate' => round(
-                $engagementRate ?? 0,
+                $engagementRate,
                 2
             ),
 

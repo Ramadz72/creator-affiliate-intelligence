@@ -9,21 +9,22 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithChunkReading;
-use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Concerns\WithEvents;
+use Maatwebsite\Excel\Concerns\WithHeadingRow;
 use Maatwebsite\Excel\Events\AfterChunk;
 use Maatwebsite\Excel\Events\BeforeImport;
 
-class SellerCenterImport implements ToCollection, WithHeadingRow, WithChunkReading, WithEvents
+class SellerCenterImport implements ToCollection, WithChunkReading, WithEvents, WithHeadingRow
 {
     private int $processedRows = 0;
+
     private int $successfulRows = 0;
+
     private int $skippedRows = 0;
+
     private int $errorRows = 0;
 
-    public function __construct(protected ImportBatch $batch)
-    {
-    }
+    public function __construct(protected ImportBatch $batch) {}
 
     public function collection(Collection $rows): void
     {
@@ -34,6 +35,7 @@ class SellerCenterImport implements ToCollection, WithHeadingRow, WithChunkReadi
 
             if ($name === '') {
                 $this->skippedRows++;
+
                 continue;
             }
 
@@ -235,7 +237,7 @@ class SellerCenterImport implements ToCollection, WithHeadingRow, WithChunkReadi
 
         $hasPercentSymbol = false;
 
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             $value = trim((string) $value);
 
             $hasPercentSymbol = str_contains($value, '%');
@@ -251,14 +253,14 @@ class SellerCenterImport implements ToCollection, WithHeadingRow, WithChunkReadi
             }
         }
 
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return 0;
         }
 
         $number = (float) $value;
 
         // Excel sering menyimpan 0,89% sebagai 0.0089
-        if (!$hasPercentSymbol && $number > 0 && $number <= 1) {
+        if (! $hasPercentSymbol && $number > 0 && $number <= 1) {
             $number *= 100;
         }
 

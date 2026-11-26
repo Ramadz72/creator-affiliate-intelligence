@@ -9,6 +9,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -33,6 +34,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $data = $request->validated();
+        $oldPhoto = $user->profile_photo;
 
         if ($request->hasFile('profile_photo')) {
             $path = $request->file('profile_photo')->store(
@@ -53,6 +55,10 @@ class ProfileController extends Controller
 
         $user->save();
 
+        if ($oldPhoto && $oldPhoto !== $user->profile_photo) {
+            Storage::disk('public')->delete($oldPhoto);
+        }
+
         Inertia::flash('toast', [
             'type' => 'success',
             'message' => __('Profile updated.'),
@@ -69,6 +75,10 @@ class ProfileController extends Controller
         $user = $request->user();
 
         Auth::logout();
+
+        if ($user->profile_photo) {
+            Storage::disk('public')->delete($user->profile_photo);
+        }
 
         $user->delete();
 

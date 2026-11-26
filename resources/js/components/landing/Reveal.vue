@@ -30,8 +30,11 @@ onUnmounted(() => {
 
 <style scoped>
 .reveal {
-    opacity: 1;
-    transform: none;
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+        opacity 0.6s ease,
+        transform 0.6s ease;
 }
 
 .reveal-visible {

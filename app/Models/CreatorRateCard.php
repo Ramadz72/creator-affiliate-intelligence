@@ -27,6 +27,7 @@ class CreatorRateCard extends Model
         'valid_until' => 'date',
     ];
 
+    /** @return BelongsTo<Creator, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Creator::class);

@@ -34,10 +34,9 @@ class CreatorAnalysisSnapshot extends Model
         'created_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<CreatorScore, $this> */
     public function creatorScore(): BelongsTo
     {
         return $this->belongsTo(CreatorScore::class);
     }
-
-    
 }

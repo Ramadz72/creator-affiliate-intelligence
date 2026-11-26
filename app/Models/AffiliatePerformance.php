@@ -69,11 +69,13 @@ class AffiliatePerformance extends Model
         'updated_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Affiliate, $this> */
     public function affiliate(): BelongsTo
     {
         return $this->belongsTo(Affiliate::class);
     }
 
+    /** @return BelongsTo<ImportBatch, $this> */
     public function importBatch(): BelongsTo
     {
         return $this->belongsTo(ImportBatch::class);

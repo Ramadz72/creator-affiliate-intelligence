@@ -28,6 +28,7 @@ class CreatorContent extends Model
         'shares' => 'integer',
     ];
 
+    /** @return BelongsTo<Creator, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Creator::class);

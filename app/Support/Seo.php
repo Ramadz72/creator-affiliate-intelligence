@@ -16,9 +16,7 @@ class Seo
     /**
      * @param  array<string, mixed>  $config
      */
-    public function __construct(private readonly array $config)
-    {
-    }
+    public function __construct(private readonly array $config) {}
 
     /**
      * Metadata lengkap untuk request saat ini.

@@ -27,10 +27,28 @@ class RequestLimitingTest extends TestCase
         $this->assertContains('throttle:ai', Route::getRoutes()->getByName('insights.index')->gatherMiddleware());
     }
 
+    public function test_authenticated_routes_require_verified_email(): void
+    {
+        $authRoutes = array_filter(
+            Route::getRoutes()->getRoutes(),
+            fn ($route) => in_array('auth', $route->gatherMiddleware(), true),
+        );
+
+        $this->assertNotEmpty($authRoutes);
+
+        foreach ($authRoutes as $route) {
+            $this->assertContains(
+                'verified',
+                $route->gatherMiddleware(),
+                $route->getName() ?? $route->uri(),
+            );
+        }
+    }
+
     public function test_oversized_request_is_rejected(): void
     {
         $request = Request::create('/', 'POST');
-        $request->headers->set('Content-Length', (string) (10 * 1024 * 1024 + 1));
+        $request->headers->set('Content-Length', (string) (config('app.max_request_bytes') + 1));
         $request->headers->set('X-Requested-With', 'XMLHttpRequest');
         $request->headers->set('Accept', 'application/json');
 

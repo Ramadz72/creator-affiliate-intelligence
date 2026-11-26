@@ -6,6 +6,7 @@ use App\Models\AffiliatePerformance;
 use App\Models\AffiliateScore;
 use App\Models\ImportBatch;
 use Illuminate\Support\Collection;
+use stdClass;
 
 class AffiliateScoreService
 {
@@ -36,8 +37,7 @@ class AffiliateScoreService
             ),
             'content' => $this->buildPercentileMap(
                 $performances->map(
-                    fn ($item) =>
-                        (int) $item->video_count +
+                    fn ($item) => (int) $item->video_count +
                         (int) $item->live_count
                 )
             ),
@@ -184,8 +184,7 @@ class AffiliateScoreService
                     if ($average > 0) {
                         $variance = $gmvs
                             ->map(
-                                fn ($value) =>
-                                    pow($value - $average, 2)
+                                fn ($value) => pow($value - $average, 2)
                             )
                             ->avg();
 
@@ -281,8 +280,12 @@ class AffiliateScoreService
      * Berbeda dengan scoreBatch():
      * - scoreBatch() = snapshot harian
      * - scoreRange() = aggregate berdasarkan date range
+     *
+     * @param  Collection<int, stdClass>  $currentPerformances
+     * @param  Collection<int, stdClass>  $previousPerformances
+     * @return Collection<int|string, array<string, mixed>>
      */
-   public function scoreRange(
+    public function scoreRange(
         Collection $currentPerformances,
         Collection $previousPerformances
     ): Collection {
@@ -297,7 +300,6 @@ class AffiliateScoreService
         * - Collection yang sudah groupBy affiliate_id
         */
 
-       
         if ($currentPerformances->isEmpty()) {
             return collect();
         }
@@ -323,8 +325,7 @@ class AffiliateScoreService
         */
 
         $currentByAffiliate = $currentGrouped->map(
-            fn (Collection $rows) =>
-                $this->aggregateRangePerformance($rows)
+            fn (Collection $rows) => $this->aggregateRangePerformance($rows)
         );
 
         /*
@@ -334,8 +335,7 @@ class AffiliateScoreService
         */
 
         $previousByAffiliate = $previousGrouped->map(
-            fn (Collection $rows) =>
-                $this->aggregateRangePerformance($rows)
+            fn (Collection $rows) => $this->aggregateRangePerformance($rows)
         );
 
         /*
@@ -513,11 +513,10 @@ class AffiliateScoreService
 
                         $variance = $dailyGmvs
                             ->map(
-                                fn ($value) =>
-                                    pow(
-                                        $value - $average,
-                                        2
-                                    )
+                                fn ($value) => pow(
+                                    $value - $average,
+                                    2
+                                )
                             )
                             ->avg();
 
@@ -598,49 +597,52 @@ class AffiliateScoreService
                     $dailyGmvs->count()
                 );
 
-                return [
-                    'performance_score' => $performanceScore,
-                    'growth_score' => $growthScore,
-                    'consistency_score' => $consistencyScore,
-                    'opportunity_score' => $opportunityScore,
-                    'overall_score' => $opportunityScore,
-                    'action' => $action,
-                    'growth_percent' => $growthPercent,
-                    'period_count' => $dailyGmvs->count(),
-                    'insights' => $insights,
-                ];
+                return $this->buildRangeScoreRow(
+                    $performanceScore,
+                    $growthScore,
+                    $consistencyScore,
+                    $opportunityScore,
+                    $action,
+                    $growthPercent,
+                    $dailyGmvs->count(),
+                    $insights
+                );
             }
         );
     }
 
-    private function flattenPerformanceRows(
-        Collection $collection
-    ): Collection {
-
-        $result = collect();
-
-        foreach ($collection as $item) {
-
-            if ($item instanceof Collection) {
-                foreach ($item as $row) {
-                    if ($row instanceof AffiliatePerformance) {
-                        $result->push($row);
-                    }
-                }
-
-                continue;
-            }
-
-            if ($item instanceof AffiliatePerformance) {
-                $result->push($item);
-            }
-        }
-
-        return $result->values();
+    /**
+     * @param  list<string>  $insights
+     * @return array<string, mixed>
+     */
+    private function buildRangeScoreRow(
+        float $performanceScore,
+        float|int $growthScore,
+        float|int $consistencyScore,
+        float $opportunityScore,
+        string $action,
+        ?float $growthPercent,
+        int $periodCount,
+        array $insights
+    ): array {
+        return [
+            'performance_score' => $performanceScore,
+            'growth_score' => $growthScore,
+            'consistency_score' => $consistencyScore,
+            'opportunity_score' => $opportunityScore,
+            'overall_score' => $opportunityScore,
+            'action' => $action,
+            'growth_percent' => $growthPercent,
+            'period_count' => $periodCount,
+            'insights' => $insights,
+        ];
     }
 
     /**
      * Aggregate beberapa snapshot menjadi satu range.
+     *
+     * @param  Collection<int, stdClass>  $rows
+     * @return array{gmv: float, orders: float, buyers: float, content: int, ctr: float, ctor: float}
      */
     private function aggregateRangePerformance(
         Collection $rows
@@ -703,6 +705,9 @@ class AffiliateScoreService
         ];
     }
 
+    /**
+     * @return list<string>
+     */
     private function generateRangeInsights(
         float $performanceScore,
         float $growthScore,
@@ -781,6 +786,9 @@ class AffiliateScoreService
     /**
      * Membuat percentile berdasarkan seluruh nilai
      * dalam satu batch.
+     *
+     * @param  Collection<int, mixed>  $values
+     * @return array<string, float|int>
      */
     private function buildPercentileMap(Collection $values): array
     {

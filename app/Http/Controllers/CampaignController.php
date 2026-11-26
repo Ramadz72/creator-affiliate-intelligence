@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Campaign;
 use App\Models\Creator;
+use App\Models\CreatorCampaignPerformanceHistory;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -37,11 +39,11 @@ class CampaignController extends Controller
             'name',
         ];
 
-        if (!in_array($status, $allowedStatuses, true)) {
+        if (! in_array($status, $allowedStatuses, true)) {
             $status = '';
         }
 
-        if (!in_array($sort, $allowedSorts, true)) {
+        if (! in_array($sort, $allowedSorts, true)) {
             $sort = 'latest';
         }
 
@@ -182,7 +184,7 @@ class CampaignController extends Controller
     /**
      * Form tambah campaign.
      */
-    public function create()
+    public function create(): Response
     {
         $creators = Creator::where('user_id', Auth::id())
             ->where('status', 'active')
@@ -203,12 +205,12 @@ class CampaignController extends Controller
     /**
      * Menyimpan campaign baru.
      */
-    public function store(Request $request)
+    public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'creator_id' => [
                 'required',
-                'exists:creators,id,user_id,' . Auth::id(),
+                'exists:creators,id,user_id,'.Auth::id(),
             ],
             'campaign_name' => ['required', 'string', 'max:150'],
             'product_name' => ['required', 'string', 'max:150'],
@@ -233,7 +235,7 @@ class CampaignController extends Controller
     /**
      * Menampilkan detail campaign.
      */
-    public function show(Campaign $campaign)
+    public function show(Campaign $campaign): Response
     {
         abort_unless($campaign->creator->user_id === Auth::id(), 404);
 
@@ -255,10 +257,10 @@ class CampaignController extends Controller
     /**
      * Form edit campaign.
      */
-    public function edit(Campaign $campaign)
+    public function edit(Campaign $campaign): Response
     {
         abort_unless($campaign->creator->user_id === Auth::id(), 404);
-       
+
         $creators = Creator::where('user_id', Auth::id())
             ->where('status', 'active')
             ->orderBy('name')
@@ -267,7 +269,7 @@ class CampaignController extends Controller
                 'name',
                 'username',
                 'platform',
-                'profile_image'
+                'profile_image',
             ]);
 
         return Inertia::render('campaigns/Edit', [
@@ -279,7 +281,7 @@ class CampaignController extends Controller
     /**
      * Memperbarui campaign.
      */
-    public function update(Request $request, Campaign $campaign)
+    public function update(Request $request, Campaign $campaign): RedirectResponse
     {
 
         abort_unless($campaign->creator->user_id === Auth::id(), 404);
@@ -287,7 +289,7 @@ class CampaignController extends Controller
         $validated = $request->validate([
             'creator_id' => [
                 'required',
-                'exists:creators,id,user_id,' . Auth::id(),
+                'exists:creators,id,user_id,'.Auth::id(),
             ],
             'campaign_name' => ['required', 'string', 'max:150'],
             'product_name' => ['required', 'string', 'max:150'],
@@ -302,66 +304,65 @@ class CampaignController extends Controller
 
         $campaign->update($validated);
 
-
         // Recalculate current performance and all historical snapshots
         // because Cost/View, Cost/Order, ROAS, and ROI depend on agreed price.
         DB::transaction(function () use ($campaign) {
-        $campaign->load('performances');
+            $campaign->load('performances');
 
-        foreach ($campaign->performances as $performance) {
-            $agreedPrice = (float) $campaign->agreed_price;
-            $views = (int) $performance->views;
-            $orders = (int) $performance->orders;
-            $gmv = (float) $performance->gmv;
+            foreach ($campaign->performances as $performance) {
+                $agreedPrice = (float) $campaign->agreed_price;
+                $views = (int) $performance->views;
+                $orders = (int) $performance->orders;
+                $gmv = (float) $performance->gmv;
 
-            $performance->cost_per_view = $views > 0
-                ? $agreedPrice / $views
-                : 0;
+                $performance->cost_per_view = $views > 0
+                    ? $agreedPrice / $views
+                    : 0;
 
-            $performance->cost_per_order = $orders > 0
-                ? $agreedPrice / $orders
-                : 0;
+                $performance->cost_per_order = $orders > 0
+                    ? $agreedPrice / $orders
+                    : 0;
 
-            $performance->roas = $agreedPrice > 0
-                ? $gmv / $agreedPrice
-                : 0;
+                $performance->roas = $agreedPrice > 0
+                    ? $gmv / $agreedPrice
+                    : 0;
 
-            $performance->roi = $agreedPrice > 0
-                ? (($gmv - $agreedPrice) / $agreedPrice) * 100
-                : 0;
+                $performance->roi = $agreedPrice > 0
+                    ? (($gmv - $agreedPrice) / $agreedPrice) * 100
+                    : 0;
 
-            $performance->save();
-        }
+                $performance->save();
+            }
 
-        $histories = \App\Models\CreatorCampaignPerformanceHistory::query()
-            ->where('campaign_id', $campaign->id)
-            ->get();
+            $histories = CreatorCampaignPerformanceHistory::query()
+                ->where('campaign_id', $campaign->id)
+                ->get();
 
-        foreach ($histories as $history) {
-            $agreedPrice = (float) $campaign->agreed_price;
-            $views = (int) $history->views;
-            $orders = (int) $history->orders;
-            $gmv = (float) $history->gmv;
+            foreach ($histories as $history) {
+                $agreedPrice = (float) $campaign->agreed_price;
+                $views = (int) $history->views;
+                $orders = (int) $history->orders;
+                $gmv = (float) $history->gmv;
 
-            $history->cost_per_view = $views > 0
-                ? $agreedPrice / $views
-                : 0;
+                $history->cost_per_view = $views > 0
+                    ? $agreedPrice / $views
+                    : 0;
 
-            $history->cost_per_order = $orders > 0
-                ? $agreedPrice / $orders
-                : 0;
+                $history->cost_per_order = $orders > 0
+                    ? $agreedPrice / $orders
+                    : 0;
 
-            $history->roas = $agreedPrice > 0
-                ? $gmv / $agreedPrice
-                : 0;
+                $history->roas = $agreedPrice > 0
+                    ? $gmv / $agreedPrice
+                    : 0;
 
-            $history->roi = $agreedPrice > 0
-                ? (($gmv - $agreedPrice) / $agreedPrice) * 100
-                : 0;
+                $history->roi = $agreedPrice > 0
+                    ? (($gmv - $agreedPrice) / $agreedPrice) * 100
+                    : 0;
 
-            $history->save();
-        }
-    });
+                $history->save();
+            }
+        });
 
         return redirect()
             ->route('campaigns.show', $campaign)
@@ -371,7 +372,7 @@ class CampaignController extends Controller
     /**
      * Menghapus campaign.
      */
-    public function destroy(Campaign $campaign)
+    public function destroy(Campaign $campaign): RedirectResponse
     {
         abort_unless($campaign->creator->user_id === Auth::id(), 404);
         $campaign->delete();

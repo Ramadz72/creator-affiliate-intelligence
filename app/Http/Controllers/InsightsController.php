@@ -8,11 +8,12 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use Inertia\Response;
 use Throwable;
 
 class InsightsController extends Controller
 {
-    public function index(Request $request, InsightEngine $insightEngine)
+    public function index(Request $request, InsightEngine $insightEngine): Response
     {
         $requestStart = microtime(true);
         $user = $request->user();
@@ -38,7 +39,7 @@ class InsightsController extends Controller
             'seconds' => round(microtime(true) - $latestBatchStart, 3),
         ]);
 
-        if (!$latestBatch) {
+        if (! $latestBatch) {
             return Inertia::render('Insights/Index', [
                 'insight' => null,
                 'batch' => null,
@@ -74,8 +75,8 @@ class InsightsController extends Controller
         if (
             (! $startDate || ! $endDate)
             && is_array($savedPeriod)
-            && !empty($savedPeriod['start'])
-            && !empty($savedPeriod['end'])
+            && ! empty($savedPeriod['start'])
+            && ! empty($savedPeriod['end'])
         ) {
             // Gunakan periode terakhir yang dipilih
             $startDate = $this->parseDate($savedPeriod['start']);
@@ -210,7 +211,7 @@ class InsightsController extends Controller
                     'id' => $currentBatches->first()->id,
                     'file_name' => $currentBatches->count() === 1
                         ? $currentBatches->first()->file_name
-                        : $currentBatches->count() . ' daily snapshots',
+                        : $currentBatches->count().' daily snapshots',
                     'period_start' => $startDate->format('Y-m-d'),
                     'period_end' => $endDate->format('Y-m-d'),
                 ]

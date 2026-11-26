@@ -4,21 +4,24 @@ namespace App\Http\Controllers;
 
 use App\Models\Creator;
 use App\Models\CreatorRateCard;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class CreatorRateCardController extends Controller
 {
-    public function create(Creator $creator)
+    public function create(Creator $creator): Response
     {
         abort_unless($creator->user_id === Auth::id(), 404);
+
         return Inertia::render('creators/rate-cards/Create', [
             'creator' => $creator,
         ]);
     }
 
-    public function store(Request $request, Creator $creator)
+    public function store(Request $request, Creator $creator): RedirectResponse
     {
         abort_unless($creator->user_id === Auth::id(), 404);
 
@@ -43,9 +46,9 @@ class CreatorRateCardController extends Controller
     public function destroy(
         Creator $creator,
         CreatorRateCard $rateCard
-    ) {
+    ): RedirectResponse {
         abort_unless($creator->user_id === Auth::id(), 404);
-        
+
         if ($rateCard->creator_id !== $creator->id) {
             abort(404);
         }

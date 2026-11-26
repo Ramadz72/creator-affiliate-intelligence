@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ImportBatch;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
@@ -38,13 +39,13 @@ class HistoryController extends Controller
             return [
                 'id' => $batch->id,
                 'file_name' => $batch->file_name,
-                'period_start' => $batch->period_start?->format('d M Y'),
-                'period_end' => $batch->period_end?->format('d M Y'),
+                'period_start' => $batch->period_start->format('d M Y'),
+                'period_end' => $batch->period_end->format('d M Y'),
                 'status' => $batch->status,
                 'total_rows' => $batch->total_rows,
                 'performance_count' => $batch->performances_count,
-                'uploaded_by' => $batch->uploader?->name ?? '-',
-                'uploaded_at' => $batch->uploaded_at?->format('d M Y H:i'),
+                'uploaded_by' => $batch->uploader->name ?? '-',
+                'uploaded_at' => $batch->uploaded_at->format('d M Y H:i'),
             ];
         });
 
@@ -53,11 +54,12 @@ class HistoryController extends Controller
             'filters' => $request->only(['start_date', 'end_date', 'status']),
         ]);
     }
-        public function show(int $batch): Response
+
+    public function show(int $batch): Response
     {
         $batch = ImportBatch::query()
-        ->where('uploaded_by', Auth::id())
-        ->findOrFail($batch);
+            ->where('uploaded_by', Auth::id())
+            ->findOrFail($batch);
 
         $summary = [
             'total_affiliates' => $batch->performances()
@@ -106,12 +108,12 @@ class HistoryController extends Controller
             'batch' => [
                 'id' => $batch->id,
                 'file_name' => $batch->file_name,
-                'period_start' => $batch->period_start?->format('d M Y'),
-                'period_end' => $batch->period_end?->format('d M Y'),
+                'period_start' => $batch->period_start->format('d M Y'),
+                'period_end' => $batch->period_end->format('d M Y'),
                 'status' => $batch->status,
                 'total_rows' => $batch->total_rows,
-                'uploaded_at' => $batch->uploaded_at?->format('d M Y H:i'),
-                'uploaded_by' => $batch->uploader?->name ?? '-',
+                'uploaded_at' => $batch->uploaded_at->format('d M Y H:i'),
+                'uploaded_by' => $batch->uploader->name ?? '-',
             ],
 
             'summary' => $summary,
@@ -119,11 +121,12 @@ class HistoryController extends Controller
             'performances' => $performances,
         ]);
     }
-    public function destroy(int $batch)
+
+    public function destroy(int $batch): RedirectResponse
     {
         $batch = ImportBatch::query()
-        ->where('uploaded_by', Auth::id())
-        ->findOrFail($batch);
+            ->where('uploaded_by', Auth::id())
+            ->findOrFail($batch);
 
         $batch->performances()->delete();
 

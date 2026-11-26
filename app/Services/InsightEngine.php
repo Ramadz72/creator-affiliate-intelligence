@@ -11,21 +11,24 @@ class InsightEngine
 {
     public function __construct(
         private AffiliateScoreService $scoreService
-    ) {
-    }
+    ) {}
 
     /**
      * Generate insight berdasarkan periode/range.
+     *
+     * @param  Collection<int, ImportBatch>  $currentBatches
+     * @param  Collection<int, ImportBatch>  $comparisonBatches
+     * @return array<string, mixed>|null
      */
     public function generateForPeriod(
         Collection $currentBatches,
         Collection $comparisonBatches
     ): ?array {
-        
+
         if ($currentBatches->isEmpty()) {
             return null;
         }
-        
+
         $currentBatchIds = $currentBatches
             ->pluck('id')
             ->filter()
@@ -69,12 +72,12 @@ class InsightEngine
                 'live_count',
             ])
             ->get();
-            Log::info('INSIGHTS PERFORMANCE', [
-                'step' => 'current performance query',
-                'seconds' => round(microtime(true) - $currentQueryStart, 3),
-                'rows' => $currentPerformances->count(),
-            ]);
-            
+        Log::info('INSIGHTS PERFORMANCE', [
+            'step' => 'current performance query',
+            'seconds' => round(microtime(true) - $currentQueryStart, 3),
+            'rows' => $currentPerformances->count(),
+        ]);
+
         if ($currentPerformances->isEmpty()) {
             return null;
         }
@@ -88,7 +91,7 @@ class InsightEngine
 
         $comparisonPerformances = collect();
 
-        if (!empty($comparisonBatchIds)) {
+        if (! empty($comparisonBatchIds)) {
             $comparisonPerformances = DB::table('affiliate_performances')
                 ->whereIn('import_batch_id', $comparisonBatchIds)
                 ->select([
@@ -106,7 +109,7 @@ class InsightEngine
                     'live_count',
                 ])
                 ->get();
-                Log::info('INSIGHTS PERFORMANCE', [
+            Log::info('INSIGHTS PERFORMANCE', [
                 'step' => 'comparison performance query',
                 'seconds' => round(microtime(true) - $comparisonQueryStart, 3),
                 'rows' => $comparisonPerformances->count(),
@@ -163,16 +166,16 @@ class InsightEngine
         $previousSummary = null;
 
         if ($comparisonPerformances->isNotEmpty()) {
-                $previousSummary = [
-                    'total_gmv' => (float) $comparisonPerformances->sum('gmv'),
-                    'total_orders' => (int) $comparisonPerformances->sum('attributed_orders'),
-                    'total_products_sold' => (int) $comparisonPerformances->sum('products_sold'),
-                    'affiliate_count' => $comparisonPerformances
-                        ->pluck('affiliate_id')
-                        ->unique()
-                        ->count(),
-                ];
-            }
+            $previousSummary = [
+                'total_gmv' => (float) $comparisonPerformances->sum('gmv'),
+                'total_orders' => (int) $comparisonPerformances->sum('attributed_orders'),
+                'total_products_sold' => (int) $comparisonPerformances->sum('products_sold'),
+                'affiliate_count' => $comparisonPerformances
+                    ->pluck('affiliate_id')
+                    ->unique()
+                    ->count(),
+            ];
+        }
 
         /*
         |--------------------------------------------------------------------------
@@ -214,7 +217,7 @@ class InsightEngine
             function ($score, $affiliateId) use ($affiliateAggregates) {
                 $aggregate = $affiliateAggregates->get($affiliateId);
 
-                if (!$aggregate) {
+                if (! $aggregate) {
                     return null;
                 }
 
@@ -390,7 +393,7 @@ class InsightEngine
         |--------------------------------------------------------------------------
         */
 
-        if (!empty($topPerformers)) {
+        if (! empty($topPerformers)) {
             $top = $topPerformers[0];
 
             $insightSummary[] = [
@@ -398,16 +401,15 @@ class InsightEngine
                 'title' => 'Top Performer',
 
                 'headline' => ($top['name'] ?? 'Affiliate')
-                    . ' menjadi kontributor GMV terbesar periode ini.',
+                    .' menjadi kontributor GMV terbesar periode ini.',
 
                 'description' => 'Menghasilkan GMV sebesar Rp'
-                    . number_format($top['gmv'], 0, ',', '.')
-                    . ' dengan '
-                    . number_format($top['orders'], 0, ',', '.')
-                    . ' orders.',
+                    .number_format($top['gmv'], 0, ',', '.')
+                    .' dengan '
+                    .number_format($top['orders'], 0, ',', '.')
+                    .' orders.',
 
-                'recommended_action' =>
-                    'Pertahankan performa dan evaluasi peluang pengembangan lebih lanjut.',
+                'recommended_action' => 'Pertahankan performa dan evaluasi peluang pengembangan lebih lanjut.',
 
                 'affiliate_id' => $top['affiliate_id'],
             ];
@@ -425,13 +427,11 @@ class InsightEngine
                 'title' => 'High GMV, Low Consistency',
 
                 'headline' => $monitoringCount
-                    . ' affiliate memiliki GMV tinggi tetapi consistency rendah.',
+                    .' affiliate memiliki GMV tinggi tetapi consistency rendah.',
 
-                'description' =>
-                    'Kondisi ini menunjukkan performa yang perlu dipantau agar kontribusi GMV tetap berkelanjutan.',
+                'description' => 'Kondisi ini menunjukkan performa yang perlu dipantau agar kontribusi GMV tetap berkelanjutan.',
 
-                'recommended_action' =>
-                    'Pantau konsistensi konten dan performa pada periode berikutnya.',
+                'recommended_action' => 'Pantau konsistensi konten dan performa pada periode berikutnya.',
 
                 'count' => $monitoringCount,
             ];
@@ -449,13 +449,11 @@ class InsightEngine
                 'title' => 'Potential Opportunity',
 
                 'headline' => $potentialCount
-                    . ' affiliate memiliki opportunity score tinggi dengan GMV di bawah Rp5 juta.',
+                    .' affiliate memiliki opportunity score tinggi dengan GMV di bawah Rp5 juta.',
 
-                'description' =>
-                    'Affiliate dalam kategori ini menunjukkan sinyal yang layak diperhatikan meskipun kontribusi GMV masih relatif kecil.',
+                'description' => 'Affiliate dalam kategori ini menunjukkan sinyal yang layak diperhatikan meskipun kontribusi GMV masih relatif kecil.',
 
-                'recommended_action' =>
-                    'Pertimbangkan pengembangan, aktivasi konten, atau dukungan tambahan.',
+                'recommended_action' => 'Pertimbangkan pengembangan, aktivasi konten, atau dukungan tambahan.',
 
                 'count' => $potentialCount,
             ];
@@ -529,8 +527,7 @@ class InsightEngine
                     abs($affiliateComparison['percentage'] ?? 0),
                 ),
 
-                'recommended_action' =>
-                    'Gunakan perubahan antarperiode sebagai dasar evaluasi strategi affiliate.',
+                'recommended_action' => 'Gunakan perubahan antarperiode sebagai dasar evaluasi strategi affiliate.',
             ];
         }
 
@@ -639,6 +636,8 @@ class InsightEngine
 
     /**
      * Backward compatibility untuk pemanggilan lama.
+     *
+     * @return array<string, mixed>|null
      */
     public function generateForBatch(ImportBatch $batch): ?array
     {
@@ -648,13 +647,16 @@ class InsightEngine
             'step' => 'engine complete',
             'seconds' => round(microtime(true) - $engineStartedAt, 3),
         ]);
-        
+
         return $this->generateForPeriod(
             collect([$batch]),
             collect()
         );
     }
 
+    /**
+     * @return array{current: float|int, previous: float|int, difference: float|int, percentage: float|null, direction: string}
+     */
     private function compareMetric(
         float|int $current,
         float|int $previous

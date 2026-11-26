@@ -3,32 +3,46 @@
 namespace App\Http\Controllers;
 
 use App\Models\Campaign;
+use App\Models\Creator;
 use App\Models\CreatorCampaignPerformance;
 use App\Models\CreatorCampaignPerformanceHistory;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class CreatorCampaignPerformanceController
 {
-    public function create(Campaign $campaign)
+    private function authorizeCampaign(Campaign $campaign): void
+    {
+        abort_unless(
+            Creator::query()
+                ->where('id', $campaign->creator_id)
+                ->where('user_id', Auth::id())
+                ->exists(),
+            404
+        );
+    }
+
+    public function create(Campaign $campaign): Response
     {
         $campaign->load('creator');
 
-        abort_unless($campaign->creator->user_id === Auth::id(), 404);
+        $this->authorizeCampaign($campaign);
 
         return Inertia::render('campaigns/PerformanceCreate', [
             'campaign' => $campaign,
         ]);
     }
 
-    public function store(Request $request, Campaign $campaign)
+    public function store(Request $request, Campaign $campaign): RedirectResponse
     {
         $campaign->load('creator');
 
-        abort_unless($campaign->creator->user_id === Auth::id(), 404);
+        $this->authorizeCampaign($campaign);
 
         if ($campaign->performances()->exists()) {
             return redirect()
@@ -129,8 +143,6 @@ class CreatorCampaignPerformanceController
             ? (($gmv - $agreedPrice) / $agreedPrice) * 100
             : 0;
 
-        
-        
         DB::transaction(function () use (
             $campaign,
             $performanceDate,
@@ -182,8 +194,6 @@ class CreatorCampaignPerformanceController
             );
         });
 
-
-
         return redirect()
             ->route('campaigns.show', $campaign)
             ->with(
@@ -195,7 +205,7 @@ class CreatorCampaignPerformanceController
     public function edit(
         Campaign $campaign,
         CreatorCampaignPerformance $performance
-    ) {
+    ): Response {
         abort_unless(
             $performance->campaign_id === $campaign->id,
             404
@@ -203,10 +213,7 @@ class CreatorCampaignPerformanceController
 
         $campaign->load('creator');
 
-        abort_unless(
-            $campaign->creator->user_id === Auth::id(),
-            404
-        );
+        $this->authorizeCampaign($campaign);
 
         return Inertia::render('campaigns/PerformanceEdit', [
             'campaign' => $campaign,
@@ -214,12 +221,11 @@ class CreatorCampaignPerformanceController
         ]);
     }
 
-   
     public function update(
         Request $request,
         Campaign $campaign,
         CreatorCampaignPerformance $performance
-    ) {
+    ): RedirectResponse {
         abort_unless(
             $performance->campaign_id === $campaign->id,
             404
@@ -227,10 +233,7 @@ class CreatorCampaignPerformanceController
 
         $campaign->load('creator');
 
-        abort_unless(
-            $campaign->creator->user_id === Auth::id(),
-            404
-        );
+        $this->authorizeCampaign($campaign);
 
         $validated = $request->validate([
             'performance_date' => ['required', 'date'],
@@ -312,7 +315,6 @@ class CreatorCampaignPerformanceController
             'performance_date'
         );
 
-        
         DB::transaction(function () use (
             $campaign,
             $performance,
@@ -335,8 +337,7 @@ class CreatorCampaignPerformanceController
                 && $targetHistory
             ) {
                 throw ValidationException::withMessages([
-                    'performance_date' =>
-                        'Tanggal tersebut sudah memiliki snapshot untuk campaign ini. Pilih tanggal lain.',
+                    'performance_date' => 'Tanggal tersebut sudah memiliki snapshot untuk campaign ini. Pilih tanggal lain.',
                 ]);
             }
 
@@ -358,14 +359,12 @@ class CreatorCampaignPerformanceController
             ));
         });
 
-
         return redirect()
             ->route('campaigns.show', $campaign)
             ->with(
                 'success',
                 'Actual campaign performance dan snapshot date '
-                . 'berhasil diperbarui.'
+                .'berhasil diperbarui.'
             );
     }
-
 }

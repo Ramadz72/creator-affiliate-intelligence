@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Creator;
 use App\Models\CreatorContent;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class CreatorContentController extends Controller
 {
-    public function create(Creator $creator)
+    public function create(Creator $creator): Response
     {
         abort_unless($creator->user_id === Auth::id(), 404);
 
@@ -18,7 +20,8 @@ class CreatorContentController extends Controller
             'creator' => $creator,
         ]);
     }
-    public function store(Request $request, Creator $creator)
+
+    public function store(Request $request, Creator $creator): RedirectResponse
     {
         abort_unless($creator->user_id === Auth::id(), 404);
 
@@ -42,9 +45,9 @@ class CreatorContentController extends Controller
     public function destroy(
         Creator $creator,
         CreatorContent $content
-    ) {
+    ): RedirectResponse {
         abort_unless($creator->user_id === Auth::id(), 404);
-        
+
         if ($content->creator_id !== $creator->id) {
             abort(404);
         }

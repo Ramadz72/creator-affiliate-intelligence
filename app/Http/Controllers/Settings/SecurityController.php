@@ -28,7 +28,7 @@ class SecurityController extends Controller
                 'enabled' => $twoFactorSecret !== null,
                 'confirmed' => $user->two_factor_confirmed_at !== null,
                 'qrSvg' => $twoFactorPending ? $user->twoFactorQrCodeSvg() : null,
-                'secretKey' => $twoFactorPending && $twoFactorSecret !== null ? decrypt($twoFactorSecret) : null,
+                'secretKey' => $twoFactorPending ? decrypt($twoFactorSecret) : null,
                 'recoveryCodes' => $twoFactorSecret !== null && ! $twoFactorPending ? $user->recoveryCodes() : [],
             ],
         ];

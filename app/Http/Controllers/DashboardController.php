@@ -13,10 +13,24 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use Inertia\Response;
 
 class DashboardController extends Controller
 {
-    public function index(Request $request)
+    private function parseDate(mixed $value): ?Carbon
+    {
+        if (! is_string($value) && ! $value instanceof \DateTimeInterface) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->startOfDay();
+        } catch (\Throwable $e) {
+            return null;
+        }
+    }
+
+    public function index(Request $request): Response
     {
         $user = Auth::user();
 
@@ -54,18 +68,8 @@ class DashboardController extends Controller
             $request->filled('start_date') &&
             $request->filled('end_date')
         ) {
-            try {
-                $startDate = Carbon::parse(
-                    $request->input('start_date')
-                )->startOfDay();
-
-                $endDate = Carbon::parse(
-                    $request->input('end_date')
-                )->startOfDay();
-            } catch (\Throwable $e) {
-                $startDate = null;
-                $endDate = null;
-            }
+            $startDate = $this->parseDate($request->input('start_date'));
+            $endDate = $this->parseDate($request->input('end_date'));
         }
 
         /*
@@ -74,18 +78,13 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (!$startDate || !$endDate) {
+        if (! $startDate || ! $endDate) {
             $savedStartDate = $request->session()->get('dashboard_start_date');
             $savedEndDate = $request->session()->get('dashboard_end_date');
 
             if ($savedStartDate && $savedEndDate) {
-                try {
-                    $startDate = Carbon::parse($savedStartDate)->startOfDay();
-                    $endDate = Carbon::parse($savedEndDate)->startOfDay();
-                } catch (\Throwable $e) {
-                    $startDate = null;
-                    $endDate = null;
-                }
+                $startDate = $this->parseDate($savedStartDate);
+                $endDate = $this->parseDate($savedEndDate);
             }
         }
 
@@ -95,15 +94,10 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (!$startDate || !$endDate) {
+        if (! $startDate || ! $endDate) {
             if ($latestBatch) {
-                $startDate = Carbon::parse(
-                    $latestBatch->period_start
-                )->startOfDay();
-
-                $endDate = Carbon::parse(
-                    $latestBatch->period_end
-                )->startOfDay();
+                $startDate = $this->parseDate($latestBatch->period_start);
+                $endDate = $this->parseDate($latestBatch->period_end);
             }
         }
 
@@ -113,7 +107,7 @@ class DashboardController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (!$startDate || !$endDate) {
+        if (! $startDate || ! $endDate) {
             $startDate = Carbon::now()->startOfWeek();
             $endDate = Carbon::now()->endOfWeek();
         }
@@ -322,8 +316,6 @@ class DashboardController extends Controller
                 ->get();
         }
 
-
-
         /*
         |--------------------------------------------------------------------------
         | Attributed Orders & GMV Trend
@@ -371,8 +363,6 @@ class DashboardController extends Controller
         ])->map(fn ($gmv) => [
             'gmv' => $gmv,
         ]);
-
-
 
         /*
         |--------------------------------------------------------------------------
@@ -568,11 +558,11 @@ class DashboardController extends Controller
         foreach ($rangeScores as $affiliateId => $score) {
             $performance = $affiliateGmv->get($affiliateId);
 
-            if (!$performance) {
+            if (! $performance) {
                 continue;
             }
 
-            $gmv = (float) ($performance['gmv'] ?? 0);
+            $gmv = (float) $performance['gmv'];
 
             $consistencyScore = $score['consistency_score'] ?? null;
             $opportunityScore = $score['opportunity_score'] ?? null;
@@ -682,21 +672,30 @@ class DashboardController extends Controller
         $creatorOverview = collect();
 
         if ($creatorLatestIds->isNotEmpty()) {
-            $creatorOverview = CreatorScore::query()
+            $topScores = CreatorScore::query()
                 ->whereIn('id', $creatorLatestIds)
                 ->whereHas('creator', function ($query) use ($user) {
                     $query->where('user_id', $user->id);
                 })
-                ->with('creator:id,name,platform,category')
                 ->orderByDesc('overall_score')
                 ->limit(2)
-                ->get()
-                ->map(function ($score) {
+                ->get(['id', 'creator_id', 'overall_score']);
+
+            $creatorMeta = Creator::query()
+                ->where('user_id', $user->id)
+                ->whereIn('id', $topScores->pluck('creator_id'))
+                ->get(['id', 'name', 'platform', 'category'])
+                ->keyBy('id');
+
+            $creatorOverview = $topScores
+                ->map(function ($score) use ($creatorMeta) {
+                    $creator = $creatorMeta->get($score->creator_id);
+
                     return [
                         'id' => $score->creator_id,
-                        'name' => $score->creator?->name,
-                        'platform' => $score->creator?->platform,
-                        'category' => $score->creator?->category,
+                        'name' => $creator?->name,
+                        'platform' => $creator?->platform,
+                        'category' => $creator?->category,
                         'score' => (float) $score->overall_score,
                     ];
                 })
@@ -916,7 +915,7 @@ class DashboardController extends Controller
             |--------------------------------------------------------------
             */
 
-            if (!empty($topGmv)) {
+            if (! empty($topGmv)) {
                 $top = $topGmv[0];
 
                 $insights[] = [

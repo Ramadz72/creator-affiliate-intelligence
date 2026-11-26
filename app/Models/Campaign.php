@@ -5,7 +5,6 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use App\Models\CreatorCampaignPerformanceHistory;
 
 class Campaign extends Model
 {
@@ -31,16 +30,19 @@ class Campaign extends Model
         'created_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<Creator, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(Creator::class);
     }
 
+    /** @return HasMany<CreatorCampaignPerformance, $this> */
     public function performances(): HasMany
     {
         return $this->hasMany(CreatorCampaignPerformance::class);
     }
 
+    /** @return HasMany<CreatorCampaignPerformanceHistory, $this> */
     public function performanceHistories(): HasMany
     {
         return $this->hasMany(

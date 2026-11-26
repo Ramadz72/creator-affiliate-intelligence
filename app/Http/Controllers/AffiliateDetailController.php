@@ -72,8 +72,8 @@ class AffiliateDetailController extends Controller
         if (
             (! $startDate || ! $endDate)
             && is_array($savedPeriod)
-            && !empty($savedPeriod['start'])
-            && !empty($savedPeriod['end'])
+            && ! empty($savedPeriod['start'])
+            && ! empty($savedPeriod['end'])
         ) {
             // Gunakan periode terakhir yang dipilih
             $startDate = $this->parseDate($savedPeriod['start']);
@@ -106,7 +106,7 @@ class AffiliateDetailController extends Controller
                 (string) $request->input('direction', 'desc')
             ),
             'action' => trim((string) $request->input('action', '')),
-        ], fn ($value) => $value !== null && $value !== '');
+        ], fn ($value) => $value !== '');
 
         $backUrl = match ($from) {
             'dashboard' => route('dashboard', [
@@ -114,7 +114,7 @@ class AffiliateDetailController extends Controller
                 'end_date' => $endDate->format('Y-m-d'),
             ]),
 
-            'insights' => url('/insights') . '?' . http_build_query([
+            'insights' => url('/insights').'?'.http_build_query([
                 'start_date' => $startDate->format('Y-m-d'),
                 'end_date' => $endDate->format('Y-m-d'),
             ]),
@@ -259,7 +259,7 @@ class AffiliateDetailController extends Controller
 
         $currentPerformances = $performances->filter(
             function ($performance) use ($startDate, $endDate) {
-                if (!$performance->period_start) {
+                if (! $performance->period_start) {
                     return false;
                 }
 
@@ -283,7 +283,7 @@ class AffiliateDetailController extends Controller
                 $previousStartDate,
                 $previousEndDate
             ) {
-                if (!$performance->period_start) {
+                if (! $performance->period_start) {
                     return false;
                 }
 
@@ -310,7 +310,7 @@ class AffiliateDetailController extends Controller
 
         $scoreCurrentPerformances = collect();
 
-        if (!empty($currentBatchIds)) {
+        if (! empty($currentBatchIds)) {
             $scoreCurrentPerformances = DB::table(
                 'affiliate_performances as ap'
             )
@@ -361,7 +361,7 @@ class AffiliateDetailController extends Controller
 
         $scoreComparisonPerformances = collect();
 
-        if (!empty($comparisonBatchIds)) {
+        if (! empty($comparisonBatchIds)) {
             $scoreComparisonPerformances = DB::table(
                 'affiliate_performances as ap'
             )
@@ -536,8 +536,7 @@ class AffiliateDetailController extends Controller
 
         $currentCtor = $currentPerformances->count() > 0
             ? $currentPerformances->avg(
-                fn ($performance) =>
-                    (float) ($performance->ctor ?? 0)
+                fn ($performance) => (float) ($performance->ctor ?? 0)
             )
             : 0;
 
@@ -621,21 +620,16 @@ class AffiliateDetailController extends Controller
                     'products_returned'
                 ),
 
-                'period_start' =>
-                    $startDate->format('Y-m-d'),
+                'period_start' => $startDate->format('Y-m-d'),
 
-                'period_end' =>
-                    $endDate->format('Y-m-d'),
+                'period_end' => $endDate->format('Y-m-d'),
 
                 'movement' => [
-                    'previous_gmv' =>
-                        $previousGmv,
+                    'previous_gmv' => $previousGmv,
 
-                    'gmv_change' =>
-                        $currentGmv - $previousGmv,
+                    'gmv_change' => $currentGmv - $previousGmv,
 
-                    'gmv_change_percent' =>
-                        $previousGmv > 0
+                    'gmv_change_percent' => $previousGmv > 0
                             ? (
                                 (
                                     $currentGmv
@@ -645,8 +639,7 @@ class AffiliateDetailController extends Controller
                             ) * 100
                             : null,
 
-                    'status' =>
-                        $previousGmv > 0
+                    'status' => $previousGmv > 0
                             ? (
                                 $currentGmv > $previousGmv
                                     ? 'UP'
@@ -713,97 +706,70 @@ class AffiliateDetailController extends Controller
                     }
 
                     return [
-                        'id' =>
-                            $performance->id,
+                        'id' => $performance->id,
 
-                        'gmv' =>
-                            $performance->gmv,
+                        'gmv' => $performance->gmv,
 
-                        'gmv_live' =>
-                            $performance->gmv_live,
+                        'gmv_live' => $performance->gmv_live,
 
-                        'gmv_video' =>
-                            $performance->gmv_video,
+                        'gmv_video' => $performance->gmv_video,
 
-                        'gmv_product_card' =>
-                            $performance->gmv_product_card,
+                        'gmv_product_card' => $performance->gmv_product_card,
 
-                        'refund' =>
-                            $performance->refund,
+                        'refund' => $performance->refund,
 
-                        'attributed_orders' =>
-                            $performance->attributed_orders,
+                        'attributed_orders' => $performance->attributed_orders,
 
-                        'products_sold' =>
-                            $performance->products_sold,
+                        'products_sold' => $performance->products_sold,
 
-                        'aov' =>
-                            $performance->aov,
+                        'aov' => $performance->aov,
 
-                        'ctr' =>
-                            $performance->ctr,
+                        'ctr' => $performance->ctr,
 
-                        'ctor' =>
-                            $performance->ctor,
+                        'ctor' => $performance->ctor,
 
-                        'impressions' =>
-                            $performance->impressions,
+                        'impressions' => $performance->impressions,
 
-                        'video_views' =>
-                            $performance->video_views,
+                        'video_views' => $performance->video_views,
 
-                        'buyers' =>
-                            $performance->buyers,
+                        'buyers' => $performance->buyers,
 
-                        'commission' =>
-                            $performance->commission,
+                        'commission' => $performance->commission,
 
-                        'live_count' =>
-                            $performance->live_count,
+                        'live_count' => $performance->live_count,
 
-                        'video_count' =>
-                            $performance->video_count,
+                        'video_count' => $performance->video_count,
 
-                        'showcase_products' =>
-                            $performance->showcase_products,
+                        'showcase_products' => $performance->showcase_products,
 
-                        'content_samples' =>
-                            $performance->content_samples,
+                        'content_samples' => $performance->content_samples,
 
-                        'samples_sent' =>
-                            $performance->samples_sent,
+                        'samples_sent' => $performance->samples_sent,
 
-                        'products_returned' =>
-                            $performance->products_returned,
+                        'products_returned' => $performance->products_returned,
 
-                        'period_start' =>
-                            $performance->period_start
+                        'period_start' => $performance->period_start
                                 ? Carbon::parse(
                                     $performance->period_start
                                 )->format('Y-m-d')
                                 : null,
 
-                        'period_end' =>
-                            $performance->period_end
+                        'period_end' => $performance->period_end
                                 ? Carbon::parse(
                                     $performance->period_end
                                 )->format('Y-m-d')
                                 : null,
 
                         'movement' => [
-                            'status' =>
-                                $movement,
+                            'status' => $movement,
 
-                            'previous_gmv' =>
-                                $previousGmv !== null
+                            'previous_gmv' => $previousGmv !== null
                                     ? (float) $previousGmv
                                     : null,
 
-                            'gmv_change' =>
-                                $change,
+                            'gmv_change' => $change,
 
-                            'gmv_change_percent' =>
-                                $changePercent,
+                            'gmv_change_percent' => $changePercent,
                         ],
                     ];
                 }
@@ -827,38 +793,27 @@ class AffiliateDetailController extends Controller
 
         $score = $rangeScore
             ? [
-                'performance_score' =>
-                    $rangeScore['performance_score'],
+                'performance_score' => $rangeScore['performance_score'],
 
-                'growth_score' =>
-                    $rangeScore['growth_score'],
+                'growth_score' => $rangeScore['growth_score'],
 
-                'consistency_score' =>
-                    $rangeScore['consistency_score'],
+                'consistency_score' => $rangeScore['consistency_score'],
 
-                'opportunity_score' =>
-                    $rangeScore['opportunity_score'],
+                'opportunity_score' => $rangeScore['opportunity_score'],
 
-                'action' =>
-                    $rangeScore['action'],
+                'action' => $rangeScore['action'],
 
-                'growth_percent' =>
-                    $rangeScore['growth_percent'],
+                'growth_percent' => $rangeScore['growth_percent'],
 
-                'period_count' =>
-                    $rangeScore['period_count'],
+                'period_count' => $rangeScore['period_count'],
 
-                'generated_at' =>
-                    now()->format('Y-m-d H:i'),
+                'generated_at' => now()->format('Y-m-d H:i'),
 
-                'period_start' =>
-                    $startDate->format('Y-m-d'),
+                'period_start' => $startDate->format('Y-m-d'),
 
-                'period_end' =>
-                    $endDate->format('Y-m-d'),
+                'period_end' => $endDate->format('Y-m-d'),
 
-                'insights' =>
-                    $rangeScore['insights'] ?? [],
+                'insights' => $rangeScore['insights'] ?? [],
             ]
             : null;
 
@@ -888,52 +843,38 @@ class AffiliateDetailController extends Controller
 
         return Inertia::render('affiliates/Show', [
             'affiliate' => [
-                'id' =>
-                    $affiliate->id,
+                'id' => $affiliate->id,
 
-                'name' =>
-                    $affiliate->name,
+                'name' => $affiliate->name,
 
-                'username' =>
-                    $affiliate->username,
+                'username' => $affiliate->username,
 
-                'platform' =>
-                    $affiliate->platform,
+                'platform' => $affiliate->platform,
 
-                'status' =>
-                    $affiliate->status,
+                'status' => $affiliate->status,
             ],
 
-            'latest_performance' =>
-                $currentPerformance,
+            'latest_performance' => $currentPerformance,
 
-            'performance_history' =>
-                $performanceHistory,
+            'performance_history' => $performanceHistory,
 
             'selected_period' => [
-                'start' =>
-                    $startDate->format('Y-m-d'),
+                'start' => $startDate->format('Y-m-d'),
 
-                'end' =>
-                    $endDate->format('Y-m-d'),
+                'end' => $endDate->format('Y-m-d'),
             ],
 
             'comparison_period' => [
-                'start' =>
-                    $previousStartDate->format('Y-m-d'),
+                'start' => $previousStartDate->format('Y-m-d'),
 
-                'end' =>
-                    $previousEndDate->format('Y-m-d'),
+                'end' => $previousEndDate->format('Y-m-d'),
             ],
 
-            'score' =>
-                $score,
-            
-            'back_url' =>
-              $backUrl,
-            
-            'from' =>
-                $from,
+            'score' => $score,
+
+            'back_url' => $backUrl,
+
+            'from' => $from,
         ]);
     }
 

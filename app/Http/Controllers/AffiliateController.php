@@ -2,15 +2,13 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\AffiliatePerformance;
 use App\Models\ImportBatch;
-use Carbon\Carbon;
 use App\Services\AffiliateScoreService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -92,18 +90,13 @@ class AffiliateController extends Controller
             $request->filled('start_date') &&
             $request->filled('end_date')
         ) {
-            try {
-                $startDate = Carbon::parse(
-                    $request->input('start_date')
-                )->startOfDay();
+            $startDate = $this->parseDate(
+                $request->input('start_date')
+            );
 
-                $endDate = Carbon::parse(
-                    $request->input('end_date')
-                )->startOfDay();
-            } catch (\Throwable $e) {
-                $startDate = null;
-                $endDate = null;
-            }
+            $endDate = $this->parseDate(
+                $request->input('end_date')
+            );
         }
 
         /*
@@ -113,23 +106,18 @@ class AffiliateController extends Controller
         */
 
         if (
-            (!$startDate || !$endDate) &&
+            (! $startDate || ! $endDate) &&
             is_array($savedPeriod) &&
-            !empty($savedPeriod['start']) &&
-            !empty($savedPeriod['end'])
+            ! empty($savedPeriod['start']) &&
+            ! empty($savedPeriod['end'])
         ) {
-            try {
-                $startDate = Carbon::parse(
-                    $savedPeriod['start']
-                )->startOfDay();
+            $startDate = $this->parseDate(
+                $savedPeriod['start']
+            );
 
-                $endDate = Carbon::parse(
-                    $savedPeriod['end']
-                )->startOfDay();
-            } catch (\Throwable $e) {
-                $startDate = null;
-                $endDate = null;
-            }
+            $endDate = $this->parseDate(
+                $savedPeriod['end']
+            );
         }
 
         /*
@@ -138,7 +126,7 @@ class AffiliateController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (!$startDate || !$endDate) {
+        if (! $startDate || ! $endDate) {
             $batchId = $request->input('batch_id');
 
             if ($batchId) {
@@ -149,13 +137,13 @@ class AffiliateController extends Controller
                     ->first();
 
                 if ($legacyBatch) {
-                    $startDate = Carbon::parse(
+                    $startDate = $this->parseDate(
                         $legacyBatch->period_start
-                    )->startOfDay();
+                    );
 
-                    $endDate = Carbon::parse(
+                    $endDate = $this->parseDate(
                         $legacyBatch->period_end
-                    )->startOfDay();
+                    );
                 }
             }
         }
@@ -166,15 +154,15 @@ class AffiliateController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (!$startDate || !$endDate) {
+        if (! $startDate || ! $endDate) {
             if ($latestBatch) {
-                $startDate = Carbon::parse(
+                $startDate = $this->parseDate(
                     $latestBatch->period_start
-                )->startOfDay();
+                );
 
-                $endDate = Carbon::parse(
+                $endDate = $this->parseDate(
                     $latestBatch->period_end
-                )->startOfDay();
+                );
             }
         }
 
@@ -263,11 +251,11 @@ class AffiliateController extends Controller
             'decline',
         ];
 
-        if (!in_array($sort, $allowedSorts, true)) {
+        if (! in_array($sort, $allowedSorts, true)) {
             $sort = 'opportunity';
         }
 
-        if (!in_array($direction, ['asc', 'desc'], true)) {
+        if (! in_array($direction, ['asc', 'desc'], true)) {
             $direction = 'desc';
         }
 
@@ -284,7 +272,7 @@ class AffiliateController extends Controller
             'DEPRIORITIZE',
         ];
 
-        if (!in_array($action, $allowedActions, true)) {
+        if (! in_array($action, $allowedActions, true)) {
             $action = '';
         }
 
@@ -312,7 +300,7 @@ class AffiliateController extends Controller
         |--------------------------------------------------------------------------
         */
 
-        if (!$startDate || !$endDate) {
+        if (! $startDate || ! $endDate) {
             return Inertia::render(
                 'affiliates/Index',
                 [
@@ -326,15 +314,13 @@ class AffiliateController extends Controller
 
                     'latest_period' => $latestBatch
                         ? [
-                            'start' =>
-                                $latestBatch
-                                    ->period_start
-                                    ?->format('Y-m-d'),
+                            'start' => $latestBatch
+                                ->period_start
+                                ->format('Y-m-d'),
 
-                            'end' =>
-                                $latestBatch
-                                    ->period_end
-                                    ?->format('Y-m-d'),
+                            'end' => $latestBatch
+                                ->period_end
+                                ->format('Y-m-d'),
                         ]
                         : null,
 
@@ -342,8 +328,7 @@ class AffiliateController extends Controller
 
                     'comparison_period' => null,
 
-                    'latest_batch_id' =>
-                        $latestBatch?->id,
+                    'latest_batch_id' => $latestBatch?->id,
 
                     'selected_batch_id' => null,
 
@@ -418,47 +403,38 @@ class AffiliateController extends Controller
 
                     'latest_period' => $latestBatch
                         ? [
-                            'start' =>
-                                $latestBatch
-                                    ->period_start
-                                    ?->format('Y-m-d'),
+                            'start' => $latestBatch
+                                ->period_start
+                                ->format('Y-m-d'),
 
-                            'end' =>
-                                $latestBatch
-                                    ->period_end
-                                    ?->format('Y-m-d'),
+                            'end' => $latestBatch
+                                ->period_end
+                                ->format('Y-m-d'),
                         ]
                         : null,
 
                     'selected_period' => [
-                        'start' =>
-                            $startDate->format('Y-m-d'),
+                        'start' => $startDate->format('Y-m-d'),
 
-                        'end' =>
-                            $endDate->format('Y-m-d'),
+                        'end' => $endDate->format('Y-m-d'),
                     ],
 
                     'comparison_period' => [
-                        'start' =>
-                            $comparisonStart->format('Y-m-d'),
+                        'start' => $comparisonStart->format('Y-m-d'),
 
-                        'end' =>
-                            $comparisonEnd->format('Y-m-d'),
+                        'end' => $comparisonEnd->format('Y-m-d'),
                     ],
 
-                    'latest_batch_id' =>
-                        $latestBatch?->id,
+                    'latest_batch_id' => $latestBatch?->id,
 
                     'selected_batch_id' => null,
 
                     'previous_batch_id' => null,
 
                     'previous_period' => [
-                        'start' =>
-                            $comparisonStart->format('Y-m-d'),
+                        'start' => $comparisonStart->format('Y-m-d'),
 
-                        'end' =>
-                            $comparisonEnd->format('Y-m-d'),
+                        'end' => $comparisonEnd->format('Y-m-d'),
                     ],
 
                     'import_batches' => $importBatches,
@@ -587,8 +563,7 @@ class AffiliateController extends Controller
 
                 'orders' => (int) ($row->orders ?? 0),
 
-                'products_sold' =>
-                    (int) ($row->products_sold ?? 0),
+                'products_sold' => (int) ($row->products_sold ?? 0),
 
                 'impressions' => $impressions,
 
@@ -598,8 +573,7 @@ class AffiliateController extends Controller
 
                 'ctor' => $ctor,
 
-                'period_count' =>
-                    (int) ($row->period_count ?? 0),
+                'period_count' => (int) ($row->period_count ?? 0),
             ];
         }
 
@@ -639,10 +613,9 @@ class AffiliateController extends Controller
             $affiliateId = $row->affiliate_id;
 
             $comparisonAggregates[$affiliateId] = [
-                'gmv' =>
-                    (float) (
-                        $row->gmv ?? 0
-                    ),
+                'gmv' => (float) (
+                    $row->gmv ?? 0
+                ),
             ];
         }
 
@@ -766,214 +739,184 @@ class AffiliateController extends Controller
         */
 
         $affiliateRows = collect($currentAggregates)
-        ->map(
-            function (
-                $aggregate,
-                $affiliateId
-            ) use (
-                $comparisonAggregates,
-                $rangeScores,
-                $startDate,
-                $endDate,
-            ) {
-                $affiliate = $aggregate['affiliate'];
+            ->map(
+                function (
+                    $aggregate,
+                    $affiliateId
+                ) use (
+                    $comparisonAggregates,
+                    $rangeScores,
+                    $startDate,
+                    $endDate,
+                ) {
+                    $affiliate = $aggregate['affiliate'];
 
-                /*
+                    /*
                 |--------------------------------------------------------------------------
                 | Current Period
                 |--------------------------------------------------------------------------
                 */
 
-                $currentGmv =
-                    (float) ($aggregate['gmv'] ?? 0);
+                    $currentGmv =
+                        (float) $aggregate['gmv'];
 
-                $currentOrders =
-                    (int) ($aggregate['orders'] ?? 0);
+                    $currentOrders =
+                        (int) $aggregate['orders'];
 
-                $currentProductsSold =
-                    (int) ($aggregate['products_sold'] ?? 0);
+                    $currentProductsSold =
+                        (int) $aggregate['products_sold'];
 
-                $currentAov =
-                    $currentOrders > 0
-                        ? $currentGmv / $currentOrders
-                        : 0;
+                    $currentAov =
+                        $currentOrders > 0
+                            ? $currentGmv / $currentOrders
+                            : 0;
 
-                $currentCtr =
-                    (float) ($aggregate['ctr'] ?? 0);
+                    $currentCtr =
+                        (float) $aggregate['ctr'];
 
-                $currentCtor =
-                    (float) ($aggregate['ctor'] ?? 0);
+                    $currentCtor =
+                        (float) $aggregate['ctor'];
 
-                /*
+                    /*
                 |--------------------------------------------------------------------------
                 | Previous Period
                 |--------------------------------------------------------------------------
                 */
 
-                $previousGmv =
-                    $comparisonAggregates[$affiliateId]['gmv']
-                    ?? null;
+                    $previousGmv =
+                        $comparisonAggregates[$affiliateId]['gmv']
+                        ?? null;
 
-                /*
+                    /*
                 |--------------------------------------------------------------------------
                 | Movement
                 |--------------------------------------------------------------------------
                 */
 
-                $changePercent = null;
+                    $changePercent = null;
 
-                if (
-                    $previousGmv !== null &&
-                    $previousGmv > 0
-                ) {
-                    $changePercent =
-                        (
+                    if (
+                        $previousGmv !== null &&
+                        $previousGmv > 0
+                    ) {
+                        $changePercent =
                             (
-                                $currentGmv -
+                                (
+                                    $currentGmv -
+                                    $previousGmv
+                                ) /
                                 $previousGmv
-                            ) /
-                            $previousGmv
-                        ) * 100;
-                }
+                            ) * 100;
+                    }
 
-                $movement = match (true) {
-                    $changePercent === null
-                        => 'NO_BASELINE',
+                    $movement = match (true) {
+                        $changePercent === null => 'NO_BASELINE',
 
-                    $changePercent > 0
-                        => 'UP',
+                        $changePercent > 0 => 'UP',
 
-                    $changePercent < 0
-                        => 'DOWN',
+                        $changePercent < 0 => 'DOWN',
 
-                    default
-                        => 'STABLE',
-                };
+                        default => 'STABLE',
+                    };
 
-                /*
+                    /*
                 |--------------------------------------------------------------------------
                 | Score
                 |--------------------------------------------------------------------------
                 */
 
-                $score =
-                    $rangeScores->get($affiliateId);
+                    $score =
+                        $rangeScores->get($affiliateId);
 
-                /*
+                    /*
                 |--------------------------------------------------------------------------
                 | Return
                 |--------------------------------------------------------------------------
                 */
 
-                return [
-                    'id' =>
-                        $affiliate['id']
-                        ?? $affiliateId,
+                    return [
+                        'id' => $affiliate['id'],
 
-                    'name' =>
-                        $affiliate['name']
-                        ?? '-',
+                        'name' => $affiliate['name']
+                            ?? '-',
 
-                    'username' =>
-                        $affiliate['username']
-                        ?? '-',
+                        'username' => $affiliate['username']
+                            ?? '-',
 
-                    'platform' =>
-                        $affiliate['platform']
-                        ?? 'TikTok',
+                        'platform' => $affiliate['platform']
+                            ?? 'TikTok',
 
-                    'status' =>
-                        $affiliate['status']
-                        ?? 'active',
+                        'status' => $affiliate['status']
+                            ?? 'active',
 
-                    'score' => [
-                        'performance' =>
-                            $score[
-                                'performance_score'
-                            ] ?? null,
+                        'score' => [
+                            'performance' => $score[
+                                    'performance_score'
+                                ] ?? null,
 
-                        'growth' =>
-                            $score[
-                                'growth_score'
-                            ] ?? null,
+                            'growth' => $score[
+                                    'growth_score'
+                                ] ?? null,
 
-                        'consistency' =>
-                            $score[
-                                'consistency_score'
-                            ] ?? null,
+                            'consistency' => $score[
+                                    'consistency_score'
+                                ] ?? null,
 
-                        'opportunity' =>
-                            $score[
-                                'opportunity_score'
-                            ] ?? null,
+                            'opportunity' => $score[
+                                    'opportunity_score'
+                                ] ?? null,
 
-                        'action' =>
-                            $score[
-                                'action'
-                            ] ?? 'MONITOR',
+                            'action' => $score[
+                                    'action'
+                                ] ?? 'MONITOR',
 
-                        'growth_percent' =>
-                            $score[
-                                'growth_percent'
-                            ] ?? null,
+                            'growth_percent' => $score[
+                                    'growth_percent'
+                                ] ?? null,
 
-                        'period_count' =>
-                            $score[
-                                'period_count'
-                            ] ?? 0,
+                            'period_count' => $score[
+                                    'period_count'
+                                ] ?? 0,
 
-                        'insights' =>
-                            $score[
-                                'insights'
-                            ] ?? [],
-                    ],
+                            'insights' => $score[
+                                    'insights'
+                                ] ?? [],
+                        ],
 
-                    'latest_performance' => [
-                        'gmv' =>
-                            $currentGmv,
+                        'latest_performance' => [
+                            'gmv' => $currentGmv,
 
-                        'attributed_orders' =>
-                            $currentOrders,
+                            'attributed_orders' => $currentOrders,
 
-                        'products_sold' =>
-                            $currentProductsSold,
+                            'products_sold' => $currentProductsSold,
 
-                        'aov' =>
-                            $currentAov,
+                            'aov' => $currentAov,
 
-                        'ctr' =>
-                            $currentCtr,
+                            'ctr' => $currentCtr,
 
-                        'ctor' =>
-                            $currentCtor,
+                            'ctor' => $currentCtor,
 
-                        'period_start' =>
-                            $startDate->format('Y-m-d'),
+                            'period_start' => $startDate->format('Y-m-d'),
 
-                        'period_end' =>
-                            $endDate->format('Y-m-d'),
-                    ],
+                            'period_end' => $endDate->format('Y-m-d'),
+                        ],
 
-                    'movement' => [
-                        'previous_gmv' =>
-                            $previousGmv,
+                        'movement' => [
+                            'previous_gmv' => $previousGmv,
 
-                        'gmv_change' =>
-                            $previousGmv !== null
-                                ? $currentGmv -
-                                    $previousGmv
-                                : null,
+                            'gmv_change' => $previousGmv !== null
+                                    ? $currentGmv -
+                                        $previousGmv
+                                    : null,
 
-                        'gmv_change_percent' =>
-                            $changePercent,
+                            'gmv_change_percent' => $changePercent,
 
-                        'status' =>
-                            $movement,
-                    ],
-                ];
-            }
-        )
-        ->values();
+                            'status' => $movement,
+                        ],
+                    ];
+                }
+            )
+            ->values();
 
         $debugAfterBuild = microtime(true);
 
@@ -1084,8 +1027,7 @@ class AffiliateController extends Controller
                 $affiliateRows =
                     $affiliateRows
                         ->sortBy(
-                            fn ($affiliate) =>
-                                $affiliate[
+                            fn ($affiliate) => $affiliate[
                                     'latest_performance'
                                 ]['gmv'],
                             SORT_NUMERIC,
@@ -1100,8 +1042,7 @@ class AffiliateController extends Controller
                 $affiliateRows =
                     $affiliateRows
                         ->sortBy(
-                            fn ($affiliate) =>
-                                $affiliate[
+                            fn ($affiliate) => $affiliate[
                                     'latest_performance'
                                 ][
                                     'attributed_orders'
@@ -1118,8 +1059,7 @@ class AffiliateController extends Controller
                 $affiliateRows =
                     $affiliateRows
                         ->sortBy(
-                            fn ($affiliate) =>
-                                $affiliate[
+                            fn ($affiliate) => $affiliate[
                                     'latest_performance'
                                 ]['aov'],
                             SORT_NUMERIC,
@@ -1134,8 +1074,7 @@ class AffiliateController extends Controller
                 $affiliateRows =
                     $affiliateRows
                         ->sortBy(
-                            fn ($affiliate) =>
-                                $affiliate[
+                            fn ($affiliate) => $affiliate[
                                     'latest_performance'
                                 ]['ctr'],
                             SORT_NUMERIC,
@@ -1150,8 +1089,7 @@ class AffiliateController extends Controller
                 $affiliateRows =
                     $affiliateRows
                         ->sortBy(
-                            fn ($affiliate) =>
-                                $affiliate[
+                            fn ($affiliate) => $affiliate[
                                     'latest_performance'
                                 ]['ctor'],
                             SORT_NUMERIC,
@@ -1166,8 +1104,7 @@ class AffiliateController extends Controller
                 $affiliateRows =
                     $affiliateRows
                         ->sortBy(
-                            fn ($affiliate) =>
-                                $affiliate[
+                            fn ($affiliate) => $affiliate[
                                     'score'
                                 ]['performance']
                                 ?? -INF,
@@ -1183,8 +1120,7 @@ class AffiliateController extends Controller
                 $affiliateRows =
                     $affiliateRows
                         ->sortBy(
-                            fn ($affiliate) =>
-                                $affiliate[
+                            fn ($affiliate) => $affiliate[
                                     'score'
                                 ]['opportunity']
                                 ?? -INF,
@@ -1200,10 +1136,9 @@ class AffiliateController extends Controller
                 $affiliateRows =
                     $affiliateRows
                         ->sortBy(
-                            fn ($affiliate) =>
-                                strtolower(
-                                    $affiliate['name']
-                                ),
+                            fn ($affiliate) => strtolower(
+                                $affiliate['name']
+                            ),
                             SORT_NATURAL,
                             $direction === 'desc'
                         )
@@ -1247,11 +1182,9 @@ class AffiliateController extends Controller
                 $perPage,
                 $currentPage,
                 [
-                    'path' =>
-                        request()->url(),
+                    'path' => request()->url(),
 
-                    'query' =>
-                        request()->query(),
+                    'query' => request()->query(),
                 ]
             );
 
@@ -1270,8 +1203,6 @@ class AffiliateController extends Controller
         $previousBatch =
             $comparisonBatches->last();
 
-     
-
         /*
         |--------------------------------------------------------------------------
         | Response
@@ -1281,88 +1212,83 @@ class AffiliateController extends Controller
         return Inertia::render(
             'affiliates/Index',
             [
-                'affiliates' =>
-                    $performances,
+                'affiliates' => $performances,
 
-                'latest_period' =>
-                    $latestBatch
+                'latest_period' => $latestBatch
                         ? [
-                            'start' =>
-                                $latestBatch
-                                    ->period_start
-                                    ?->format(
-                                        'Y-m-d'
-                                    ),
+                            'start' => $latestBatch
+                                ->period_start
+                                ->format(
+                                    'Y-m-d'
+                                ),
 
-                            'end' =>
-                                $latestBatch
-                                    ->period_end
-                                    ?->format(
-                                        'Y-m-d'
-                                    ),
+                            'end' => $latestBatch
+                                ->period_end
+                                ->format(
+                                    'Y-m-d'
+                                ),
                         ]
                         : null,
 
                 'selected_period' => [
-                    'start' =>
-                        $startDate->format(
-                            'Y-m-d'
-                        ),
+                    'start' => $startDate->format(
+                        'Y-m-d'
+                    ),
 
-                    'end' =>
-                        $endDate->format(
-                            'Y-m-d'
-                        ),
+                    'end' => $endDate->format(
+                        'Y-m-d'
+                    ),
                 ],
 
                 'comparison_period' => [
-                    'start' =>
-                        $comparisonStart->format(
-                            'Y-m-d'
-                        ),
+                    'start' => $comparisonStart->format(
+                        'Y-m-d'
+                    ),
 
-                    'end' =>
-                        $comparisonEnd->format(
-                            'Y-m-d'
-                        ),
+                    'end' => $comparisonEnd->format(
+                        'Y-m-d'
+                    ),
                 ],
 
-                'latest_batch_id' =>
-                    $latestBatch?->id,
+                'latest_batch_id' => $latestBatch?->id,
 
-                'selected_batch_id' =>
-                    $selectedBatch?->id,
+                'selected_batch_id' => $selectedBatch->id,
 
-                'previous_batch_id' =>
-                    $previousBatch?->id,
+                'previous_batch_id' => $previousBatch?->id,
 
                 'previous_period' => [
-                    'start' =>
-                        $comparisonStart->format(
-                            'Y-m-d'
-                        ),
+                    'start' => $comparisonStart->format(
+                        'Y-m-d'
+                    ),
 
-                    'end' =>
-                        $comparisonEnd->format(
-                            'Y-m-d'
-                        ),
+                    'end' => $comparisonEnd->format(
+                        'Y-m-d'
+                    ),
                 ],
 
-                'import_batches' =>
-                    $importBatches,
+                'import_batches' => $importBatches,
 
-                'search' =>
-                    $search,
+                'search' => $search,
 
-                'sort' =>
-                    $sort,
+                'sort' => $sort,
 
-                'direction' =>
-                    $direction,
+                'direction' => $direction,
 
-                'action' =>
-                    $action,
+                'action' => $action,
             ]
         );
+    }
+
+    private function parseDate(mixed $value): ?Carbon
+    {
+        if ($value === null || $value === '' || (is_string($value) && trim($value) === '')) {
+            return null;
+        }
+
+        try {
+            return Carbon::parse($value)->startOfDay();
+        } catch (\Throwable) {
+            return null;
+        }
     }
 }
